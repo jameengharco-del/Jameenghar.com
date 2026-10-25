@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Find properties to buy, sell or rent with JameenGhar.com.">
+  <title>JameenGhar.com — Buy | Sell | Rent</title>
+  <style>
+    :root{--green:#064d2b;--green2:#0b6840;--orange:#ff5a0a;--ink:#17251d;--muted:#64736a;--cream:#f6f8f5;--line:#e4eae5;--white:#fff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff}
+    a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}.wrap{width:min(1160px,92%);margin:auto}
+    header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}.nav{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand img{display:block;width:220px;max-height:68px;object-fit:contain}.navlinks{display:flex;align-items:center;gap:24px;font-size:14px;font-weight:650}.navlinks a:hover{color:var(--orange)}
+    .btn{border:0;border-radius:10px;padding:12px 18px;font-weight:750;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s}
+    .btn-primary{background:var(--orange);color:#fff}.btn-primary:hover{background:#e84b00;transform:translateY(-1px)}.btn-outline{border:1px solid #b9c8be;background:#fff;color:var(--green)}
+    .hero{background:radial-gradient(ellipse at 80% 0%,#e1f0e6 0,transparent 38%),linear-gradient(135deg,#f5faf6,#fff 65%);padding:64px 0 54px}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:34px}.eyebrow{display:inline-block;color:var(--green2);background:#e3f2e8;border-radius:30px;padding:7px 12px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    h1{font-size:clamp(36px,5vw,58px);line-height:1.06;letter-spacing:-.045em;margin:18px 0}.orange{color:var(--orange)}.hero p{color:var(--muted);font-size:17px;line-height:1.7;max-width:530px}
+    .hero-art{min-height:320px;border-radius:28px;position:relative;overflow:hidden;background:linear-gradient(145deg,#d6eadb,#f5f8ee);display:flex;align-items:center;justify-content:center}
+    .house{width:70%;height:220px;position:relative}.roof{position:absolute;left:8%;top:18px;width:84%;height:125px;background:var(--orange);clip-path:polygon(50% 0,100% 55%,91% 55%,50% 14%,9% 55%,0 55%)}.home{position:absolute;left:18%;right:18%;top:82px;height:125px;background:#fff;border:5px solid var(--green);border-top:0;border-radius:2px 2px 0 0}
+    .window{position:absolute;top:25px;width:42px;height:42px;background:#d6eadb;border:4px solid var(--green)}.w1{left:20px}.w2{right:20px}.door{position:absolute;bottom:0;left:calc(50% - 22px);width:44px;height:70px;background:var(--green);border-radius:5px 5px 0 0}
+    .float-note{position:absolute;background:#fff;border:1px solid #e2e9e3;box-shadow:0 12px 32px #12331b14;border-radius:14px;padding:13px 16px;font-size:13px;font-weight:750}.note1{left:18px;bottom:24px}.note2{right:18px;top:22px}
+    .search-card{background:#fff;padding:20px;border-radius:18px;box-shadow:0 18px 50px #12331b12;border:1px solid #e9eee9;margin-top:28px}
+    .tabs{display:flex;gap:6px;margin-bottom:16px}.tab{padding:10px 18px;border-radius:8px;font-weight:800;color:var(--muted);cursor:pointer;border:0;background:transparent}.tab.active{background:var(--green);color:#fff}
+    .search-fields{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:10px}.field{min-width:0}.field label{display:block;font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:0 0 7px}.field input,.field select{width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;padding:13px 12px;outline:none;color:var(--ink)}.field input:focus,.field select:focus{border-color:var(--green2)}
+    section{padding:58px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:24px}.section-head h2{font-size:clamp(26px,3vw,36px);letter-spacing:-.035em;margin:0 0 8px}.section-head p{margin:0;color:var(--muted)}.link{color:var(--green2);font-weight:800;font-size:14px}
+    .chips{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 22px}.chip{border:1px solid var(--line);border-radius:24px;padding:9px 14px;background:#fff;color:#405349;cursor:pointer;font-weight:700;font-size:13px}.chip.active,.chip:hover{background:#e8f4eb;border-color:#b8d7c1;color:var(--green)}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.property{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;transition:.2s}.property:hover{transform:translateY(-4px);box-shadow:0 16px 30px #183c2212}
+    .prop-visual{height:180px;position:relative;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,#dce9de,#f5e8d7)}.prop-visual:before{content:"";position:absolute;width:72%;height:90px;bottom:0;background:#f8f7f1;border:4px solid #fff;box-shadow:0 -6px 0 #d2ded2}.prop-visual:after{content:"";position:absolute;width:80%;height:105px;top:15px;background:var(--green);clip-path:polygon(50% 0,100% 48%,91% 48%,50% 15%,9% 48%,0 48%)}.building{position:absolute;z-index:1;bottom:0;width:48%;height:83px;background:#fff;border:3px solid #e0e7df}.building:before{content:"";position:absolute;left:15%;top:14px;width:22px;height:24px;background:#b8d8c1;box-shadow:45px 0 #b8d8c1,0 35px #b8d8c1,45px 35px #b8d8c1}.tag{position:absolute;z-index:2;top:12px;left:12px;background:#fff;border-radius:6px;padding:6px 9px;font-size:11px;font-weight:850;color:var(--green)}.prop-body{padding:17px}.price{font-size:22px;font-weight:900;color:var(--green);margin-bottom:6px}.prop-title{font-size:15px;font-weight:800;margin-bottom:6px}.location{font-size:13px;color:var(--muted);margin-bottom:14px}.features{display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px;color:#5a6b60;font-size:12px}
+    .empty{padding:30px;text-align:center;border:1px dashed #cad8ce;border-radius:14px;color:var(--muted);grid-column:1/-1}
+    .cta{background:var(--green);color:#fff;border-radius:22px;padding:34px;display:flex;align-items:center;justify-content:space-between;gap:24px}.cta h2{margin:0 0 8px;font-size:30px}.cta p{margin:0;color:#d5e8db}.cta .btn{background:#fff;color:var(--green);white-space:nowrap}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.step{padding:22px;border:1px solid var(--line);border-radius:14px}.step-num{width:36px;height:36px;border-radius:10px;background:#e4f3e8;color:var(--green);display:grid;place-items:center;font-weight:900}.step h3{margin:14px 0 7px}.step p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+    footer{background:#f4f7f4;border-top:1px solid var(--line);padding:32px 0 20px}.footer-top{display:flex;justify-content:space-between;gap:25px;flex-wrap:wrap}.footer-brand img{width:190px;max-height:65px;object-fit:contain}.footer-brand p{color:var(--muted);max-width:300px;font-size:13px;line-height:1.6}.footer-links{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;font-weight:700}.copyright{border-top:1px solid var(--line);padding-top:16px;margin-top:22px;color:var(--muted);font-size:12px}
+    .modal{position:fixed;inset:0;background:#0b2116a8;z-index:30;display:none;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-box{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:24px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modal-head h2{margin:0}.close{border:0;background:#edf3ee;border-radius:8px;padding:8px 11px;cursor:pointer}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .full{grid-column:1/-1}.form-grid label{font-size:12px;font-weight:800;display:block;margin-bottom:6px}.form-grid input,.form-grid select,.form-grid textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px}.hint{font-size:12px;color:var(--muted);line-height:1.5}.mobile-menu{display:none}
+    @media(max-width:850px){.hero-grid{grid-template-columns:1fr}.hero-art{min-height:270px}.search-fields{grid-template-columns:1fr 1fr}.search-fields .btn{width:100%}.cards{grid-template-columns:repeat(2,1fr)}.navlinks{gap:13px}.brand img{width:180px}}
+    @media(max-width:600px){.nav{height:68px}.brand img{width:160px}.navlinks a:not(.btn){display:none}.navlinks .btn{padding:10px 12px;font-size:12px}.hero{padding:42px 0}.hero p{font-size:15px}.hero-art{min-height:230px}.search-card{padding:14px}.search-fields{grid-template-columns:1fr}.tabs{overflow:auto}.tab{padding:9px 13px}.cards,.steps{grid-template-columns:1fr}.prop-visual{height:200px}section{padding:42px 0}.section-head{align-items:start;flex-direction:column}.cta{align-items:start;flex-direction:column;padding:25px}.cta h2{font-size:26px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.footer-top{flex-direction:column}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#" aria-label="JameenGhar home"><img src="assets/jameenghar-logo.png" alt="JameenGhar.com — Buy Sell Rent"></a>
+    <nav class="navlinks" aria-label="Main navigation">
+      <a href="#properties">Buy</a><a href="#properties" data-mode-link="Rent">Rent</a><a href="#how">How it works</a>
+      <button class="btn btn-primary" id="postTop">＋ Post Property</button>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Your property journey starts here</span>
+        <h1>Find a place to call <span class="orange">home.</span></h1>
+        <p>Buy, sell or rent property with more confidence. Explore homes, plots and commercial spaces with JameenGhar.com.</p>
+        <div class="search-card">
+          <div class="tabs" role="tablist" aria-label="Property purpose">
+            <button class="tab active" data-mode="Buy">Buy</button><button class="tab" data-mode="Rent">Rent</button><button class="tab" data-mode="Sell">Sell</button>
+          </div>
+          <form id="searchForm">
+            <div class="search-fields">
+              <div class="field"><label for="city">City / locality</label><input id="city" placeholder="e.g. Jaipur, Vaishali Nagar"></div>
+              <div class="field"><label for="kind">Property type</label><select id="kind"><option>Any property</option><option>Apartment / Flat</option><option>Independent House</option><option>Plot / Land</option><option>Villa</option><option>Commercial</option></select></div>
+              <div class="field"><label for="budget">Budget</label><select id="budget"><option value="">Any budget</option><option value="0-3000000">Under ₹30 lakh</option><option value="3000000-6000000">₹30–60 lakh</option><option value="6000000-10000000">₹60 lakh–₹1 crore</option><option value="10000000-999999999">₹1 crore+</option></select></div>
+              <button class="btn btn-primary" type="submit">Search properties</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="Illustration of a home">
+        <div class="house"><div class="roof"></div><div class="home"><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div></div>
+        <div class="float-note note1">🏡 Find your next home</div><div class="float-note note2">✓ Buy · Sell · Rent</div>
+      </div>
+    </div>
+  </section>
+  <section id="properties">
+    <div class="wrap">
+      <div class="section-head"><div><h2>Explore properties</h2><p>Start with these sample listings, then add your own properties.</p></div><button class="btn btn-outline" id="postSection">＋ List your property</button></div>
+      <div class="chips" id="filterChips"><button class="chip active" data-filter="All">All properties</button><button class="chip" data-filter="Apartment / Flat">Apartments</button><button class="chip" data-filter="Independent House">Independent houses</button><button class="chip" data-filter="Plot / Land">Plots & land</button><button class="chip" data-filter="Commercial">Commercial</button></div>
+      <div class="cards" id="propertyCards"></div>
+    </div>
+  </section>
+  <section style="background:var(--cream)">
+    <div class="wrap">
+      <div class="cta"><div><h2>Have a property to sell or rent?</h2><p>Share the details and start getting enquiries from interested people.</p></div><button class="btn" id="postCta">Post your property →</button></div>
+    </div>
+  </section>
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head"><div><h2>Property search, made simpler</h2><p>A straightforward way to connect people with properties.</p></div></div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><h3>Search your way</h3><p>Choose a location, property type and budget to narrow down your options.</p></div>
+        <div class="step"><div class="step-num">2</div><h3>Compare options</h3><p>Review property details and contact information before making a decision.</p></div>
+        <div class="step"><div class="step-num">3</div><h3>Connect directly</h3><p>Post your property or contact the listing owner to take the next step.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand"><img src="assets/jameenghar-logo.png" alt="JameenGhar.com"><p>Your property partner for buying, selling and renting. Helping you take the next step with confidence.</p></div>
+      <div class="footer-links"><a href="#properties">Buy property</a><a href="#properties" data-mode-link="Rent">Rent property</a><a href="#" id="footerPost">Post a property</a><a href="mailto:hello@jameenghar.com">Contact us</a></div>
+    </div>
+    <div class="copyright">© <span id="year"></span> JameenGhar.com. All rights reserved. <span style="float:right">Listings shown are sample/demo listings.</span></div>
+  </div>
+</footer>
+<div class="modal" id="postModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="modalTitle">Post your property</h2><button class="close" id="closeModal" aria-label="Close">✕</button></div>
+    <form id="propertyForm">
+      <div class="form-grid">
+        <div><label for="ownerName">Your name *</label><input id="ownerName" required placeholder="Full name"></div>
+        <div><label for="ownerPhone">Phone number *</label><input id="ownerPhone" required type="tel" pattern="[0-9 +()-]{8,}" placeholder="Mobile number"></div>
+        <div><label for="purpose">I want to *</label><select id="purpose"><option>Sell</option><option>Rent</option></select></div>
+        <div><label for="newKind">Property type *</label><select id="newKind" required><option>Apartment / Flat</option><option>Independent House</option><option>Plot / Land</option><option>Villa</option><option>Commercial</option></select></div>
+        <div><label for="newPrice">Expected price / rent (₹) *</label><input id="newPrice" type="number" min="1" required placeholder="e.g. 4500000"></div>
+        <div><label for="newBeds">Bedrooms</label><select id="newBeds"><option>Not applicable</option><option>1 BHK</option><option>2 BHK</option><option>3 BHK</option><option>4+ BHK</option></select></div>
+        <div class="full"><label for="newLocation">Property location *</label><input id="newLocation" required placeholder="Area, city"></div>
+        <div class="full"><label for="newDetails">More details</label><textarea id="newDetails" rows="3" placeholder="Area, floor, amenities, availability..."></textarea></div>
+        <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Save listing on this device</button></div>
+      </div>
+      <p class="hint">Demo note: this free starter site saves listings only in this browser. To receive leads from visitors on all devices, connect a backend or a free form service before publishing.</p>
+    </form>
+  </div>
+</div>
+<script>
+const starterListings = [
+ {id:1, purpose:"Buy",kind:"Apartment / Flat",price:4850000,title:"Modern 2 BHK apartment",location:"Vaishali Nagar, Jaipur",beds:"2 BHK",area:"1,050 sq ft",tag:"Featured"},
+ {id:2, purpose:"Buy",kind:"Independent House",price:8900000,title:"Family home with open terrace",location:"Mansarovar, Jaipur",beds:"3 BHK",area:"1,650 sq ft",tag:"Owner listing"},
+ {id:3, purpose:"Buy",kind:"Plot / Land",price:3200000,title:"Residential plot in a growing area",location:"Ajmer Road, Jaipur",beds:"Plot",area:"150 sq yd",tag:"New"},
+ {id:4, purpose:"Rent",kind:"Apartment / Flat",price:18000,title:"Bright, semi-furnished apartment",location:"Jagatpura, Jaipur",beds:"2 BHK",area:"980 sq ft",tag:"Available"},
+ {id:5, purpose:"Buy",kind:"Villa",price:14500000,title:"Independent villa with parking",location:"Sirsi Road, Jaipur",beds:"4 BHK",area:"2,200 sq ft",tag:"Premium"},
+ {id:6, purpose:"Rent",kind:"Commercial",price:35000,title:"Road-facing commercial space",location:"Tonk Road, Jaipur",beds:"Shop / Office",area:"600 sq ft",tag:"Business"}
+];
+let mode = "Buy", activeFilter = "All";
+const $ = s => document.querySelector(s);
+const formatPrice = (n,purpose) => purpose==="Rent" ? "₹"+Number(n).toLocaleString("en-IN")+"/month" : Number(n)>=10000000 ? "₹"+(Number(n)/10000000).toFixed(2).replace(/\.00$/,"")+" Cr" : "₹"+(Number(n)/100000).toFixed(1).replace(/\.0$/,"")+" lakh";
+function getListings(){try{return [...starterListings,...JSON.parse(localStorage.getItem("jgListings")||"[]")]}catch(e){return starterListings}}
+function renderListings(){
+ const city=$("#city").value.trim().toLowerCase(), kind=$("#kind").value, budget=$("#budget").value;
+ const cards=getListings().filter(p=>(mode==="Sell" ? true : p.purpose===mode) && (activeFilter==="All"||p.kind===activeFilter) && (!city||(p.location+" "+p.title).toLowerCase().includes(city)) && (kind==="Any property"||p.kind===kind) && (!budget||(p.price>=Number(budget.split("-")[0])&&p.price<=Number(budget.split("-")[1]))));
+ $("#propertyCards").innerHTML=cards.length?cards.map(p=>`<article class="property"><div class="prop-visual"><span class="tag">${p.tag||"New listing"}</span><div class="building"></div></div><div class="prop-body"><div class="price">${formatPrice(p.price,p.purpose)}</div><div class="prop-title">${escapeHTML(p.title)}</div><div class="location">📍 ${escapeHTML(p.location)}</div><div class="features"><span>🛏 ${escapeHTML(p.beds||"—")}</span><span>▧ ${escapeHTML(p.area||"Details on request")}</span><span>${escapeHTML(p.kind)}</span></div><button class="btn btn-outline" style="width:100%;margin-top:14px" onclick="contactListing('${escapeHTML(p.title)}','${escapeHTML(p.location)}')">Enquire now</button></div></article>`).join(""):`<div class="empty">No matching listings yet. Try a different filter or post your property.</div>`;
+}
+function escapeHTML(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function contactListing(title,location){const subject=encodeURIComponent("Property enquiry: "+title);const body=encodeURIComponent("Hello JameenGhar.com,\nI am interested in: "+title+"\nLocation: "+location+"\nPlease share more details.");window.location.href="mailto:hello@jameenghar.com?subject="+subject+"&body="+body}
+function setMode(next){mode=next;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));if(mode==="Sell"){openModal();return}renderListings()}
+function openModal(){ $("#postModal").classList.add("show");document.body.style.overflow="hidden"; }
+function closeModal(){ $("#postModal").classList.remove("show");document.body.style.overflow=""; }
+document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+document.querySelectorAll("[data-mode-link]").forEach(a=>a.addEventListener("click",()=>{mode=a.dataset.modeLink;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));renderListings()}));
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{activeFilter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));renderListings()}));
+$("#searchForm").addEventListener("submit",e=>{e.preventDefault();activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"})});
+["postTop","postSection","postCta","footerPost"].forEach(id=>$("#"+id).addEventListener("click",e=>{e.preventDefault();openModal()}));
+$("#closeModal").addEventListener("click",closeModal);$("#postModal").addEventListener("click",e=>{if(e.target.id==="postModal")closeModal()});
+$("#propertyForm").addEventListener("submit",e=>{e.preventDefault();const listings=JSON.parse(localStorage.getItem("jgListings")||"[]");listings.unshift({id:Date.now(),purpose:$("#purpose").value,kind:$("#newKind").value,price:Number($("#newPrice").value),title:$("#newDetails").value.trim()||$("#newKind").value+" in "+$("#newLocation").value,location:$("#newLocation").value,beds:$("#newBeds").value,area:"Contact owner",tag:"Your listing"});localStorage.setItem("jgListings",JSON.stringify(listings));closeModal();e.target.reset();mode="Buy";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"});alert("Listing saved in this browser. For a public website, connect a backend/form service to collect enquiries from visitors.");});
+$("#year").textContent=new Date().getFullYear();renderListings();
+</script>
+</body>
+</html>
