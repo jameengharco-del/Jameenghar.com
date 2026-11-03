@@ -157,80 +157,147 @@ $("#propertyForm").addEventListener("submit",e=>{e.preventDefault();const listin
 $("#year").textContent=new Date().getFullYear();renderListings();
 </script>
   
-<!-- Home Loan Inquiry Section -->
-<section id="home-loan" style="padding:50px 20px; background:#f4f7fb;">
-  <div style="max-width:800px; margin:auto; background:white; padding:30px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
 
-    <h2 style="text-align:center; color:#123b65;">
-      Home Loan Assistance
-    </h2>
+<!-- JameenGhar Home Loan Assistance -->
+<section id="home-loan" style="padding:60px 20px;background:linear-gradient(135deg,#eef4ff,#f8fbff);font-family:Arial,sans-serif;">
+  <div style="max-width:1100px;margin:auto;">
 
-    <p style="text-align:center; color:#555;">
-      Looking to buy your dream property? Get assistance with your home loan inquiry.
-    </p>
+    <div style="text-align:center;margin-bottom:35px;">
+      <span style="display:inline-block;background:#dce9ff;color:#123b65;padding:8px 18px;border-radius:30px;font-weight:bold;">
+        HOME LOAN ASSISTANCE
+      </span>
 
-    <form id="homeLoanForm">
-      <label>Full Name</label>
-      <input type="text" name="name" required
-      placeholder="Enter your full name"
-      style="width:100%; padding:12px; margin:8px 0 18px;">
+      <h2 style="font-size:clamp(28px,4vw,42px);color:#123b65;margin:18px 0;">
+        Your Dream Home. <span style="color:#d49a28;">Our Guidance.</span>
+      </h2>
 
-      <label>Mobile Number</label>
-      <input type="tel" name="mobile" required
-      pattern="[0-9]{10}"
-      placeholder="10-digit mobile number"
-      style="width:100%; padding:12px; margin:8px 0 18px;">
+      <p style="color:#58677b;font-size:17px;line-height:1.7;">
+        Explore your home loan options and calculate your estimated monthly EMI with JameenGhar.com.
+      </p>
+    </div>
 
-      <label>City</label>
-      <input type="text" name="city" required
-      placeholder="Enter your city"
-      style="width:100%; padding:12px; margin:8px 0 18px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;">
 
-      <label>Property Budget</label>
-      <select name="budget" required
-      style="width:100%; padding:12px; margin:8px 0 18px;">
-        <option value="">Select Budget</option>
-        <option>Below ₹25 Lakh</option>
-        <option>₹25–50 Lakh</option>
-        <option>₹50 Lakh–1 Crore</option>
-        <option>Above ₹1 Crore</option>
-      </select>
+      <!-- EMI Calculator -->
+      <div style="background:white;padding:28px;border-radius:20px;box-shadow:0 8px 30px rgba(18,59,101,.10);">
+        <h3 style="color:#123b65;margin-top:0;">Home Loan EMI Calculator</h3>
 
-      <label>Employment Type</label>
-      <select name="employment" required
-      style="width:100%; padding:12px; margin:8px 0 18px;">
-        <option value="">Select Employment Type</option>
-        <option>Salaried</option>
-        <option>Self-Employed</option>
-      </select>
+        <label>Property Price (₹)</label>
+        <input id="loanPropertyPrice" type="number" value="5000000" min="1"
+        style="width:100%;padding:12px;margin:10px 0 20px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
 
-      <label>Loan Required</label>
-      <select name="loan" required
-      style="width:100%; padding:12px; margin:8px 0 18px;">
-        <option value="">Select Loan Amount</option>
-        <option>Below ₹25 Lakh</option>
-        <option>₹25–50 Lakh</option>
-        <option>₹50 Lakh–1 Crore</option>
-        <option>Above ₹1 Crore</option>
-      </select>
+        <label>Down Payment (₹)</label>
+        <input id="loanDownPayment" type="number" value="1000000" min="0"
+        style="width:100%;padding:12px;margin:10px 0 20px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
 
-      <button type="submit"
-      style="width:100%; padding:15px; background:#123b65; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
-        Submit Home Loan Inquiry
-      </button>
-    </form>
+        <label>Interest Rate (% per year)</label>
+        <input id="loanInterest" type="number" value="8.5" min="0.1" max="30" step="0.1"
+        style="width:100%;padding:12px;margin:10px 0 20px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
 
-    <p style="text-align:center; font-size:12px; color:#777; margin-top:15px;">
-      JameenGhar.com — Your Property Partner
-    </p>
+        <label>Loan Tenure (Years)</label>
+        <select id="loanTenure"
+        style="width:100%;padding:12px;margin:10px 0 20px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
+          <option value="5">5 Years</option>
+          <option value="10">10 Years</option>
+          <option value="15">15 Years</option>
+          <option value="20" selected>20 Years</option>
+          <option value="25">25 Years</option>
+          <option value="30">30 Years</option>
+        </select>
+
+        <div style="background:#123b65;color:white;padding:24px;border-radius:14px;text-align:center;">
+          <p style="margin:0 0 8px;color:#dce9ff;">Estimated Monthly EMI</p>
+          <h2 id="loanEMI" style="font-size:32px;margin:0;">₹34,691</h2>
+          <p id="loanAmountText" style="font-size:13px;color:#dce9ff;margin-bottom:0;">
+            Loan Amount: ₹40,00,000
+          </p>
+        </div>
+
+        <p style="font-size:12px;color:#78869a;line-height:1.6;margin-top:15px;">
+          This is an estimate only. Actual EMI, interest rate and eligibility depend on lender terms.
+        </p>
+      </div>
+
+      <!-- Inquiry Form -->
+      <div style="background:white;padding:28px;border-radius:20px;box-shadow:0 8px 30px rgba(18,59,101,.10);">
+        <h3 style="color:#123b65;margin-top:0;">Get Home Loan Assistance</h3>
+
+        <p style="color:#58677b;line-height:1.6;">
+          Interested in a home loan? Submit your inquiry and our property assistance team can connect with you.
+        </p>
+
+        <form id="homeLoanForm">
+          <label>Full Name</label>
+          <input type="text" name="name" required placeholder="Your full name"
+          style="width:100%;padding:12px;margin:8px 0 18px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
+
+          <label>Mobile Number</label>
+          <input type="tel" name="mobile" required pattern="[0-9]{10}" placeholder="10-digit mobile number"
+          style="width:100%;padding:12px;margin:8px 0 18px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
+
+          <label>City / Locality</label>
+          <input type="text" name="city" required placeholder="Jaipur, Malviya Nagar..."
+          style="width:100%;padding:12px;margin:8px 0 18px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
+
+          <label>Employment Type</label>
+          <select name="employment" required
+          style="width:100%;padding:12px;margin:8px 0 18px;box-sizing:border-box;border:1px solid #ccd6e5;border-radius:8px;">
+            <option value="">Select employment type</option>
+            <option>Salaried</option>
+            <option>Self-Employed</option>
+          </select>
+
+          <button type="submit"
+          style="width:100%;padding:16px;background:#d49a28;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;">
+            Request Home Loan Assistance
+          </button>
+        </form>
+
+        <p style="font-size:12px;text-align:center;color:#78869a;margin-top:18px;">
+          JameenGhar.com | Your Property Partner
+        </p>
+      </div>
+
+    </div>
   </div>
-</section>
 
-<script>
-document.getElementById("homeLoanForm").addEventListener("submit", function(event) {
-  event.preventDefault();
-  alert("Thank you! The form design is ready. Inquiry storage and email notifications will be connected next.");
-});
-</script>
+  <script>
+  (function(){
+    const price = document.getElementById("loanPropertyPrice");
+    const down = document.getElementById("loanDownPayment");
+    const rate = document.getElementById("loanInterest");
+    const tenure = document.getElementById("loanTenure");
+    const emiDisplay = document.getElementById("loanEMI");
+    const amountDisplay = document.getElementById("loanAmountText");
+
+    function calculateEMI(){
+      const propertyPrice = Math.max(0, Number(price.value) || 0);
+      const downPayment = Math.max(0, Number(down.value) || 0);
+      const principal = Math.max(0, propertyPrice - downPayment);
+      const monthlyRate = (Number(rate.value) || 0) / 1200;
+      const months = (Number(tenure.value) || 20) * 12;
+
+      let emi = 0;
+
+      if(monthlyRate === 0){
+        emi = principal / months;
+      }else{
+        emi = principal * monthlyRate * Math.pow(1 + monthlyRate, months) /
+        (Math.pow(1 + monthlyRate, months) - 1);
+      }
+
+      emiDisplay.textContent = "₹" + Math.round(emi).toLocaleString("en-IN");
+      amountDisplay.textContent = "Loan Amount: ₹" + Math.round(principal).toLocaleString("en-IN");
+    }
+
+    [price,down,rate,tenure].forEach(function(input){
+      input.addEventListener("input",calculateEMI);
+      input.addEventListener("change",calculateEMI);
+    });
+
+    calculateEMI();
+  })();
+  </script>
+</section>
 </body>
 </html>
