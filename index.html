@@ -1,4 +1,4 @@
-<!doctype html>
+F<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -156,5 +156,83 @@ $("#closeModal").addEventListener("click",closeModal);$("#postModal").addEventLi
 $("#propertyForm").addEventListener("submit",e=>{e.preventDefault();const listings=JSON.parse(localStorage.getItem("jgListings")||"[]");listings.unshift({id:Date.now(),purpose:$("#purpose").value,kind:$("#newKind").value,price:Number($("#newPrice").value),title:$("#newDetails").value.trim()||$("#newKind").value+" in "+$("#newLocation").value,location:$("#newLocation").value,beds:$("#newBeds").value,area:"Contact owner",tag:"Your listing"});localStorage.setItem("jgListings",JSON.stringify(listings));closeModal();e.target.reset();mode="Buy";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"});alert("Listing saved in this browser. For a public website, connect a backend/form service to collect enquiries from visitors.");});
 $("#year").textContent=new Date().getFullYear();renderListings();
 </script>
+  
+<!-- Home Loan Inquiry Section -->
+<section id="home-loan" style="padding:50px 20px; background:#f4f7fb;">
+  <div style="max-width:800px; margin:auto; background:white; padding:30px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.08);">
+
+    <h2 style="text-align:center; color:#123b65;">
+      Home Loan Assistance
+    </h2>
+
+    <p style="text-align:center; color:#555;">
+      Looking to buy your dream property? Get assistance with your home loan inquiry.
+    </p>
+
+    <form id="homeLoanForm">
+      <label>Full Name</label>
+      <input type="text" name="name" required
+      placeholder="Enter your full name"
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+
+      <label>Mobile Number</label>
+      <input type="tel" name="mobile" required
+      pattern="[0-9]{10}"
+      placeholder="10-digit mobile number"
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+
+      <label>City</label>
+      <input type="text" name="city" required
+      placeholder="Enter your city"
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+
+      <label>Property Budget</label>
+      <select name="budget" required
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+        <option value="">Select Budget</option>
+        <option>Below ₹25 Lakh</option>
+        <option>₹25–50 Lakh</option>
+        <option>₹50 Lakh–1 Crore</option>
+        <option>Above ₹1 Crore</option>
+      </select>
+
+      <label>Employment Type</label>
+      <select name="employment" required
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+        <option value="">Select Employment Type</option>
+        <option>Salaried</option>
+        <option>Self-Employed</option>
+      </select>
+
+      <label>Loan Required</label>
+      <select name="loan" required
+      style="width:100%; padding:12px; margin:8px 0 18px;">
+        <option value="">Select Loan Amount</option>
+        <option>Below ₹25 Lakh</option>
+        <option>₹25–50 Lakh</option>
+        <option>₹50 Lakh–1 Crore</option>
+        <option>Above ₹1 Crore</option>
+      </select>
+
+      <button type="submit"
+      style="width:100%; padding:15px; background:#123b65; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer;">
+        Submit Home Loan Inquiry
+      </button>
+    </form>
+
+    <p style="text-align:center; font-size:12px; color:#777; margin-top:15px;">
+      JameenGhar.com — Your Property Partner
+    </p>
+  </div>
+</section>
+
+<script>
+document.getElementById("homeLoanForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  alert("Thank you! The form design is ready. Inquiry storage and email notifications will be connected next.");
+});
+</script>
+</body>
+
 </body>
 </html>
