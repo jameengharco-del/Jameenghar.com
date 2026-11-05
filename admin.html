@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,333 +8,116 @@
 
 <style>
 :root {
-  --green: #064d2b;
-  --green2: #0b6840;
-  --orange: #ff5a0a;
-  --ink: #17251d;
-  --muted: #64736a;
-  --cream: #f6f8f5;
-  --line: #e4eae5;
-  --white: #ffffff;
+  --green:#064d2b;
+  --green2:#0b6840;
+  --orange:#ff5a0a;
+  --ink:#17251d;
+  --muted:#64736a;
+  --cream:#f6f8f5;
+  --line:#e4eae5;
 }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--cream);color:var(--ink)}
+button,input{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:var(--cream)
 }
-
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--cream);
-  color: var(--ink);
+.login-card{
+  background:white;border:1px solid var(--line);border-radius:18px;
+  padding:35px;width:100%;max-width:420px;box-shadow:0 8px 30px #00008
 }
-
-.layout {
-  display: flex;
-  min-height: 100vh;
+.login-card img{display:block;width:190px;max-width:100%;margin:0 auto 25px}
+.login-card h1{text-align:center;color:var(--green);margin-bottom:8px}
+.login-card p{text-align:center;color:var(--muted);margin-bottom:22px}
+.login-card input{
+  display:block;width:100%;padding:13px;margin:12px 0;
+  border:1px solid var(--line);border-radius:9px
 }
-
-.sidebar {
-  width: 250px;
-  background: white;
-  border-right: 1px solid var(--line);
-  padding: 24px 16px;
-  flex-shrink: 0;
+.primary-btn{
+  width:100%;border:0;border-radius:9px;padding:13px;
+  background:var(--green);color:white;font-weight:bold
 }
+.primary-btn:hover{background:var(--green2)}
+#loginMessage{margin-top:14px;color:#b42318;font-size:13px;text-align:center}
 
-.logo {
-  width: 100%;
-  max-width: 205px;
-  height: auto;
-  display: block;
-  margin: 0 auto 35px;
-}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:250px;background:white;border-right:1px solid var(--line);padding:24px 16px;flex-shrink:0}
+.logo{width:100%;max-width:205px;height:auto;display:block;margin:0 auto 35px}
+.nav-title{font-size:11px;color:var(--muted);font-weight:bold;letter-spacing:1px;margin:22px 12px 10px}
+.nav a{display:block;text-decoration:none;color:var(--ink);padding:13px 14px;margin:5px 0;border-radius:9px;font-size:14px;font-weight:600}
+.nav a:hover,.nav a.active{background:#eaf4ed;color:var(--green)}
+.nav a.active{border-left:3px solid var(--orange)}
+.main{flex:1;min-width:0;padding:30px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:28px}
+.header h1{font-size:28px;margin-bottom:8px}
+.header p{color:var(--muted);font-size:14px}
+.admin-badge{background:#eaf4ed;color:var(--green);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:bold}
+.logout-btn{border:1px solid var(--line);background:white;padding:10px 14px;border-radius:9px;color:var(--green);font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:25px}
+.stat-card,.section{background:white;border:1px solid var(--line);border-radius:14px;padding:24px}
+.stat-card p{font-size:14px;color:var(--muted);margin-bottom:14px}
+.stat-card h2{color:var(--green);font-size:32px}
+.stat-card .accent{color:var(--orange)}
+.section{border-radius:15px;padding:25px;margin-bottom:24px}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.section h2{font-size:21px}
+.section p{color:var(--muted);font-size:14px;line-height:1.7}
+.tag{display:inline-block;background:#fff1df;color:#a85b00;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:bold}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{text-align:left;color:var(--muted);font-size:12px;padding:15px 12px;border-bottom:1px solid var(--line)}
+td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
+.empty{color:var(--muted);padding:25px 12px}
+.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.info-card{background:#f9fbf9;border:1px solid var(--line);border-radius:12px;padding:20px}
+.info-card h3{color:var(--green);font-size:16px;margin-bottom:10px}
+.footer{text-align:center;padding:15px;color:var(--muted);font-size:12px}
+.orange-line{width:45px;height:4px;background:var(--orange);border-radius:10px;margin-top:12px}
 
-.nav-title {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: bold;
-  letter-spacing: 1px;
-  margin: 22px 12px 10px;
-}
-
-.nav a {
-  display: block;
-  text-decoration: none;
-  color: var(--ink);
-  padding: 13px 14px;
-  margin: 5px 0;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.nav a:hover,
-.nav a.active {
-  background: #eaf4ed;
-  color: var(--green);
-}
-
-.nav a.active {
-  border-left: 3px solid var(--orange);
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-  padding: 30px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 28px;
-}
-
-.header h1 {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-.header p {
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.admin-badge {
-  background: #eaf4ed;
-  color: var(--green);
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 25px;
-}
-
-.stat-card {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 24px;
-}
-
-.stat-card p {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 14px;
-}
-
-.stat-card h2 {
-  color: var(--green);
-  font-size: 32px;
-}
-
-.stat-card .accent {
-  color: var(--orange);
-}
-
-.section {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 24px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.section h2 {
-  font-size: 21px;
-}
-
-.section p {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.tag {
-  display: inline-block;
-  background: #fff1df;
-  color: #a85b00;
-  border-radius: 20px;
-  padding: 7px 12px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 600px;
-}
-
-th {
-  text-align: left;
-  color: var(--muted);
-  font-size: 12px;
-  padding: 15px 12px;
-  border-bottom: 1px solid var(--line);
-}
-
-td {
-  padding: 16px 12px;
-  border-bottom: 1px solid var(--line);
-  font-size: 14px;
-}
-
-.empty {
-  color: var(--muted);
-  padding: 25px 12px;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.info-card {
-  background: #f9fbf9;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px;
-}
-
-.info-card h3 {
-  color: var(--green);
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.footer {
-  text-align: center;
-  padding: 15px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.orange-line {
-  width: 45px;
-  height: 4px;
-  background: var(--orange);
-  border-radius: 10px;
-  margin-top: 12px;
-}
-
-@media (max-width: 1100px) {
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .layout {
-    display: block;
-  }
-
-  .sidebar {
-    width: 100%;
-    padding: 15px;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .logo {
-    max-width: 170px;
-    margin-bottom: 15px;
-  }
-
-  .nav-title {
-    display: none;
-  }
-
-  .nav {
-    display: flex;
-    overflow-x: auto;
-    gap: 5px;
-  }
-
-  .nav a {
-    white-space: nowrap;
-    margin: 0;
-    padding: 11px 13px;
-    font-size: 12px;
-  }
-
-  .main {
-    padding: 18px 12px;
-  }
-
-  .header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .header h1 {
-    font-size: 24px;
-  }
-
-  .stats {
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 16px;
-  }
-
-  .stat-card h2 {
-    font-size: 27px;
-  }
-
-  .section {
-    padding: 18px 14px;
-  }
-
-  .section h2 {
-    font-size: 18px;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:768px){
+.layout{display:block}.sidebar{width:100%;padding:15px;border-right:none;border-bottom:1px solid var(--line)}
+.logo{max-width:170px;margin-bottom:15px}.nav-title{display:none}
+.nav{display:flex;overflow-x:auto;gap:5px}.nav a{white-space:nowrap;margin:0;padding:11px 13px;font-size:12px}
+.main{padding:18px 12px}.header{align-items:flex-start;flex-direction:column}
+.header h1{font-size:24px}.stats{gap:10px}.stat-card{padding:16px}
+.stat-card h2{font-size:27px}.section{padding:18px 14px}.section h2{font-size:18px}
+.info-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
 
-<div class="layout">
+<!-- OWNER LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img src="jameenghar-logo.png" alt="JameenGhar Logo">
+    <h1>Owner Login</h1>
+    <p>Sign in to manage JameenGhar.com</p>
+
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="Owner Email Address" required>
+      <input id="password" type="password" placeholder="Password" required>
+      <button class="primary-btn" type="submit" id="loginButton">Login Securely</button>
+    </form>
+
+    <div id="loginMessage"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardScreen" class="layout hidden">
 
   <aside class="sidebar">
     <a href="index.html">
-      <img src="jameenghar-logo.png"
-           class="logo"
-           alt="JameenGhar.com Logo">
+      <img src="jameenghar-logo.png" class="logo" alt="JameenGhar Logo">
     </a>
-
     <div class="nav-title">MANAGEMENT</div>
-
     <nav class="nav">
       <a href="#dashboard" class="active">▦ Dashboard</a>
       <a href="#enquiries">♙ Buyer & Seller Enquiries</a>
@@ -346,158 +130,245 @@ td {
   </aside>
 
   <main class="main">
-
     <header class="header" id="dashboard">
       <div>
         <h1>Owner Dashboard</h1>
         <p>Welcome to JameenGhar.com Management Panel</p>
         <div class="orange-line"></div>
       </div>
-
-      <div class="admin-badge">👑 Super Admin</div>
+      <div>
+        <span class="admin-badge">👑 Owner</span>
+        <button id="logoutButton" class="logout-btn">Logout</button>
+      </div>
     </header>
 
     <div class="stats">
-
-      <div class="stat-card">
-        <p>Total Enquiries</p>
-        <h2>0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Active Properties</p>
-        <h2>0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Pending Verification</p>
-        <h2 class="accent">0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Registered Agents</p>
-        <h2>0</h2>
-      </div>
-
+      <div class="stat-card"><p>Total Enquiries</p><h2 id="totalEnquiries">0</h2></div>
+      <div class="stat-card"><p>Active Properties</p><h2 id="activeProperties">0</h2></div>
+      <div class="stat-card"><p>Pending Verification</p><h2 class="accent" id="pendingVerification">0</h2></div>
+      <div class="stat-card"><p>Registered Agents</p><h2 id="registeredAgents">0</h2></div>
     </div>
 
     <section class="section" id="enquiries">
-
       <div class="section-header">
         <h2>Recent Buyer & Seller Enquiries</h2>
-        <span class="tag">Awaiting Data</span>
+        <span class="tag" id="enquiryStatus">Connecting...</span>
       </div>
-
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Enquiry Type</th>
-              <th>Location</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>Customer</th><th>Enquiry Type</th><th>Location</th><th>Status</th></tr>
           </thead>
-
-          <tbody>
-            <tr>
-              <td colspan="4" class="empty">
-                No enquiries displayed. Firebase connection is pending.
-              </td>
-            </tr>
+          <tbody id="enquiryTable">
+            <tr><td colspan="4" class="empty">Loading enquiries...</td></tr>
           </tbody>
         </table>
       </div>
-
     </section>
 
     <section class="section" id="properties">
-
-      <div class="section-header">
-        <h2>Property Listings</h2>
-        <span class="tag">Coming Soon</span>
-      </div>
-
-      <p>
-        Property management will be connected to Firebase.
-        Active listings, prices, locations and property details
-        will be displayed here.
-      </p>
-
+      <div class="section-header"><h2>Property Listings</h2><span class="tag">Firebase Data</span></div>
+      <p>Property management will be connected here.</p>
     </section>
 
     <section class="section" id="verification">
-
-      <div class="section-header">
-        <h2>Property Verification</h2>
-        <span class="tag">Pending Data</span>
-      </div>
-
-      <p>
-        Pending property approvals will appear here.
-        Owner approval controls will be added after Firebase integration.
-      </p>
-
+      <div class="section-header"><h2>Property Verification</h2><span class="tag">Pending Data</span></div>
+      <p>Pending property approvals will appear here.</p>
     </section>
 
     <section class="section" id="agents">
-
-      <div class="section-header">
-        <h2>Agent Verification</h2>
-        <span class="tag">Pending Data</span>
-      </div>
-
-      <p>
-        Agent registration details and verification status
-        will be connected to Firebase.
-      </p>
-
+      <div class="section-header"><h2>Agent Verification</h2><span class="tag">Pending Data</span></div>
+      <p>Agent registration and verification details will appear here.</p>
     </section>
 
     <section class="section" id="sales">
-
-      <div class="section-header">
-        <h2>Sales Team Management</h2>
-        <span class="tag">Coming Soon</span>
-      </div>
-
+      <div class="section-header"><h2>Sales Team Management</h2><span class="tag">Coming Soon</span></div>
       <div class="info-grid">
-
-        <div class="info-card">
-          <h3>Sales Manager</h3>
-          <p>Sales team management and lead allocation.</p>
-        </div>
-
-        <div class="info-card">
-          <h3>Sales Agents</h3>
-          <p>Agent profiles and assigned enquiries.</p>
-        </div>
-
+        <div class="info-card"><h3>Sales Manager</h3><p>Sales team management and lead allocation.</p></div>
+        <div class="info-card"><h3>Sales Agents</h3><p>Agent profiles and assigned enquiries.</p></div>
       </div>
-
     </section>
 
     <section class="section" id="settings">
-
-      <div class="section-header">
-        <h2>Website Settings</h2>
-        <span class="tag">Owner Access</span>
-      </div>
-
-      <p>
-        Website configuration, management controls and
-        dashboard settings will be added here.
-      </p>
-
+      <div class="section-header"><h2>Website Settings</h2><span class="tag">Owner Access</span></div>
+      <p>Website configuration and dashboard settings.</p>
     </section>
 
-    <footer class="footer">
-      © 2026 JameenGhar.com | Buy • Sell • Rent
-    </footer>
-
+    <footer class="footer">© 2026 JameenGhar.com | Buy • Sell • Rent</footer>
   </main>
-
 </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, collection, onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
+  authDomain: "jameenghar-ffdfd.firebaseapp.com",
+  projectId: "jameenghar-ffdfd",
+  storageBucket: "jameenghar-ffdfd.firebasestorage.app",
+  messagingSenderId: "554797022939",
+  appId: "1:554797022939:web:5abc3fd7e68ea6aeca56fe",
+  measurementId: "G-RQJWG3PBY9"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loginScreen = document.getElementById("loginScreen");
+const dashboardScreen = document.getElementById("dashboardScreen");
+const loginMessage = document.getElementById("loginMessage");
+const loginButton = document.getElementById("loginButton");
+
+let stopLeadsListener = null;
+
+function showLogin(message = "") {
+  loginScreen.classList.remove("hidden");
+  dashboardScreen.classList.add("hidden");
+  loginMessage.textContent = message;
+}
+
+function showDashboard() {
+  loginScreen.classList.add("hidden");
+  dashboardScreen.classList.remove("hidden");
+}
+
+function stopDashboardListeners() {
+  if (stopLeadsListener) {
+    stopLeadsListener();
+    stopLeadsListener = null;
+  }
+}
+
+async function verifyOwner(user) {
+  // Owner role must be present in the user's Firestore document.
+  const userDoc = await getDoc(doc(db, "users", user.uid));
+
+  if (!userDoc.exists()) return false;
+
+  const data = userDoc.data();
+
+  return data.role === "owner" &&
+         data.email === "jameenghar.co@gmail.com";
+}
+
+function connectLeads() {
+  stopDashboardListeners();
+
+  const tbody = document.getElementById("enquiryTable");
+  const status = document.getElementById("enquiryStatus");
+
+  stopLeadsListener = onSnapshot(
+    collection(db, "leads"),
+    (snapshot) => {
+      document.getElementById("totalEnquiries").textContent = snapshot.size;
+
+      if (snapshot.empty) {
+        tbody.innerHTML =
+          '<tr><td colspan="4" class="empty">No enquiries found.</td></tr>';
+        status.textContent = "No Enquiries";
+        return;
+      }
+
+      const rows = [];
+
+      snapshot.forEach((leadDoc) => {
+        const lead = leadDoc.data();
+
+        const customer = lead.customerName || lead.name || "Not provided";
+        const type = lead.enquiryType || "Not provided";
+        const location = lead.propertyLocation || lead.location || "Not provided";
+        const leadStatus = lead.status || "new";
+
+        rows.push(`
+          <tr>
+            <td>${escapeHTML(customer)}</td>
+            <td>${escapeHTML(type)}</td>
+            <td>${escapeHTML(location)}</td>
+            <td>${escapeHTML(leadStatus)}</td>
+          </tr>
+        `);
+      });
+
+      tbody.innerHTML = rows.join("");
+      status.textContent = "Live Data";
+    },
+    (error) => {
+      status.textContent = "Access Error";
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="empty">Could not load enquiries. Check Firestore Rules.</td></tr>';
+      console.error("Leads listener error:", error);
+    }
+  );
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  loginButton.disabled = true;
+  loginButton.textContent = "Signing in...";
+  loginMessage.textContent = "";
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    loginMessage.textContent = "Login failed: " + error.message;
+  } finally {
+    loginButton.disabled = false;
+    loginButton.textContent = "Login Securely";
+  }
+});
+
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  stopDashboardListeners();
+  await signOut(auth);
+});
+
+onAuthStateChanged(auth, async (user) => {
+  stopDashboardListeners();
+
+  if (!user) {
+    showLogin();
+    return;
+  }
+
+  try {
+    const isOwner = await verifyOwner(user);
+
+    if (!isOwner) {
+      await signOut(auth);
+      showLogin("This account does not have owner access.");
+      return;
+    }
+
+    showDashboard();
+    connectLeads();
+  } catch (error) {
+    console.error("Owner verification error:", error);
+    await signOut(auth);
+    showLogin("Unable to verify owner access. Check Firestore Rules.");
+  }
+});
+</script>
 
 </body>
 </html>
