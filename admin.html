@@ -267,6 +267,20 @@ const loginMessage = document.getElementById("loginMessage");
 const loginButton = document.getElementById("loginButton");
 
 let stopLeadsListener = null;
+let stopPropertiesListener = null;
+
+function showLogin(message = "") {
+  loginScreen.classList.remove("hidden");
+  dashboardScreen.classList.add("hidden");
+  loginMessage.textContent = message;
+}
+
+function showDashboard() {
+  loginScreen.classList.add("hidden");
+  dashboardScreen.classList.remove("hidden");
+}
+
+let stopLeadsListener = null;
 
 function showLogin(message = "") {
   loginScreen.classList.remove("hidden");
@@ -284,8 +298,12 @@ function stopDashboardListeners() {
     stopLeadsListener();
     stopLeadsListener = null;
   }
-}
 
+  if (stopPropertiesListener) {
+    stopPropertiesListener();
+    stopPropertiesListener = null;
+  }
+}
 async function verifyOwner(user) {
   // Owner role must be present in the user's Firestore document.
   const userDoc = await getDoc(doc(db, "users", user.uid));
