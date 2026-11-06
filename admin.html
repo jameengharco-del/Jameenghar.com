@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,7 +57,7 @@ button {
   padding:35px;
   width:100%;
   max-width:420px;
-  box-shadow:0 8px 30px #00008;
+  box-shadow:0 8px 30px #00000014;
 }
 
 .login-card img {
@@ -278,7 +279,7 @@ button {
 table {
   width:100%;
   border-collapse:collapse;
-  min-width:600px;
+  min-width:650px;
 }
 
 th {
@@ -293,6 +294,7 @@ td {
   padding:16px 12px;
   border-bottom:1px solid var(--line);
   font-size:14px;
+  line-height:1.6;
 }
 
 .empty {
@@ -350,6 +352,31 @@ td {
   padding:8px 12px;
   border-radius:5px;
   margin:3px;
+}
+
+.status-approved {
+  color:#15803d;
+  font-weight:bold;
+}
+
+.status-pending {
+  color:#b45309;
+  font-weight:bold;
+}
+
+.status-rejected {
+  color:#dc2626;
+  font-weight:bold;
+}
+
+.status-published {
+  color:#15803d;
+  font-weight:bold;
+}
+
+.status-unpublished {
+  color:#64736a;
+  font-weight:bold;
 }
 
 @media(max-width:1100px) {
@@ -437,6 +464,7 @@ td {
 <!-- OWNER LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
+
     <img src="jameenghar-logo.png" alt="JameenGhar Logo">
 
     <h1>Owner Login</h1>
@@ -474,6 +502,7 @@ td {
 <div id="dashboardScreen" class="layout hidden">
 
   <aside class="sidebar">
+
     <a href="index.html">
       <img
         src="jameenghar-logo.png"
@@ -493,11 +522,13 @@ td {
       <a href="#sales">▣ Sales Team</a>
       <a href="#settings">⚙ Website Settings</a>
     </nav>
+
   </aside>
 
   <main class="main">
 
     <header class="header" id="dashboard">
+
       <div>
         <h1>Owner Dashboard</h1>
         <p>Welcome to JameenGhar.com Management Panel</p>
@@ -508,9 +539,12 @@ td {
         <span class="admin-badge">👑 Owner</span>
         <button id="logoutButton" class="logout-btn">Logout</button>
       </div>
+
     </header>
 
+    <!-- DASHBOARD STATS -->
     <div class="stats">
+
       <div class="stat-card">
         <p>Total Enquiries</p>
         <h2 id="totalEnquiries">0</h2>
@@ -530,9 +564,12 @@ td {
         <p>Registered Agents</p>
         <h2 id="registeredAgents">0</h2>
       </div>
+
     </div>
 
+    <!-- ENQUIRIES -->
     <section class="section" id="enquiries">
+
       <div class="section-header">
         <h2>Recent Buyer & Seller Enquiries</h2>
         <span class="tag" id="enquiryStatus">Connecting...</span>
@@ -556,18 +593,48 @@ td {
           </tbody>
         </table>
       </div>
+
     </section>
 
+    <!-- PROPERTY LISTINGS -->
     <section class="section" id="properties">
+
       <div class="section-header">
         <h2>Property Listings</h2>
-        <span class="tag">Firebase Data</span>
+        <span class="tag" id="propertyListStatus">Connecting...</span>
       </div>
 
-      <p>Property management will be connected here.</p>
+      <p style="margin-bottom:18px;">
+        All properties registered in JameenGhar.com will appear here.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property ID</th>
+              <th>Property Details</th>
+              <th>Owner / Agent</th>
+              <th>Verification</th>
+              <th>Website Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="propertyListingsTable">
+            <tr>
+              <td colspan="5" class="empty">
+                Loading property listings...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </section>
 
+    <!-- PROPERTY VERIFICATION -->
     <section class="section" id="verification">
+
       <div class="section-header">
         <h2>Property Verification</h2>
         <span class="tag">Pending Approvals</span>
@@ -594,24 +661,31 @@ td {
           </tbody>
         </table>
       </div>
+
     </section>
 
+    <!-- AGENT VERIFICATION -->
     <section class="section" id="agents">
+
       <div class="section-header">
         <h2>Agent Verification</h2>
         <span class="tag">Pending Data</span>
       </div>
 
       <p>Agent registration and verification details will appear here.</p>
+
     </section>
 
+    <!-- SALES TEAM -->
     <section class="section" id="sales">
+
       <div class="section-header">
         <h2>Sales Team Management</h2>
         <span class="tag">Coming Soon</span>
       </div>
 
       <div class="info-grid">
+
         <div class="info-card">
           <h3>Sales Manager</h3>
           <p>Sales team management and lead allocation.</p>
@@ -621,16 +695,21 @@ td {
           <h3>Sales Agents</h3>
           <p>Agent profiles and assigned enquiries.</p>
         </div>
+
       </div>
+
     </section>
 
+    <!-- WEBSITE SETTINGS -->
     <section class="section" id="settings">
+
       <div class="section-header">
         <h2>Website Settings</h2>
         <span class="tag">Owner Access</span>
       </div>
 
       <p>Website configuration and dashboard settings.</p>
+
     </section>
 
     <footer class="footer">
@@ -695,23 +774,28 @@ const loginButton = document.getElementById("loginButton");
 
 let stopLeadsListener = null;
 let stopPropertiesListener = null;
+let stopPropertyListingsListener = null;
 
 
 /* LOGIN AND DASHBOARD DISPLAY */
 
 function showLogin(message = "") {
+
   loginScreen.classList.remove("hidden");
   dashboardScreen.classList.add("hidden");
   loginMessage.textContent = message;
+
 }
 
 function showDashboard() {
+
   loginScreen.classList.add("hidden");
   dashboardScreen.classList.remove("hidden");
+
 }
 
 
-/* STOP FIRESTORE LISTENERS */
+/* STOP ALL FIRESTORE LISTENERS */
 
 function stopDashboardListeners() {
 
@@ -723,6 +807,11 @@ function stopDashboardListeners() {
   if (stopPropertiesListener) {
     stopPropertiesListener();
     stopPropertiesListener = null;
+  }
+
+  if (stopPropertyListingsListener) {
+    stopPropertyListingsListener();
+    stopPropertyListingsListener = null;
   }
 
 }
@@ -763,12 +852,46 @@ function escapeHTML(value) {
 }
 
 
+/* FORMAT PROPERTY PRICE */
+
+function formatPrice(price) {
+
+  if (price === undefined || price === null || price === "") {
+    return "Not provided";
+  }
+
+  if (typeof price === "number") {
+    return "₹" + price.toLocaleString("en-IN");
+  }
+
+  return String(price);
+
+}
+
+
+/* FORMAT PROPERTY DETAILS */
+
+function getPropertyDetails(property) {
+
+  const title = property.title || "Untitled Property";
+  const city = property.city || "Not provided";
+  const area = property.areaGaj || property.area || "Not provided";
+  const facing = property.facing || "Not provided";
+  const price = formatPrice(property.price);
+
+  return `
+    <strong>${escapeHTML(title)}</strong><br>
+    ${escapeHTML(city)} | ${escapeHTML(area)} Gaj<br>
+    Facing: ${escapeHTML(facing)}<br>
+    Price: ${escapeHTML(price)}
+  `;
+
+}
+
+
 /* CONNECT BUYER AND SELLER ENQUIRIES */
 
 function connectLeads() {
-
-  // Stop only the previous leads listener.
-  // Do not stop the property listener here.
 
   if (stopLeadsListener) {
     stopLeadsListener();
@@ -846,6 +969,121 @@ function connectLeads() {
 }
 
 
+/* CONNECT ALL PROPERTY LISTINGS */
+
+function connectPropertyListings() {
+
+  if (stopPropertyListingsListener) {
+    stopPropertyListingsListener();
+    stopPropertyListingsListener = null;
+  }
+
+  const tbody = document.getElementById("propertyListingsTable");
+  const status = document.getElementById("propertyListStatus");
+
+  stopPropertyListingsListener = onSnapshot(
+    collection(db, "properties"),
+
+    (snapshot) => {
+
+      const allProperties = [];
+
+      let activeCount = 0;
+
+      snapshot.forEach((propertyDoc) => {
+
+        const property = propertyDoc.data();
+
+        allProperties.push({
+          id: propertyDoc.id,
+          ...property
+        });
+
+        if (property.isPublished === true) {
+          activeCount++;
+        }
+
+      });
+
+      document.getElementById("activeProperties").textContent =
+        activeCount;
+
+      if (allProperties.length === 0) {
+
+        tbody.innerHTML =
+          '<tr><td colspan="5" class="empty">No property listings found.</td></tr>';
+
+        status.textContent = "No Properties";
+        return;
+
+      }
+
+      tbody.innerHTML = allProperties.map((property) => {
+
+        const verification =
+          property.verificationStatus || property.status || "pending";
+
+        const websiteStatus =
+          property.isPublished === true ? "Published" : "Not Published";
+
+        let verificationClass = "status-pending";
+
+        if (verification === "approved") {
+          verificationClass = "status-approved";
+        } else if (verification === "rejected") {
+          verificationClass = "status-rejected";
+        }
+
+        const websiteClass =
+          property.isPublished === true
+            ? "status-published"
+            : "status-unpublished";
+
+        const owner =
+          property.agentId || property.ownerId || "Not provided";
+
+        return `
+          <tr>
+
+            <td>${escapeHTML(property.id)}</td>
+
+            <td>${getPropertyDetails(property)}</td>
+
+            <td>${escapeHTML(owner)}</td>
+
+            <td class="${verificationClass}">
+              ${escapeHTML(verification)}
+            </td>
+
+            <td class="${websiteClass}">
+              ${escapeHTML(websiteStatus)}
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+      status.textContent = allProperties.length + " Properties";
+
+    },
+
+    (error) => {
+
+      status.textContent = "Access Error";
+
+      tbody.innerHTML =
+        '<tr><td colspan="5" class="empty">Unable to load property listings. Check Firestore Rules.</td></tr>';
+
+      console.error("Property listings error:", error);
+
+    }
+
+  );
+
+}
+
+
 /* CONNECT PROPERTY VERIFICATION */
 
 function connectProperties() {
@@ -896,45 +1134,25 @@ function connectProperties() {
 
       tbody.innerHTML = pendingProperties.map((property) => {
 
-        const title =
-          property.title || "Untitled Property";
-
-        const city =
-          property.city || "Not provided";
-
-        const area =
-          property.areaGaj || "Not provided";
-
-        const facing =
-          property.facing || "Not provided";
-
-        const price = property.price
-          ? "₹" + Number(property.price).toLocaleString("en-IN")
-          : "Not provided";
+        const currentStatus =
+          property.verificationStatus || property.status || "pending";
 
         const owner =
           property.agentId || property.ownerId || "Not provided";
-
-        const currentStatus =
-          property.verificationStatus || property.status || "pending";
 
         return `
           <tr>
 
             <td>${escapeHTML(property.id)}</td>
 
-            <td>
-              <strong>${escapeHTML(title)}</strong><br>
-              ${escapeHTML(city)} | ${escapeHTML(area)} Gaj<br>
-              Facing: ${escapeHTML(facing)}<br>
-              Price: ${escapeHTML(price)}
-            </td>
+            <td>${getPropertyDetails(property)}</td>
 
             <td>${escapeHTML(owner)}</td>
 
             <td>${escapeHTML(currentStatus)}</td>
 
             <td>
+
               <button
                 class="approve-btn"
                 data-action="approve"
@@ -948,6 +1166,7 @@ function connectProperties() {
                 data-id="${escapeHTML(property.id)}">
                 Reject
               </button>
+
             </td>
 
           </tr>
@@ -1144,6 +1363,7 @@ onAuthStateChanged(auth, async (user) => {
     showDashboard();
 
     connectLeads();
+    connectPropertyListings();
     connectProperties();
 
   } catch (error) {
