@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JameenGhar CRM</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f3f6f3;color:#183323}
+header{background:#064d2b;color:white;padding:18px;text-align:center}
+header img{width:150px;max-width:80%;margin-bottom:10px}
+.container{max-width:650px;margin:30px auto;padding:15px}
+.card{background:white;padding:25px;border-radius:15px;box-shadow:0 4px 20px #0001;margin-bottom:20px}
+h2{margin-bottom:18px;color:#064d2b}
+input,button{width:100%;padding:13px;margin:8px 0;border-radius:8px;font-size:15px}
+input{border:1px solid #ccd6ce}
+button{border:none;background:#064d2b;color:white;font-weight:bold;cursor:pointer}
+button:hover{background:#0b6840}
+.secondary{background:#64736a}
+.reject{background:#b42318}
+.hidden{display:none!important}
+.status{padding:12px;border-radius:8px;background:#edf5ee;margin:12px 0}
+.userbox{border:1px solid #dce5dd;padding:15px;border-radius:10px;margin:12px 0}
+.small{font-size:13px;color:#64736a}
+#message{white-space:pre-wrap;margin:12px 0;color:#b42318}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>JameenGhar.com</h1>
+<p>Real Estate CRM Portal</p>
+</header>
+
+<div class="container">
+
+<div class="card" id="authCard">
+<h2>CRM Login</h2>
+
+<div id="loginBox">
+<input id="loginEmail" type="email" placeholder="Email Address">
+<input id="loginPassword" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+<button class="secondary" id="showRegister">Create CRM Account</button>
+</div>
+
+<div id="registerBox" class="hidden">
+<input id="regName" placeholder="Full Name">
+<input id="regPhone" type="tel" placeholder="Mobile Number">
+<input id="regEmail" type="email" placeholder="Email Address">
+<input id="regPassword" type="password" placeholder="Create Password (minimum 6 characters)">
+<button id="registerBtn">Register Account</button>
+<button class="secondary" id="showLogin">Back to Login</button>
+</div>
+
+<div id="message"></div>
+</div>
+
+<div class="card hidden" id="pendingCard">
+<h2>Account Status</h2>
+<div class="status" id="pendingStatus"></div>
+<button id="logoutPending" class="secondary">Logout</button>
+</div>
+
+<div class="card hidden" id="ownerCard">
+<h2>Owner Dashboard</h2>
+<p>CRM User Approval Management</p>
+<div id="pendingUsers"></div>
+<button id="refreshUsers" class="secondary">Refresh Users</button>
+<button id="ownerLogout">Logout</button>
+</div>
+
+<div class="card hidden" id="approvedCard">
+<h2>CRM Dashboard</h2>
+<div class="status">
+Welcome to JameenGhar CRM.
+<br><br>
+Your account is approved.
+<br>
+The Lead and Property modules will be added in the next step.
+</div>
+<button id="approvedLogout">Logout</button>
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+import {
+getFirestore,
+doc,
+setDoc,
+getDoc,
+getDocs,
+collection,
+updateDoc,
+serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
+authDomain: "jameenghar-ffdfd.firebaseapp.com",
+projectId: "jameenghar-ffdfd",
+storageBucket: "jameenghar-ffdfd.firebasestorage.app",
+messagingSenderId: "554797022939",
+appId: "1:554797022939:web:5abc3fd7e68ea6aeca56fe",
+measurementId: "G-RQJWG3PBY9"
+};
+
+const OWNER_UID = "P46WrdzpVWVHVC4t6vqIOYcZfxC3";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+
+function message(text){
+$("message").textContent = text;
+}
+
+function hideAll(){
+$("authCard").classList.add("hidden");
+$("pendingCard").classList.add("hidden");
+$("ownerCard").classList.add("hidden");
+$("approvedCard").classList.add("hidden");
+}
+
+$("showRegister").onclick = () => {
+$("loginBox").classList.add("hidden");
+$("registerBox").classList.remove("hidden");
+message("");
+};
+
+$("showLogin").onclick = () => {
+$("registerBox").classList.add("hidden");
+$("loginBox").classList.remove("hidden");
+message("");
+};
+
+$("registerBtn").onclick = async () => {
+const name = $("regName").value.trim();
+const phone = $("regPhone").value.trim();
+const email = $("regEmail").value.trim();
+const password = $("regPassword").value;
+
+if(!name || !phone || !email || !password){
+message("Please fill all fields.");
+return;
+}
+
+if(password.length < 6){
+message("Password must be at least 6 characters.");
+return;
+}
+
+try{
+const result = await createUserWithEmailAndPassword(
+auth,email,password
+);
+
+await setDoc(doc(db,"users",result.user.uid),{
+uid:result.user.uid,
+name:name,
+phone:phone,
+email:email,
+role:"crm",
+status:"pending",
+createdAt:serverTimestamp()
+});
+
+message("Registration successful. Please wait for Owner approval.");
+
+}catch(error){
+message(error.message);
+}
+};
+
+$("loginBtn").onclick = async () => {
+const email = $("loginEmail").value.trim();
+const password = $("loginPassword").value;
+
+if(!email || !password){
+message("Enter email and password.");
+return;
+}
+
+try{
+await signInWithEmailAndPassword(auth,email,password);
+message("");
+}catch(error){
+message(error.message);
+}
+};
+
+async function loadPendingUsers(){
+
+const list = $("pendingUsers");
+list.innerHTML = "Loading users...";
+
+try{
+const snapshot = await getDocs(collection(db,"users"));
+list.innerHTML = "";
+
+let count = 0;
+
+snapshot.forEach(userDoc => {
+const user = userDoc.data();
+
+if(user.status === "pending" && user.uid !== OWNER_UID){
+
+count++;
+
+const box = document.createElement("div");
+box.className = "userbox";
+
+const details = document.createElement("p");
+details.textContent =
+"Name: " + (user.name || "") +
+" | Email: " + (user.email || "") +
+" | Mobile: " + (user.phone || "");
+
+const approve = document.createElement("button");
+approve.textContent = "Approve User";
+
+approve.onclick = async () => {
+try{
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"approved",
+approvedAt:serverTimestamp()
+});
+await loadPendingUsers();
+}catch(error){
+alert(error.message);
+}
+};
+
+const reject = document.createElement("button");
+reject.textContent = "Reject User";
+reject.className = "reject";
+
+reject.onclick = async () => {
+try{
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"rejected",
+rejectedAt:serverTimestamp()
+});
+await loadPendingUsers();
+}catch(error){
+alert(error.message);
+}
+};
+
+box.appendChild(details);
+box.appendChild(approve);
+box.appendChild(reject);
+
+list.appendChild(box);
+}
+});
+
+if(count === 0){
+list.textContent = "No pending CRM users.";
+}
+
+}catch(error){
+list.textContent = error.message;
+}
+}
+
+$("refreshUsers").onclick = loadPendingUsers;
+
+async function logout(){
+await signOut(auth);
+}
+
+$("logoutPending").onclick = logout;
+$("ownerLogout").onclick = logout;
+$("approvedLogout").onclick = logout;
+
+onAuthStateChanged(auth,async user => {
+
+hideAll();
+
+if(!user){
+$("authCard").classList.remove("hidden");
+return;
+}
+
+if(user.uid === OWNER_UID){
+$("ownerCard").classList.remove("hidden");
+await loadPendingUsers();
+return;
+}
+
+try{
+const userRef = doc(db,"users",user.uid);
+const userSnap = await getDoc(userRef);
+
+if(!userSnap.exists()){
+$("pendingCard").classList.remove("hidden");
+$("pendingStatus").textContent =
+"Your CRM profile is not available. Please contact Owner.";
+return;
+}
+
+const data = userSnap.data();
+
+if(data.status === "approved"){
+$("approvedCard").classList.remove("hidden");
+}
+else if(data.status === "rejected"){
+$("pendingCard").classList.remove("hidden");
+$("pendingStatus").textContent =
+"Your registration has been rejected. Please contact Owner.";
+}
+else{
+$("pendingCard").classList.remove("hidden");
+$("pendingStatus").textContent =
+"Your account is pending Owner approval. Please wait.";
+}
+
+}catch(error){
+$("authCard").classList.remove("hidden");
+message(error.message);
+}
+
+});
+
+</script>
+</body>
+</html>
