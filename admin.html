@@ -172,9 +172,30 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
     </section>
 
     <section class="section" id="verification">
-      <div class="section-header"><h2>Property Verification</h2><span class="tag">Pending Data</span></div>
-      <p>Pending property approvals will appear here.</p>
-    </section>
+  <div class="section-header">
+    <h2>Property Verification</h2>
+    <span class="tag">Pending Approvals</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Property ID</th>
+          <th>Property Details</th>
+          <th>Owner</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="propertyVerificationTable">
+        <tr>
+          <td colspan="5">Loading pending properties...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
     <section class="section" id="agents">
       <div class="section-header"><h2>Agent Verification</h2><span class="tag">Pending Data</span></div>
@@ -204,7 +225,7 @@ import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, collection, onSnapshot
+  getFirestore, doc, getDoc, collection, onSnapshot, updateDoc
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
