@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,96 +15,419 @@
   --cream:#f6f8f5;
   --line:#e4eae5;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,Helvetica,sans-serif;background:var(--cream);color:var(--ink)}
-button,input{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
 
-#loginScreen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:20px;background:var(--cream)
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
-.login-card{
-  background:white;border:1px solid var(--line);border-radius:18px;
-  padding:35px;width:100%;max-width:420px;box-shadow:0 8px 30px #00008
-}
-.login-card img{display:block;width:190px;max-width:100%;margin:0 auto 25px}
-.login-card h1{text-align:center;color:var(--green);margin-bottom:8px}
-.login-card p{text-align:center;color:var(--muted);margin-bottom:22px}
-.login-card input{
-  display:block;width:100%;padding:13px;margin:12px 0;
-  border:1px solid var(--line);border-radius:9px
-}
-.primary-btn{
-  width:100%;border:0;border-radius:9px;padding:13px;
-  background:var(--green);color:white;font-weight:bold
-}
-.primary-btn:hover{background:var(--green2)}
-#loginMessage{margin-top:14px;color:#b42318;font-size:13px;text-align:center}
 
-.layout{display:flex;min-height:100vh}
-.sidebar{width:250px;background:white;border-right:1px solid var(--line);padding:24px 16px;flex-shrink:0}
-.logo{width:100%;max-width:205px;height:auto;display:block;margin:0 auto 35px}
-.nav-title{font-size:11px;color:var(--muted);font-weight:bold;letter-spacing:1px;margin:22px 12px 10px}
-.nav a{display:block;text-decoration:none;color:var(--ink);padding:13px 14px;margin:5px 0;border-radius:9px;font-size:14px;font-weight:600}
-.nav a:hover,.nav a.active{background:#eaf4ed;color:var(--green)}
-.nav a.active{border-left:3px solid var(--orange)}
-.main{flex:1;min-width:0;padding:30px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:28px}
-.header h1{font-size:28px;margin-bottom:8px}
-.header p{color:var(--muted);font-size:14px}
-.admin-badge{background:#eaf4ed;color:var(--green);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:bold}
-.logout-btn{border:1px solid var(--line);background:white;padding:10px 14px;border-radius:9px;color:var(--green);font-weight:bold}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:25px}
-.stat-card,.section{background:white;border:1px solid var(--line);border-radius:14px;padding:24px}
-.stat-card p{font-size:14px;color:var(--muted);margin-bottom:14px}
-.stat-card h2{color:var(--green);font-size:32px}
-.stat-card .accent{color:var(--orange)}
-.section{border-radius:15px;padding:25px;margin-bottom:24px}
-.section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
-.section h2{font-size:21px}
-.section p{color:var(--muted);font-size:14px;line-height:1.7}
-.tag{display:inline-block;background:#fff1df;color:#a85b00;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:bold}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:600px}
-th{text-align:left;color:var(--muted);font-size:12px;padding:15px 12px;border-bottom:1px solid var(--line)}
-td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
-.empty{color:var(--muted);padding:25px 12px}
-.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.info-card{background:#f9fbf9;border:1px solid var(--line);border-radius:12px;padding:20px}
-.info-card h3{color:var(--green);font-size:16px;margin-bottom:10px}
-.footer{text-align:center;padding:15px;color:var(--muted);font-size:12px}
-.orange-line{width:45px;height:4px;background:var(--orange);border-radius:10px;margin-top:12px}
-
-@media(max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:768px){
-.layout{display:block}.sidebar{width:100%;padding:15px;border-right:none;border-bottom:1px solid var(--line)}
-.logo{max-width:170px;margin-bottom:15px}.nav-title{display:none}
-.nav{display:flex;overflow-x:auto;gap:5px}.nav a{white-space:nowrap;margin:0;padding:11px 13px;font-size:12px}
-.main{padding:18px 12px}.header{align-items:flex-start;flex-direction:column}
-.header h1{font-size:24px}.stats{gap:10px}.stat-card{padding:16px}
-.stat-card h2{font-size:27px}.section{padding:18px 14px}.section h2{font-size:18px}
-.info-grid{grid-template-columns:1fr}
+body {
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--cream);
+  color:var(--ink);
 }
+
+button,input {
+  font:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+.hidden {
+  display:none!important;
+}
+
+#loginScreen {
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:var(--cream);
+}
+
+.login-card {
+  background:white;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:35px;
+  width:100%;
+  max-width:420px;
+  box-shadow:0 8px 30px #00008;
+}
+
+.login-card img {
+  display:block;
+  width:190px;
+  max-width:100%;
+  margin:0 auto 25px;
+}
+
+.login-card h1 {
+  text-align:center;
+  color:var(--green);
+  margin-bottom:8px;
+}
+
+.login-card p {
+  text-align:center;
+  color:var(--muted);
+  margin-bottom:22px;
+}
+
+.login-card input {
+  display:block;
+  width:100%;
+  padding:13px;
+  margin:12px 0;
+  border:1px solid var(--line);
+  border-radius:9px;
+}
+
+.primary-btn {
+  width:100%;
+  border:0;
+  border-radius:9px;
+  padding:13px;
+  background:var(--green);
+  color:white;
+  font-weight:bold;
+}
+
+.primary-btn:hover {
+  background:var(--green2);
+}
+
+.primary-btn:disabled {
+  opacity:.65;
+  cursor:not-allowed;
+}
+
+#loginMessage {
+  margin-top:14px;
+  color:#b42318;
+  font-size:13px;
+  text-align:center;
+}
+
+.layout {
+  display:flex;
+  min-height:100vh;
+}
+
+.sidebar {
+  width:250px;
+  background:white;
+  border-right:1px solid var(--line);
+  padding:24px 16px;
+  flex-shrink:0;
+}
+
+.logo {
+  width:100%;
+  max-width:205px;
+  height:auto;
+  display:block;
+  margin:0 auto 35px;
+}
+
+.nav-title {
+  font-size:11px;
+  color:var(--muted);
+  font-weight:bold;
+  letter-spacing:1px;
+  margin:22px 12px 10px;
+}
+
+.nav a {
+  display:block;
+  text-decoration:none;
+  color:var(--ink);
+  padding:13px 14px;
+  margin:5px 0;
+  border-radius:9px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.nav a:hover,
+.nav a.active {
+  background:#eaf4ed;
+  color:var(--green);
+}
+
+.nav a.active {
+  border-left:3px solid var(--orange);
+}
+
+.main {
+  flex:1;
+  min-width:0;
+  padding:30px;
+}
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  margin-bottom:28px;
+}
+
+.header h1 {
+  font-size:28px;
+  margin-bottom:8px;
+}
+
+.header p {
+  color:var(--muted);
+  font-size:14px;
+}
+
+.admin-badge {
+  display:inline-block;
+  background:#eaf4ed;
+  color:var(--green);
+  padding:12px 18px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:bold;
+  margin-right:8px;
+}
+
+.logout-btn {
+  border:1px solid var(--line);
+  background:white;
+  padding:10px 14px;
+  border-radius:9px;
+  color:var(--green);
+  font-weight:bold;
+}
+
+.stats {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+  margin-bottom:25px;
+}
+
+.stat-card,
+.section {
+  background:white;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:24px;
+}
+
+.stat-card p {
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+
+.stat-card h2 {
+  color:var(--green);
+  font-size:32px;
+}
+
+.stat-card .accent {
+  color:var(--orange);
+}
+
+.section {
+  border-radius:15px;
+  padding:25px;
+  margin-bottom:24px;
+}
+
+.section-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.section h2 {
+  font-size:21px;
+}
+
+.section p {
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.7;
+}
+
+.tag {
+  display:inline-block;
+  background:#fff1df;
+  color:#a85b00;
+  border-radius:20px;
+  padding:7px 12px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.table-wrap {
+  overflow-x:auto;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:600px;
+}
+
+th {
+  text-align:left;
+  color:var(--muted);
+  font-size:12px;
+  padding:15px 12px;
+  border-bottom:1px solid var(--line);
+}
+
+td {
+  padding:16px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:14px;
+}
+
+.empty {
+  color:var(--muted);
+  padding:25px 12px;
+}
+
+.info-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+
+.info-card {
+  background:#f9fbf9;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:20px;
+}
+
+.info-card h3 {
+  color:var(--green);
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+.footer {
+  text-align:center;
+  padding:15px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.orange-line {
+  width:45px;
+  height:4px;
+  background:var(--orange);
+  border-radius:10px;
+  margin-top:12px;
+}
+
 .approve-btn {
-  background: #16a34a;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 3px;
+  background:#16a34a;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:5px;
+  margin:3px;
 }
 
 .reject-btn {
-  background: #dc2626;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 3px;
+  background:#dc2626;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:5px;
+  margin:3px;
+}
+
+@media(max-width:1100px) {
+  .stats {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:768px) {
+  .layout {
+    display:block;
+  }
+
+  .sidebar {
+    width:100%;
+    padding:15px;
+    border-right:none;
+    border-bottom:1px solid var(--line);
+  }
+
+  .logo {
+    max-width:170px;
+    margin-bottom:15px;
+  }
+
+  .nav-title {
+    display:none;
+  }
+
+  .nav {
+    display:flex;
+    overflow-x:auto;
+    gap:5px;
+  }
+
+  .nav a {
+    white-space:nowrap;
+    margin:0;
+    padding:11px 13px;
+    font-size:12px;
+  }
+
+  .main {
+    padding:18px 12px;
+  }
+
+  .header {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .header h1 {
+    font-size:24px;
+  }
+
+  .stats {
+    gap:10px;
+  }
+
+  .stat-card {
+    padding:16px;
+  }
+
+  .stat-card h2 {
+    font-size:27px;
+  }
+
+  .section {
+    padding:18px 14px;
+  }
+
+  .section h2 {
+    font-size:18px;
+  }
+
+  .info-grid {
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -116,13 +438,32 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
 <div id="loginScreen">
   <div class="login-card">
     <img src="jameenghar-logo.png" alt="JameenGhar Logo">
+
     <h1>Owner Login</h1>
     <p>Sign in to manage JameenGhar.com</p>
 
     <form id="loginForm">
-      <input id="email" type="email" placeholder="Owner Email Address" required>
-      <input id="password" type="password" placeholder="Password" required>
-      <button class="primary-btn" type="submit" id="loginButton">Login Securely</button>
+      <input
+        id="email"
+        type="email"
+        placeholder="Owner Email Address"
+        required
+      >
+
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        required
+      >
+
+      <button
+        class="primary-btn"
+        type="submit"
+        id="loginButton"
+      >
+        Login Securely
+      </button>
     </form>
 
     <div id="loginMessage"></div>
@@ -134,9 +475,15 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
 
   <aside class="sidebar">
     <a href="index.html">
-      <img src="jameenghar-logo.png" class="logo" alt="JameenGhar Logo">
+      <img
+        src="jameenghar-logo.png"
+        class="logo"
+        alt="JameenGhar Logo"
+      >
     </a>
+
     <div class="nav-title">MANAGEMENT</div>
+
     <nav class="nav">
       <a href="#dashboard" class="active">▦ Dashboard</a>
       <a href="#enquiries">♙ Buyer & Seller Enquiries</a>
@@ -149,12 +496,14 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
   </aside>
 
   <main class="main">
+
     <header class="header" id="dashboard">
       <div>
         <h1>Owner Dashboard</h1>
         <p>Welcome to JameenGhar.com Management Panel</p>
         <div class="orange-line"></div>
       </div>
+
       <div>
         <span class="admin-badge">👑 Owner</span>
         <button id="logoutButton" class="logout-btn">Logout</button>
@@ -162,10 +511,25 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
     </header>
 
     <div class="stats">
-      <div class="stat-card"><p>Total Enquiries</p><h2 id="totalEnquiries">0</h2></div>
-      <div class="stat-card"><p>Active Properties</p><h2 id="activeProperties">0</h2></div>
-      <div class="stat-card"><p>Pending Verification</p><h2 class="accent" id="pendingVerification">0</h2></div>
-      <div class="stat-card"><p>Registered Agents</p><h2 id="registeredAgents">0</h2></div>
+      <div class="stat-card">
+        <p>Total Enquiries</p>
+        <h2 id="totalEnquiries">0</h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Active Properties</p>
+        <h2 id="activeProperties">0</h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Pending Verification</p>
+        <h2 class="accent" id="pendingVerification">0</h2>
+      </div>
+
+      <div class="stat-card">
+        <p>Registered Agents</p>
+        <h2 id="registeredAgents">0</h2>
+      </div>
     </div>
 
     <section class="section" id="enquiries">
@@ -173,79 +537,133 @@ td{padding:16px 12px;border-bottom:1px solid var(--line);font-size:14px}
         <h2>Recent Buyer & Seller Enquiries</h2>
         <span class="tag" id="enquiryStatus">Connecting...</span>
       </div>
+
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Customer</th><th>Enquiry Type</th><th>Location</th><th>Status</th></tr>
+            <tr>
+              <th>Customer</th>
+              <th>Enquiry Type</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
           </thead>
+
           <tbody id="enquiryTable">
-            <tr><td colspan="4" class="empty">Loading enquiries...</td></tr>
+            <tr>
+              <td colspan="4" class="empty">Loading enquiries...</td>
+            </tr>
           </tbody>
         </table>
       </div>
     </section>
 
     <section class="section" id="properties">
-      <div class="section-header"><h2>Property Listings</h2><span class="tag">Firebase Data</span></div>
+      <div class="section-header">
+        <h2>Property Listings</h2>
+        <span class="tag">Firebase Data</span>
+      </div>
+
       <p>Property management will be connected here.</p>
     </section>
 
     <section class="section" id="verification">
-  <div class="section-header">
-    <h2>Property Verification</h2>
-    <span class="tag">Pending Approvals</span>
-  </div>
+      <div class="section-header">
+        <h2>Property Verification</h2>
+        <span class="tag">Pending Approvals</span>
+      </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Property ID</th>
-          <th>Property Details</th>
-          <th>Owner</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="propertyVerificationTable">
-        <tr>
-          <td colspan="5">Loading pending properties...</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property ID</th>
+              <th>Property Details</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="propertyVerificationTable">
+            <tr>
+              <td colspan="5" class="empty">
+                Loading pending properties...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="section" id="agents">
-      <div class="section-header"><h2>Agent Verification</h2><span class="tag">Pending Data</span></div>
+      <div class="section-header">
+        <h2>Agent Verification</h2>
+        <span class="tag">Pending Data</span>
+      </div>
+
       <p>Agent registration and verification details will appear here.</p>
     </section>
 
     <section class="section" id="sales">
-      <div class="section-header"><h2>Sales Team Management</h2><span class="tag">Coming Soon</span></div>
+      <div class="section-header">
+        <h2>Sales Team Management</h2>
+        <span class="tag">Coming Soon</span>
+      </div>
+
       <div class="info-grid">
-        <div class="info-card"><h3>Sales Manager</h3><p>Sales team management and lead allocation.</p></div>
-        <div class="info-card"><h3>Sales Agents</h3><p>Agent profiles and assigned enquiries.</p></div>
+        <div class="info-card">
+          <h3>Sales Manager</h3>
+          <p>Sales team management and lead allocation.</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Sales Agents</h3>
+          <p>Agent profiles and assigned enquiries.</p>
+        </div>
       </div>
     </section>
 
     <section class="section" id="settings">
-      <div class="section-header"><h2>Website Settings</h2><span class="tag">Owner Access</span></div>
+      <div class="section-header">
+        <h2>Website Settings</h2>
+        <span class="tag">Owner Access</span>
+      </div>
+
       <p>Website configuration and dashboard settings.</p>
     </section>
 
-    <footer class="footer">© 2026 JameenGhar.com | Buy • Sell • Rent</footer>
+    <footer class="footer">
+      © 2026 JameenGhar.com | Buy • Sell • Rent
+    </footer>
+
   </main>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
 import {
-  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
 import {
-  getFirestore, doc, getDoc, collection, onSnapshot, updateDoc
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  onSnapshot,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+
+/* FIREBASE CONFIG */
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
@@ -257,30 +675,29 @@ const firebaseConfig = {
   measurementId: "G-RQJWG3PBY9"
 };
 
+
+/* INITIALIZE FIREBASE */
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+
+/* HTML ELEMENTS */
 
 const loginScreen = document.getElementById("loginScreen");
 const dashboardScreen = document.getElementById("dashboardScreen");
 const loginMessage = document.getElementById("loginMessage");
 const loginButton = document.getElementById("loginButton");
 
+
+/* LISTENER VARIABLES */
+
 let stopLeadsListener = null;
 let stopPropertiesListener = null;
 
-function showLogin(message = "") {
-  loginScreen.classList.remove("hidden");
-  dashboardScreen.classList.add("hidden");
-  loginMessage.textContent = message;
-}
 
-function showDashboard() {
-  loginScreen.classList.add("hidden");
-  dashboardScreen.classList.remove("hidden");
-}
-
-let stopLeadsListener = null;
+/* LOGIN AND DASHBOARD DISPLAY */
 
 function showLogin(message = "") {
   loginScreen.classList.remove("hidden");
@@ -292,8 +709,12 @@ function showDashboard() {
   loginScreen.classList.add("hidden");
   dashboardScreen.classList.remove("hidden");
 }
+
+
+/* STOP FIRESTORE LISTENERS */
 
 function stopDashboardListeners() {
+
   if (stopLeadsListener) {
     stopLeadsListener();
     stopLeadsListener = null;
@@ -303,46 +724,95 @@ function stopDashboardListeners() {
     stopPropertiesListener();
     stopPropertiesListener = null;
   }
+
 }
+
+
+/* VERIFY OWNER */
+
 async function verifyOwner(user) {
-  // Owner role must be present in the user's Firestore document.
+
   const userDoc = await getDoc(doc(db, "users", user.uid));
 
-  if (!userDoc.exists()) return false;
+  if (!userDoc.exists()) {
+    return false;
+  }
 
   const data = userDoc.data();
 
-  return data.role === "owner" &&
-         data.email === "jameenghar.co@gmail.com";
+  return (
+    data.role === "owner" &&
+    data.email === "jameenghar.co@gmail.com"
+  );
+
 }
 
+
+/* HTML SECURITY HELPER */
+
+function escapeHTML(value) {
+
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+
+}
+
+
+/* CONNECT BUYER AND SELLER ENQUIRIES */
+
 function connectLeads() {
-  stopDashboardListeners();
+
+  // Stop only the previous leads listener.
+  // Do not stop the property listener here.
+
+  if (stopLeadsListener) {
+    stopLeadsListener();
+    stopLeadsListener = null;
+  }
 
   const tbody = document.getElementById("enquiryTable");
   const status = document.getElementById("enquiryStatus");
 
   stopLeadsListener = onSnapshot(
     collection(db, "leads"),
+
     (snapshot) => {
-      document.getElementById("totalEnquiries").textContent = snapshot.size;
+
+      document.getElementById("totalEnquiries").textContent =
+        snapshot.size;
 
       if (snapshot.empty) {
+
         tbody.innerHTML =
           '<tr><td colspan="4" class="empty">No enquiries found.</td></tr>';
+
         status.textContent = "No Enquiries";
         return;
+
       }
 
       const rows = [];
 
       snapshot.forEach((leadDoc) => {
+
         const lead = leadDoc.data();
 
-        const customer = lead.customerName || lead.name || "Not provided";
-        const type = lead.enquiryType || "Not provided";
-        const location = lead.propertyLocation || lead.location || "Not provided";
-        const leadStatus = lead.status || "new";
+        const customer =
+          lead.customerName || lead.name || "Not provided";
+
+        const type =
+          lead.enquiryType || "Not provided";
+
+        const location =
+          lead.propertyLocation || lead.location || "Not provided";
+
+        const leadStatus =
+          lead.status || "new";
 
         rows.push(`
           <tr>
@@ -352,23 +822,34 @@ function connectLeads() {
             <td>${escapeHTML(leadStatus)}</td>
           </tr>
         `);
+
       });
 
       tbody.innerHTML = rows.join("");
       status.textContent = "Live Data";
+
     },
+
     (error) => {
+
       status.textContent = "Access Error";
+
       tbody.innerHTML =
         '<tr><td colspan="4" class="empty">Could not load enquiries. Check Firestore Rules.</td></tr>';
+
       console.error("Leads listener error:", error);
+
     }
+
   );
+
 }
 
-let stopPropertiesListener = null;
+
+/* CONNECT PROPERTY VERIFICATION */
 
 function connectProperties() {
+
   const tbody = document.getElementById("propertyVerificationTable");
 
   if (stopPropertiesListener) {
@@ -378,53 +859,81 @@ function connectProperties() {
 
   stopPropertiesListener = onSnapshot(
     collection(db, "properties"),
+
     (snapshot) => {
+
       const pendingProperties = [];
 
       snapshot.forEach((propertyDoc) => {
+
         const property = propertyDoc.data();
 
         if (
           property.status === "pending" ||
           property.verificationStatus === "pending"
         ) {
+
           pendingProperties.push({
             id: propertyDoc.id,
             ...property
           });
+
         }
+
       });
 
       document.getElementById("pendingVerification").textContent =
         pendingProperties.length;
 
       if (pendingProperties.length === 0) {
+
         tbody.innerHTML =
           '<tr><td colspan="5" class="empty">No pending properties found.</td></tr>';
+
         return;
+
       }
 
       tbody.innerHTML = pendingProperties.map((property) => {
-        const title = property.title || "Untitled Property";
-        const city = property.city || "Not provided";
-        const area = property.areaGaj || "Not provided";
-        const facing = property.facing || "Not provided";
+
+        const title =
+          property.title || "Untitled Property";
+
+        const city =
+          property.city || "Not provided";
+
+        const area =
+          property.areaGaj || "Not provided";
+
+        const facing =
+          property.facing || "Not provided";
+
         const price = property.price
           ? "₹" + Number(property.price).toLocaleString("en-IN")
           : "Not provided";
-        const owner = property.agentId || property.ownerId || "Not provided";
+
+        const owner =
+          property.agentId || property.ownerId || "Not provided";
+
+        const currentStatus =
+          property.verificationStatus || property.status || "pending";
 
         return `
           <tr>
+
             <td>${escapeHTML(property.id)}</td>
+
             <td>
               <strong>${escapeHTML(title)}</strong><br>
               ${escapeHTML(city)} | ${escapeHTML(area)} Gaj<br>
               Facing: ${escapeHTML(facing)}<br>
               Price: ${escapeHTML(price)}
             </td>
+
             <td>${escapeHTML(owner)}</td>
-            <td>${escapeHTML(property.verificationStatus || property.status || "pending")}</td>
+
+            <td>${escapeHTML(currentStatus)}</td>
+
             <td>
               <button
                 class="approve-btn"
@@ -440,123 +949,217 @@ function connectProperties() {
                 Reject
               </button>
             </td>
+
           </tr>
         `;
+
       }).join("");
+
     },
+
     (error) => {
+
       tbody.innerHTML =
         '<tr><td colspan="5" class="empty">Unable to load properties. Check Firestore Rules.</td></tr>';
 
       console.error("Properties listener error:", error);
+
     }
+
   );
-}
-  document.getElementById("propertyVerificationTable").addEventListener("click", async (event) => {
-  const button = event.target.closest("button[data-action]");
 
-  if (!button) return;
-
-  const propertyId = button.dataset.id;
-  const action = button.dataset.action;
-
-  if (action === "approve") {
-    const confirmApproval = confirm("Approve this property for verification?");
-    if (!confirmApproval) return;
-
-    try {
-      await updateDoc(doc(db, "properties", propertyId), {
-        status: "approved",
-        verificationStatus: "approved",
-        isPublished: false
-      });
-
-      alert("Property verification approved successfully.");
-    } catch (error) {
-      console.error("Approval error:", error);
-      alert("Unable to approve property. Check Firestore Rules.");
-    }
-  }
-
-  if (action === "reject") {
-    const confirmRejection = confirm("Reject this property?");
-    if (!confirmRejection) return;
-
-    try {
-      await updateDoc(doc(db, "properties", propertyId), {
-        status: "rejected",
-        verificationStatus: "rejected",
-        isPublished: false
-      });
-
-      alert("Property rejected successfully.");
-    } catch (error) {
-      console.error("Rejection error:", error);
-      alert("Unable to reject property. Check Firestore Rules.");
-    }
-  }
-});
-  function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[char]));
 }
 
-document.getElementById("loginForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
 
-  loginButton.disabled = true;
-  loginButton.textContent = "Signing in...";
-  loginMessage.textContent = "";
+/* PROPERTY APPROVE AND REJECT BUTTONS */
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+document
+  .getElementById("propertyVerificationTable")
+  .addEventListener("click", async (event) => {
 
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    loginMessage.textContent = "Login failed: " + error.message;
-  } finally {
-    loginButton.disabled = false;
-    loginButton.textContent = "Login Securely";
-  }
-});
+    const button = event.target.closest("button[data-action]");
 
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  stopDashboardListeners();
-  await signOut(auth);
-});
-
-onAuthStateChanged(auth, async (user) => {
-  stopDashboardListeners();
-
-  if (!user) {
-    showLogin();
-    return;
-  }
-
-  try {
-    const isOwner = await verifyOwner(user);
-
-    if (!isOwner) {
-      await signOut(auth);
-      showLogin("This account does not have owner access.");
+    if (!button) {
       return;
     }
 
+    const propertyId = button.dataset.id;
+    const action = button.dataset.action;
+
+    if (action === "approve") {
+
+      const confirmApproval = confirm(
+        "Approve this property for verification?"
+      );
+
+      if (!confirmApproval) {
+        return;
+      }
+
+      try {
+
+        await updateDoc(
+          doc(db, "properties", propertyId),
+          {
+            status: "approved",
+            verificationStatus: "approved",
+            isPublished: false
+          }
+        );
+
+        alert("Property verification approved successfully.");
+
+      } catch (error) {
+
+        console.error("Approval error:", error);
+
+        alert(
+          "Unable to approve property. Check Firestore Rules."
+        );
+
+      }
+
+    }
+
+    if (action === "reject") {
+
+      const confirmRejection = confirm(
+        "Reject this property?"
+      );
+
+      if (!confirmRejection) {
+        return;
+      }
+
+      try {
+
+        await updateDoc(
+          doc(db, "properties", propertyId),
+          {
+            status: "rejected",
+            verificationStatus: "rejected",
+            isPublished: false
+          }
+        );
+
+        alert("Property rejected successfully.");
+
+      } catch (error) {
+
+        console.error("Rejection error:", error);
+
+        alert(
+          "Unable to reject property. Check Firestore Rules."
+        );
+
+      }
+
+    }
+
+  });
+
+
+/* OWNER LOGIN FORM */
+
+document
+  .getElementById("loginForm")
+  .addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Signing in...";
+    loginMessage.textContent = "";
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const password =
+      document.getElementById("password").value;
+
+    try {
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    } catch (error) {
+
+      loginMessage.textContent =
+        "Login failed: " + error.message;
+
+    } finally {
+
+      loginButton.disabled = false;
+      loginButton.textContent = "Login Securely";
+
+    }
+
+  });
+
+
+/* OWNER LOGOUT */
+
+document
+  .getElementById("logoutButton")
+  .addEventListener("click", async () => {
+
+    stopDashboardListeners();
+    await signOut(auth);
+
+  });
+
+
+/* CHECK LOGIN SESSION AND OWNER ACCESS */
+
+onAuthStateChanged(auth, async (user) => {
+
+  stopDashboardListeners();
+
+  if (!user) {
+
+    showLogin();
+    return;
+
+  }
+
+  try {
+
+    const isOwner = await verifyOwner(user);
+
+    if (!isOwner) {
+
+      await signOut(auth);
+
+      showLogin(
+        "This account does not have owner access."
+      );
+
+      return;
+
+    }
+
     showDashboard();
+
     connectLeads();
     connectProperties();
+
   } catch (error) {
+
     console.error("Owner verification error:", error);
+
     await signOut(auth);
-    showLogin("Unable to verify owner access. Check Firestore Rules.");
+
+    showLogin(
+      "Unable to verify owner access. Check Firestore Rules."
+    );
+
   }
+
 });
+
 </script>
 
 </body>
