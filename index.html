@@ -1,4 +1,4 @@
-F<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -100,10 +100,15 @@ F<!doctype html>
   <div class="wrap">
     <div class="footer-top">
       <div class="footer-brand"><img src="assets/jameenghar-logo.png" alt="JameenGhar.com"><p>Your property partner for buying, selling and renting. Helping you take the next step with confidence.</p></div>
-      <div class="footer-links"><a href="#properties">Buy property</a><a href="#properties" data-mode-link="Rent">Rent property</a><a href="#" id="footerPost">Post a property</a><<a href="mailto:support@jameenghar.com">Contact us</a>Contact us</aContact us</a></div>
-    </div>
-    <div class="copyright">© <span id="year"></span> JameenGhar.com. All rights reserved. <span style="float:right">Listings shown are sample/demo listings.</span></div>
-  </div>
+      <div class="footer-links">
+  <a href="#properties">Buy property</a>
+  <a href="#properties" data-mode-link="Rent">Rent property</a>
+  <a href="#" id="footerPost">Post a property</a>
+  <a href="mailto:support@jameenghar.com">Contact us</a>
+</div>
+</div>
+<div class="copyright">© <span id="year"></span> JameenGhar.com. All rights reserved. <span style="float:right">Listings shown are sample/demo listings.</span></div>
+</div>
 </footer>
 <div class="modal" id="postModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
@@ -124,39 +129,291 @@ F<!doctype html>
     </form>
   </div>
 </div>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEO2y8",
+  authDomain: "jameenghar-ffdfd.firebaseapp.com",
+  projectId: "jameenghar-ffdfd",
+  storageBucket: "jameenghar-ffdfd.firebasestorage.app",
+  messagingSenderId: "554797022939",
+  appId: "1:554797022939:web:5abc3fd7e68ea6aeca56fe",
+  measurementId: "G-RQJWG3PBY9"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const starterListings = [
- {id:1, purpose:"Buy",kind:"Apartment / Flat",price:4850000,title:"Modern 2 BHK apartment",location:"Vaishali Nagar, Jaipur",beds:"2 BHK",area:"1,050 sq ft",tag:"Featured"},
- {id:2, purpose:"Buy",kind:"Independent House",price:8900000,title:"Family home with open terrace",location:"Mansarovar, Jaipur",beds:"3 BHK",area:"1,650 sq ft",tag:"Owner listing"},
- {id:3, purpose:"Buy",kind:"Plot / Land",price:3200000,title:"Residential plot in a growing area",location:"Ajmer Road, Jaipur",beds:"Plot",area:"150 sq yd",tag:"New"},
- {id:4, purpose:"Rent",kind:"Apartment / Flat",price:18000,title:"Bright, semi-furnished apartment",location:"Jagatpura, Jaipur",beds:"2 BHK",area:"980 sq ft",tag:"Available"},
- {id:5, purpose:"Buy",kind:"Villa",price:14500000,title:"Independent villa with parking",location:"Sirsi Road, Jaipur",beds:"4 BHK",area:"2,200 sq ft",tag:"Premium"},
- {id:6, purpose:"Rent",kind:"Commercial",price:35000,title:"Road-facing commercial space",location:"Tonk Road, Jaipur",beds:"Shop / Office",area:"600 sq ft",tag:"Business"}
+ {id:1,purpose:"Buy",kind:"Apartment / Flat",price:4850000,title:"Modern 2 BHK apartment",location:"Vaishali Nagar, Jaipur",beds:"2 BHK",area:"1,050 sq ft",tag:"Featured"},
+ {id:2,purpose:"Buy",kind:"Independent House",price:8900000,title:"Family home with open terrace",location:"Mansarovar, Jaipur",beds:"3 BHK",area:"1,650 sq ft",tag:"Owner listing"},
+ {id:3,purpose:"Buy",kind:"Plot / Land",price:3200000,title:"Residential plot in a growing area",location:"Ajmer Road, Jaipur",beds:"Plot",area:"150 sq yd",tag:"New"},
+ {id:4,purpose:"Rent",kind:"Apartment / Flat",price:18000,title:"Bright, semi-furnished apartment",location:"Jagatpura, Jaipur",beds:"2 BHK",area:"980 sq ft",tag:"Available"},
+ {id:5,purpose:"Buy",kind:"Villa",price:14500000,title:"Independent villa with parking",location:"Sirsi Road, Jaipur",beds:"4 BHK",area:"2,200 sq ft",tag:"Premium"},
+ {id:6,purpose:"Rent",kind:"Commercial",price:35000,title:"Road-facing commercial space",location:"Tonk Road, Jaipur",beds:"Shop / Office",area:"600 sq ft",tag:"Business"}
 ];
-let mode = "Buy", activeFilter = "All";
+
+let firestoreListings = [];
+let mode = "Buy";
+let activeFilter = "All";
+
 const $ = s => document.querySelector(s);
-const formatPrice = (n,purpose) => purpose==="Rent" ? "₹"+Number(n).toLocaleString("en-IN")+"/month" : Number(n)>=10000000 ? "₹"+(Number(n)/10000000).toFixed(2).replace(/\.00$/,"")+" Cr" : "₹"+(Number(n)/100000).toFixed(1).replace(/\.0$/,"")+" lakh";
-function getListings(){try{return [...starterListings,...JSON.parse(localStorage.getItem("jgListings")||"[]")]}catch(e){return starterListings}}
-function renderListings(){
- const city=$("#city").value.trim().toLowerCase(), kind=$("#kind").value, budget=$("#budget").value;
- const cards=getListings().filter(p=>(mode==="Sell" ? true : p.purpose===mode) && (activeFilter==="All"||p.kind===activeFilter) && (!city||(p.location+" "+p.title).toLowerCase().includes(city)) && (kind==="Any property"||p.kind===kind) && (!budget||(p.price>=Number(budget.split("-")[0])&&p.price<=Number(budget.split("-")[1]))));
- $("#propertyCards").innerHTML=cards.length?cards.map(p=>`<article class="property"><div class="prop-visual"><span class="tag">${p.tag||"New listing"}</span><div class="building"></div></div><div class="prop-body"><div class="price">${formatPrice(p.price,p.purpose)}</div><div class="prop-title">${escapeHTML(p.title)}</div><div class="location">📍 ${escapeHTML(p.location)}</div><div class="features"><span>🛏 ${escapeHTML(p.beds||"—")}</span><span>▧ ${escapeHTML(p.area||"Details on request")}</span><span>${escapeHTML(p.kind)}</span></div><button class="btn btn-outline" style="width:100%;margin-top:14px" onclick="contactListing('${escapeHTML(p.title)}','${escapeHTML(p.location)}')">Enquire now</button></div></article>`).join(""):`<div class="empty">No matching listings yet. Try a different filter or post your property.</div>`;
+
+const formatPrice = (n,purpose) =>
+  purpose==="Rent"
+  ? "₹"+Number(n).toLocaleString("en-IN")+"/month"
+  : Number(n)>=10000000
+  ? "₹"+(Number(n)/10000000).toFixed(2).replace(/\.00$/,"")+" Cr"
+  : "₹"+(Number(n)/100000).toFixed(1).replace(/\.0$/,"")+" lakh";
+
+function getListings(){
+  try {
+    return [
+      ...firestoreListings,
+      ...starterListings,
+      ...JSON.parse(localStorage.getItem("jgListings")||"[]")
+    ];
+  } catch(e) {
+    return [...firestoreListings,...starterListings];
+  }
 }
-function escapeHTML(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function contactListing(title,location){const subject=encodeURIComponent("Property enquiry: "+title);const body=encodeURIComponent("Hello JameenGhar.com,\nI am interested in: "+title+"\nLocation: "+location+"\nPlease share more details.");window.location.href="mailto:hello@jameenghar.com?subject="+subject+"&body="+body}
-function setMode(next){mode=next;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));if(mode==="Sell"){openModal();return}renderListings()}
-function openModal(){ $("#postModal").classList.add("show");document.body.style.overflow="hidden"; }
-function closeModal(){ $("#postModal").classList.remove("show");document.body.style.overflow=""; }
-document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
-document.querySelectorAll("[data-mode-link]").forEach(a=>a.addEventListener("click",()=>{mode=a.dataset.modeLink;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));renderListings()}));
-document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{activeFilter=b.dataset.filter;document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));renderListings()}));
-$("#searchForm").addEventListener("submit",e=>{e.preventDefault();activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"})});
-["postTop","postSection","postCta","footerPost"].forEach(id=>$("#"+id).addEventListener("click",e=>{e.preventDefault();openModal()}));
-$("#closeModal").addEventListener("click",closeModal);$("#postModal").addEventListener("click",e=>{if(e.target.id==="postModal")closeModal()});
-$("#propertyForm").addEventListener("submit",e=>{e.preventDefault();const listings=JSON.parse(localStorage.getItem("jgListings")||"[]");listings.unshift({id:Date.now(),purpose:$("#purpose").value,kind:$("#newKind").value,price:Number($("#newPrice").value),title:$("#newDetails").value.trim()||$("#newKind").value+" in "+$("#newLocation").value,location:$("#newLocation").value,beds:$("#newBeds").value,area:"Contact owner",tag:"Your listing"});localStorage.setItem("jgListings",JSON.stringify(listings));closeModal();e.target.reset();mode="Buy";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"});alert("Listing saved in this browser. For a public website, connect a backend/form service to collect enquiries from visitors.");});
-$("#year").textContent=new Date().getFullYear();renderListings();
-</script>
-  
+
+function mapFirestoreProperty(docSnap){
+  const data = docSnap.data();
+
+  const price = Number(
+    String(data.price || 0).replace(/[₹,\s]/g,"")
+  );
+
+  const area = data.areaGaj || data.area || "Details on request";
+
+  return {
+    id: docSnap.id,
+    purpose: data.purpose || "Buy",
+    kind: data.propertyType || data.kind || "Plot / Land",
+    price: price,
+    title: data.title || "Property in Jaipur",
+    location: [data.locality,data.city].filter(Boolean).join(", ") || "Jaipur",
+    beds: data.beds || "Details on request",
+    area: String(area).includes("Gaj") ? String(area) : String(area)+" Gaj",
+    tag: "Published",
+    facing: data.facing || ""
+  };
+}
+
+function renderListings(){
+  const city = $("#city").value.trim().toLowerCase();
+  const kind = $("#kind").value;
+  const budget = $("#budget").value;
+
+  const cards = getListings().filter(p =>
+    (mode==="Sell" ? true : p.purpose===mode) &&
+    (activeFilter==="All" || p.kind===activeFilter) &&
+    (!city || (p.location+" "+p.title).toLowerCase().includes(city)) &&
+    (kind==="Any property" || p.kind===kind) &&
+    (!budget || (
+      p.price>=Number(budget.split("-")[0]) &&
+      p.price<=Number(budget.split("-")[1])
+    ))
+  );
+
+  $("#propertyCards").innerHTML = cards.length
+    ? cards.map(p => `
+      <article class="property">
+        <div class="prop-visual">
+          <span class="tag">${escapeHTML(p.tag||"New listing")}</span>
+          <div class="building"></div>
+        </div>
+        <div class="prop-body">
+          <div class="price">${formatPrice(p.price,p.purpose)}</div>
+          <div class="prop-title">${escapeHTML(p.title)}</div>
+          <div class="location">📍 ${escapeHTML(p.location)}</div>
+          <div class="features">
+            <span>🛏 ${escapeHTML(p.beds||"—")}</span>
+            <span>▧ ${escapeHTML(p.area||"Details on request")}</span>
+            <span>${escapeHTML(p.kind)}</span>
+            ${p.facing ? `<span>Facing ${escapeHTML(p.facing)}</span>` : ""}
+          </div>
+          <button class="btn btn-outline enquire-btn"
+            data-title="${escapeHTML(p.title)}"
+            data-location="${escapeHTML(p.location)}"
+            style="width:100%;margin-top:14px">
+            Enquire now
+          </button>
+        </div>
+      </article>
+    `).join("")
+    : `<div class="empty">No matching listings yet. Try a different filter or post your property.</div>`;
+}
+
+function escapeHTML(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
+}
+
+function contactListing(title,location){
+  const subject = encodeURIComponent("Property enquiry: "+title);
+  const body = encodeURIComponent(
+    "Hello JameenGhar.com,\nI am interested in: "+title+
+    "\nLocation: "+location+"\nPlease share more details."
+  );
+
+  window.location.href =
+    "mailto:hello@jameenghar.com?subject="+subject+"&body="+body;
+}
+
+document.addEventListener("click",e=>{
+  const button = e.target.closest(".enquire-btn");
+  if(button){
+    contactListing(button.dataset.title,button.dataset.location);
+  }
+});
+
+function setMode(next){
+  mode = next;
+
+  document.querySelectorAll("[data-mode]").forEach(b =>
+    b.classList.toggle("active",b.dataset.mode===mode)
+  );
+
+  if(mode==="Sell"){
+    openModal();
+    return;
+  }
+
+  renderListings();
+}
+
+function openModal(){
+  $("#postModal").classList.add("show");
+  document.body.style.overflow="hidden";
+}
+
+function closeModal(){
+  $("#postModal").classList.remove("show");
+  document.body.style.overflow="";
+}
+
+document.querySelectorAll("[data-mode]").forEach(b =>
+  b.addEventListener("click",()=>setMode(b.dataset.mode))
+);
+
+document.querySelectorAll("[data-mode-link]").forEach(a =>
+  a.addEventListener("click",()=>{
+    mode=a.dataset.modeLink;
+    document.querySelectorAll("[data-mode]").forEach(b =>
+      b.classList.toggle("active",b.dataset.mode===mode)
+    );
+    renderListings();
+  })
+);
+
+document.querySelectorAll("[data-filter]").forEach(b =>
+  b.addEventListener("click",()=>{
+    activeFilter=b.dataset.filter;
+    document.querySelectorAll("[data-filter]").forEach(x =>
+      x.classList.toggle("active",x===b)
+    );
+    renderListings();
+  })
+);
+
+$("#searchForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  activeFilter="All";
+
+  document.querySelectorAll("[data-filter]").forEach(x =>
+    x.classList.toggle("active",x.dataset.filter==="All")
+  );
+
+  renderListings();
+  $("#properties").scrollIntoView({behavior:"smooth"});
+});
+
+["postTop","postSection","postCta","footerPost"].forEach(id =>
+  $("#"+id).addEventListener("click",e=>{
+    e.preventDefault();
+    openModal();
+  })
+);
+
+$("#closeModal").addEventListener("click",closeModal);
+
+$("#postModal").addEventListener("click",e=>{
+  if(e.target.id==="postModal") closeModal();
+});
+
+$("#propertyForm").addEventListener("submit",e=>{
+  e.preventDefault();
+
+  const listings=JSON.parse(localStorage.getItem("jgListings")||"[]");
+
+  listings.unshift({
+    id:Date.now(),
+    purpose:$("#purpose").value,
+    kind:$("#newKind").value,
+    price:Number($("#newPrice").value),
+    title:$("#newDetails").value.trim() ||
+      $("#newKind").value+" in "+$("#newLocation").value,
+    location:$("#newLocation").value,
+    beds:$("#newBeds").value,
+    area:"Contact owner",
+    tag:"Your listing"
+  });
+
+  localStorage.setItem("jgListings",JSON.stringify(listings));
+
+  closeModal();
+  e.target.reset();
+  mode="Buy";
+
+  document.querySelectorAll("[data-mode]").forEach(b =>
+    b.classList.toggle("active",b.dataset.mode===mode)
+  );
+
+  activeFilter="All";
+
+  document.querySelectorAll("[data-filter]").forEach(x =>
+    x.classList.toggle("active",x.dataset.filter==="All")
+  );
+
+  renderListings();
+  $("#properties").scrollIntoView({behavior:"smooth"});
+
+  alert("Listing saved in this browser.");
+});
+
+$("#year").textContent=new Date().getFullYear();
+
+const publishedQuery = query(
+  collection(db,"properties"),
+  where("isPublished","==",true)
+);
+
+onSnapshot(publishedQuery,snapshot=>{
+  firestoreListings = snapshot.docs.map(mapFirestoreProperty);
+  renderListings();
+},error=>{
+  console.error("Firestore property loading error:",error);
+  $("#propertyCards").innerHTML =
+    `<div class="empty">Unable to load published properties. Please try again later.</div>`;
+});
+
+renderListings();
+</script>  
 
 <!-- JameenGhar Home Loan Assistance -->
 <section id="home-loan" style="padding:60px 20px;background:linear-gradient(135deg,#eef4ff,#f8fbff);font-family:Arial,sans-serif;">
