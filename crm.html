@@ -88,7 +88,7 @@ header img {
 }
 
 .container {
-  max-width:850px;
+  max-width:1000px;
   margin:20px auto 45px;
   padding:15px;
 }
@@ -105,6 +105,11 @@ header img {
 h2 {
   margin-bottom:18px;
   color:var(--green);
+}
+
+h3 {
+  color:var(--green);
+  margin:20px 0 12px;
 }
 
 .card-description {
@@ -176,7 +181,8 @@ button:hover {
   color:var(--ink);
 }
 
-.userbox {
+.userbox,
+.leadbox {
   border:1px solid var(--line);
   padding:17px;
   border-radius:12px;
@@ -184,10 +190,66 @@ button:hover {
   background:#fff;
 }
 
-.userbox p {
+.userbox p,
+.leadbox p {
   line-height:1.8;
   overflow-wrap:anywhere;
-  margin-bottom:8px;
+  margin-bottom:7px;
+}
+
+.leadbox h3 {
+  margin:0 0 10px;
+  font-size:17px;
+}
+
+.lead-meta {
+  color:var(--muted);
+  font-size:12px;
+  margin-top:10px;
+}
+
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin:20px 0;
+}
+
+.stat-box {
+  background:#f6f8f5;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:18px 12px;
+  text-align:center;
+}
+
+.stat-box strong {
+  display:block;
+  color:var(--green);
+  font-size:27px;
+  margin-bottom:6px;
+}
+
+.stat-box span {
+  color:var(--muted);
+  font-size:13px;
+}
+
+.lead-toolbar {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.lead-toolbar input {
+  flex:1;
+  min-width:180px;
+}
+
+.lead-toolbar button {
+  width:auto;
+  min-width:130px;
 }
 
 .small {
@@ -241,6 +303,18 @@ footer {
 
   .hero h2 {
     font-size:22px;
+  }
+
+  .stats-grid {
+    grid-template-columns:1fr;
+  }
+
+  .lead-toolbar {
+    display:block;
+  }
+
+  .lead-toolbar button {
+    width:100%;
   }
 }
 </style>
@@ -304,12 +378,51 @@ footer {
   <div class="card hidden" id="ownerCard">
     <h2>Owner Dashboard</h2>
     <p class="card-description">
-      Manage CRM user registrations and account approvals.
+      Manage CRM user registrations and property enquiries.
     </p>
 
+    <h3>CRM User Approvals</h3>
     <div id="pendingUsers"></div>
 
     <button id="refreshUsers" class="secondary">Refresh Users</button>
+
+    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
+    <h2>Lead Management</h2>
+    <p class="card-description">
+      View and monitor buyer and seller enquiries received by JameenGhar.
+    </p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <strong id="totalLeads">0</strong>
+        <span>Total Leads</span>
+      </div>
+
+      <div class="stat-box">
+        <strong id="buyerLeads">0</strong>
+        <span>Buyer Enquiries</span>
+      </div>
+
+      <div class="stat-box">
+        <strong id="sellerLeads">0</strong>
+        <span>Seller Enquiries</span>
+      </div>
+    </div>
+
+    <div class="lead-toolbar">
+      <input
+        id="leadSearch"
+        type="search"
+        placeholder="Search name, mobile, email or location..."
+      >
+      <button id="refreshLeads" class="secondary">Refresh Leads</button>
+    </div>
+
+    <p class="small" id="leadCountText">Loading leads...</p>
+
+    <div id="leadsList"></div>
+
     <button id="ownerLogout">Logout</button>
   </div>
 
@@ -321,7 +434,7 @@ footer {
       <br><br>
       Your account has been approved successfully.
       <br><br>
-      Lead Management and Property Management modules will be added in the next development stage.
+      Your CRM dashboard modules will be activated as development progresses.
     </div>
 
     <button id="approvedLogout" class="secondary">Logout</button>
@@ -376,6 +489,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const $ = id => document.getElementById(id);
+
+let allLeads = [];
 
 function message(text) {
   $("message").textContent = text;
@@ -534,7 +649,136 @@ async function loadPendingUsers() {
   }
 }
 
+function formatDate(timestamp) {
+  if (!timestamp || typeof timestamp.toDate !== "function") {
+    return "Date not available";
+  }
+
+  return timestamp.toDate().toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
+function renderLeads() {
+  const list = $("leadsList");
+  const searchText = $("leadSearch").value.trim().toLowerCase();
+
+  const filtered = allLeads.filter(lead => {
+    const searchable = [
+      lead.customerName,
+      lead.phone,
+      lead.email,
+      lead.propertyLocation,
+      lead.message,
+      lead.enquiryType
+    ].join(" ").toLowerCase();
+
+    return searchable.includes(searchText);
+  });
+
+  $("leadCountText").textContent =
+    "Showing " + filtered.length + " of " + allLeads.length + " leads";
+
+  list.innerHTML = "";
+
+  if (filtered.length === 0) {
+    list.textContent = allLeads.length === 0
+      ? "No leads found in Firestore."
+      : "No matching leads found.";
+    return;
+  }
+
+  filtered.forEach(lead => {
+    const box = document.createElement("div");
+    box.className = "leadbox";
+
+    const title = document.createElement("h3");
+    title.textContent = lead.customerName || "Name not provided";
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Mobile: " + (lead.phone || "Not provided") +
+      "\nEmail: " + (lead.email || "Not provided") +
+      "\nEnquiry Type: " + (lead.enquiryType || "Not specified") +
+      "\nLocation: " + (lead.propertyLocation || "Not provided") +
+      "\nStatus: " + (lead.status || "new") +
+      "\nAssigned To: " + (lead.assignedTo || "Not assigned");
+
+    const requirement = document.createElement("p");
+    requirement.textContent =
+      "Requirement: " + (lead.message || "No message provided");
+
+    const date = document.createElement("p");
+    date.className = "lead-meta";
+    date.textContent =
+      "Received: " + formatDate(lead.createdAt);
+
+    box.appendChild(title);
+    box.appendChild(details);
+    box.appendChild(requirement);
+    box.appendChild(date);
+
+    list.appendChild(box);
+  });
+}
+
+async function loadLeads() {
+  const list = $("leadsList");
+  list.textContent = "Loading leads...";
+  $("leadCountText").textContent = "Please wait...";
+
+  try {
+    const snapshot = await getDocs(collection(db, "leads"));
+
+    allLeads = [];
+
+    snapshot.forEach(leadDoc => {
+      allLeads.push({
+        id: leadDoc.id,
+        ...leadDoc.data()
+      });
+    });
+
+    allLeads.sort((a, b) => {
+      const aTime = a.createdAt && a.createdAt.toMillis
+        ? a.createdAt.toMillis()
+        : 0;
+
+      const bTime = b.createdAt && b.createdAt.toMillis
+        ? b.createdAt.toMillis()
+        : 0;
+
+      return bTime - aTime;
+    });
+
+    const buyers = allLeads.filter(
+      lead => String(lead.enquiryType || "").toLowerCase() === "buyer"
+    ).length;
+
+    const sellers = allLeads.filter(
+      lead => String(lead.enquiryType || "").toLowerCase() === "seller"
+    ).length;
+
+    $("totalLeads").textContent = allLeads.length;
+    $("buyerLeads").textContent = buyers;
+    $("sellerLeads").textContent = sellers;
+
+    renderLeads();
+
+  } catch (error) {
+    allLeads = [];
+    $("totalLeads").textContent = "—";
+    $("buyerLeads").textContent = "—";
+    $("sellerLeads").textContent = "—";
+    $("leadCountText").textContent = "Could not load leads.";
+    list.textContent = error.message;
+  }
+}
+
 $("refreshUsers").onclick = loadPendingUsers;
+$("refreshLeads").onclick = loadLeads;
+$("leadSearch").addEventListener("input", renderLeads);
 
 async function logout() {
   try {
@@ -559,6 +803,7 @@ onAuthStateChanged(auth, async user => {
   if (user.uid === OWNER_UID) {
     $("ownerCard").classList.remove("hidden");
     await loadPendingUsers();
+    await loadLeads();
     return;
   }
 
