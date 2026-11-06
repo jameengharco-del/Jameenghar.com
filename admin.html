@@ -1020,53 +1020,84 @@ function connectPropertyListings() {
 
       }
 
-      tbody.innerHTML = allProperties.map((property) => {
+      
+tbody.innerHTML = allProperties.map((property) => {
 
-        const verification =
-          property.verificationStatus || property.status || "pending";
+  const verification =
+    property.verificationStatus || property.status || "pending";
 
-        const websiteStatus =
-          property.isPublished === true ? "Published" : "Not Published";
+  const isApproved =
+    verification === "approved";
 
-        let verificationClass = "status-pending";
+  const isPublished =
+    property.isPublished === true;
 
-        if (verification === "approved") {
-          verificationClass = "status-approved";
-        } else if (verification === "rejected") {
-          verificationClass = "status-rejected";
-        }
+  const websiteStatus =
+    isPublished ? "Published" : "Not Published";
 
-        const websiteClass =
-          property.isPublished === true
-            ? "status-published"
-            : "status-unpublished";
+  let verificationClass = "status-pending";
 
-        const owner =
-          property.agentId || property.ownerId || "Not provided";
+  if (verification === "approved") {
+    verificationClass = "status-approved";
+  } else if (verification === "rejected") {
+    verificationClass = "status-rejected";
+  }
 
-        return `
-          <tr>
+  const websiteClass =
+    isPublished ? "status-published" : "status-unpublished";
 
-            <td>${escapeHTML(property.id)}</td>
+  const owner =
+    property.agentId || property.ownerId || "Not provided";
 
-            <td>${getPropertyDetails(property)}</td>
+  let publishButton = "";
 
-            <td>${escapeHTML(owner)}</td>
+  if (isApproved) {
 
-            <td class="${verificationClass}">
-              ${escapeHTML(verification)}
-            </td>
+    publishButton = `
+      <button
+        class="approve-btn"
+        data-publish-action="${isPublished ? "unpublish" : "publish"}"
+        data-id="${escapeHTML(property.id)}"
+        style="margin-top:8px;">
+        ${isPublished ? "Unpublish" : "Publish"}
+      </button>
+    `;
 
-            <td class="${websiteClass}">
-              ${escapeHTML(websiteStatus)}
-            </td>
+  } else {
 
-          </tr>
-        `;
+    publishButton = `
+      <span style="color:#64736a;font-size:12px;">
+        Approve First
+      </span>
+    `;
 
-      }).join("");
+  }
 
-      status.textContent = allProperties.length + " Properties";
+  return `
+    <tr>
+
+      <td>${escapeHTML(property.id)}</td>
+
+      <td>${getPropertyDetails(property)}</td>
+
+      <td>${escapeHTML(owner)}</td>
+
+      <td class="${verificationClass}">
+        ${escapeHTML(verification)}
+      </td>
+
+      <td class="${websiteClass}">
+        ${escapeHTML(websiteStatus)}
+        <br>
+        ${publishButton}
+      </td>
+
+    </tr>
+  `;
+
+}).join("");
+
+status.textContent = allProperties.length + " Properties";
 
     },
 
@@ -1085,7 +1116,6 @@ function connectPropertyListings() {
 
 }
 
-
 /* CONNECT PROPERTY VERIFICATION */
 
 function connectProperties() {
@@ -1096,6 +1126,7 @@ function connectProperties() {
     stopPropertiesListener();
     stopPropertiesListener = null;
   }
+
 
   stopPropertiesListener = onSnapshot(
     collection(db, "properties"),
@@ -1191,7 +1222,61 @@ function connectProperties() {
 
 }
 
+/* PROPERTY PUBLISH AND UNPUBLISH BUTTONS */
 
+document.getElementById("propertyListingsTable")
+.addEventListener("click", async (event) => {
+
+  const button = event.target.closest("button[data-publish-action]");
+
+  if (!button) return;
+
+  const propertyId = button.dataset.id;
+  const action = button.dataset.publishAction;
+  const publish = action === "publish";
+
+  if (!confirm(publish
+    ? "Publish this approved property?"
+    : "Unpublish this property?")) {
+    return;
+  }
+
+  try {
+
+    const propertyRef = doc(db, "properties", propertyId);
+    const propertySnapshot = await getDoc(propertyRef);
+
+    if (!propertySnapshot.exists()) {
+      alert("Property not found.");
+      return;
+    }
+
+    const property = propertySnapshot.data();
+
+    if (
+      property.status !== "approved" &&
+      property.verificationStatus !== "approved"
+    ) {
+      alert("Only approved properties can be published.");
+      return;
+    }
+
+    await updateDoc(propertyRef, {
+      isPublished: publish
+    });
+
+    alert(publish
+      ? "Property Published Successfully!"
+      : "Property Unpublished Successfully!");
+
+  } catch (error) {
+
+    console.error(error);
+    alert("Unable to update property. Please check Firestore Rules.");
+
+  }
+
+});
 /* PROPERTY APPROVE AND REJECT BUTTONS */
 
 document
