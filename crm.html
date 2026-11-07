@@ -491,6 +491,7 @@ const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 
 let allLeads = [];
+let approvedAgents = [];
 
 function message(text) {
   $("message").textContent = text;
@@ -660,6 +661,23 @@ function formatDate(timestamp) {
   });
 }
 
+async function loadApprovedAgents() {
+  const snapshot = await getDocs(collection(db, "agents"));
+  approvedAgents = [];
+
+  snapshot.forEach(agentDoc => {
+    const agent = agentDoc.data();
+    if (agent.role === "agent" && agent.status === "approved") {
+      approvedAgents.push({
+        id: agentDoc.id,
+        name: agent.name || agent.email || agentDoc.id
+      });
+    }
+  });
+
+  approvedAgents.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function renderLeads() {
   const list = $("leadsList");
   const searchText = $("leadSearch").value.trim().toLowerCase();
@@ -671,7 +689,8 @@ function renderLeads() {
       lead.email,
       lead.propertyLocation,
       lead.message,
-      lead.enquiryType
+      lead.enquiryType,
+      lead.assignedAgentName
     ].join(" ").toLowerCase();
 
     return searchable.includes(searchText);
@@ -703,7 +722,9 @@ function renderLeads() {
       "\nEnquiry Type: " + (lead.enquiryType || "Not specified") +
       "\nLocation: " + (lead.propertyLocation || "Not provided") +
       "\nStatus: " + (lead.status || "new") +
-      "\nAssigned To: " + (lead.assignedTo || "Not assigned");
+      "\nAssigned To: " + (lead.assignedAgentName ||
+        (lead.assignedTo && lead.assignedTo !== "pending" &&
+         lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned"));
 
     const requirement = document.createElement("p");
     requirement.textContent =
@@ -711,14 +732,77 @@ function renderLeads() {
 
     const date = document.createElement("p");
     date.className = "lead-meta";
-    date.textContent =
-      "Received: " + formatDate(lead.createdAt);
+    date.textContent = "Received: " + formatDate(lead.createdAt);
 
     box.appendChild(title);
     box.appendChild(details);
     box.appendChild(requirement);
     box.appendChild(date);
 
+    // Assignment occurs only after the Owner selects a consultant and clicks.
+    const assignmentRow = document.createElement("div");
+    assignmentRow.className = "assignment-row";
+
+    const select = document.createElement("select");
+    select.setAttribute("aria-label", "Select consultant for lead");
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose consultant...";
+    select.appendChild(placeholder);
+
+    approvedAgents.forEach(agent => {
+      const option = document.createElement("option");
+      option.value = agent.id;
+      option.textContent = agent.name;
+      if (lead.assignedTo === agent.id) option.selected = true;
+      select.appendChild(option);
+    });
+
+    const assignButton = document.createElement("button");
+    assignButton.textContent =
+      lead.assignedTo && lead.assignedTo !== "pending" &&
+      lead.assignedTo !== "unassigned" ? "Reassign Lead" : "Assign Lead";
+
+    assignButton.onclick = async () => {
+      const selectedAgentId = select.value;
+      if (!selectedAgentId) {
+        alert("Please choose a consultant first.");
+        return;
+      }
+
+      const selectedAgent = approvedAgents.find(agent => agent.id === selectedAgentId);
+      if (!selectedAgent) {
+        alert("Selected consultant is not available. Please refresh leads.");
+        return;
+      }
+
+      if (lead.assignedTo === selectedAgentId) {
+        alert("This lead is already assigned to this consultant.");
+        return;
+      }
+
+      assignButton.disabled = true;
+      assignButton.textContent = "Saving...";
+
+      try {
+        await updateDoc(doc(db, "leads", lead.id), {
+          assignedTo: selectedAgentId,
+          assignedAgentName: selectedAgent.name,
+          assignedAt: serverTimestamp(),
+          assignedBy: OWNER_UID
+        });
+        await loadLeads();
+      } catch (error) {
+        alert("Could not assign lead: " + error.message);
+        assignButton.disabled = false;
+        assignButton.textContent = "Assign Lead";
+      }
+    };
+
+    assignmentRow.appendChild(select);
+    assignmentRow.appendChild(assignButton);
+    box.appendChild(assignmentRow);
     list.appendChild(box);
   });
 }
