@@ -885,16 +885,16 @@ onAuthStateChanged(auth, async user => {
   }
 
   if (user.uid === OWNER_UID) {
-    $("ownerCard").classList.remove("hidden");
-    await loadPendingUsers();
-    await loadLeads();
-    return;
-  }
+  $("ownerCard").classList.remove("hidden");
+  await loadPendingUsers();
+  await loadApprovedAgents();
+  await loadLeads();
+  return;
+}
 
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-
+try {
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
       $("pendingCard").classList.remove("hidden");
       $("pendingStatus").textContent =
