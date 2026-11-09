@@ -16,8 +16,6 @@
   --cream:#f6f8f5;
   --line:#e4eae5;
   --white:#ffffff;
-  --red:#b42318;
-  --yellow:#fff4d6;
 }
 
 * {
@@ -34,7 +32,7 @@ body {
 }
 
 header {
-  background:white;
+  background:var(--white);
   border-bottom:1px solid var(--line);
   padding:14px 5%;
   display:flex;
@@ -45,7 +43,9 @@ header {
   box-shadow:0 2px 10px #00000008;
 }
 
-.logo-link { display:block; }
+.logo-link {
+  display:block;
+}
 
 header img {
   display:block;
@@ -55,7 +55,9 @@ header img {
   object-fit:contain;
 }
 
-.header-text { text-align:right; }
+.header-text {
+  text-align:right;
+}
 
 .header-text h1 {
   color:var(--green);
@@ -86,13 +88,13 @@ header img {
 }
 
 .container {
-  max-width:1100px;
+  max-width:1000px;
   margin:20px auto 45px;
   padding:15px;
 }
 
 .card {
-  background:white;
+  background:var(--white);
   padding:28px;
   border:1px solid var(--line);
   border-radius:16px;
@@ -117,7 +119,7 @@ h3 {
   margin-bottom:12px;
 }
 
-input,button,select,textarea {
+input,button,select {
   width:100%;
   padding:14px;
   margin:8px 0;
@@ -125,19 +127,13 @@ input,button,select,textarea {
   font-size:15px;
 }
 
-input,select,textarea {
+input,select {
   border:1px solid #ccd8ce;
   background:white;
   color:var(--ink);
 }
 
-textarea {
-  min-height:100px;
-  font-family:Arial,Helvetica,sans-serif;
-  resize:vertical;
-}
-
-input:focus,select:focus,textarea:focus {
+input:focus {
   outline:2px solid #b8d7c1;
   border-color:var(--green2);
 }
@@ -151,20 +147,29 @@ button {
   transition:background .2s;
 }
 
-button:hover { background:#e84b00; }
-
-button:disabled {
-  opacity:.6;
-  cursor:not-allowed;
+button:hover {
+  background:#e84b00;
 }
 
-.secondary { background:var(--green); }
-.secondary:hover { background:var(--green2); }
+.secondary {
+  background:var(--green);
+}
 
-.reject { background:var(--red); }
-.reject:hover { background:#941b13; }
+.secondary:hover {
+  background:var(--green2);
+}
 
-.hidden { display:none!important; }
+.reject {
+  background:#b42318;
+}
+
+.reject:hover {
+  background:#941b13;
+}
+
+.hidden {
+  display:none!important;
+}
 
 .status {
   padding:17px;
@@ -176,19 +181,20 @@ button:disabled {
   color:var(--ink);
 }
 
-.userbox,.leadbox {
+.userbox,
+.leadbox {
   border:1px solid var(--line);
   padding:17px;
   border-radius:12px;
   margin:14px 0;
-  background:white;
+  background:#fff;
 }
 
-.userbox p,.leadbox p {
+.userbox p,
+.leadbox p {
   line-height:1.8;
   overflow-wrap:anywhere;
   margin-bottom:7px;
-  white-space:pre-wrap;
 }
 
 .leadbox h3 {
@@ -204,7 +210,7 @@ button:disabled {
 
 .stats-grid {
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(3,1fr);
   gap:12px;
   margin:20px 0;
 }
@@ -229,63 +235,6 @@ button:disabled {
   font-size:13px;
 }
 
-.followup-card {
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:18px;
-  margin:14px 0;
-  background:white;
-}
-
-.followup-card h3 {
-  margin:0 0 10px;
-  font-size:17px;
-}
-
-.followup-card p {
-  line-height:1.7;
-  margin:5px 0;
-  overflow-wrap:anywhere;
-  white-space:pre-wrap;
-}
-
-.today-card {
-  border-left:5px solid #e5a000;
-  background:#fffdf7;
-}
-
-.overdue-card {
-  border-left:5px solid var(--red);
-  background:#fffafa;
-}
-
-.followup-date {
-  font-weight:bold;
-  color:var(--green);
-}
-
-.overdue-label {
-  display:inline-block;
-  background:#fde8e7;
-  color:var(--red);
-  padding:5px 9px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:bold;
-  margin-bottom:8px;
-}
-
-.today-label {
-  display:inline-block;
-  background:var(--yellow);
-  color:#805900;
-  padding:5px 9px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:bold;
-  margin-bottom:8px;
-}
-
 .lead-toolbar {
   display:flex;
   gap:10px;
@@ -303,40 +252,6 @@ button:disabled {
   min-width:130px;
 }
 
-.assignment-row {
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-
-.assignment-row select {
-  flex:1;
-  min-width:180px;
-}
-
-.assignment-row button {
-  width:auto;
-  min-width:140px;
-}
-
-.lead-update-section {
-  margin-top:18px;
-  padding-top:15px;
-  border-top:1px solid var(--line);
-}
-
-.lead-update-section label {
-  display:block;
-  margin-top:10px;
-  font-size:14px;
-  font-weight:bold;
-  color:var(--green);
-}
-
-.lead-update-section button { margin-top:12px; }
-
 .small {
   font-size:13px;
   color:var(--muted);
@@ -345,7 +260,7 @@ button:disabled {
 #message {
   white-space:pre-wrap;
   margin:12px 0;
-  color:var(--red);
+  color:#b42318;
   font-size:14px;
   line-height:1.5;
 }
@@ -359,35 +274,58 @@ footer {
   background:white;
 }
 
-@media(max-width:850px) {
-  .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
 
+.followup-panel{border:2px solid #ff5a0a;background:linear-gradient(135deg,#fffaf5,#fff);border-radius:16px;padding:20px;margin:18px 0 24px;box-shadow:0 8px 24px #ff5a0a12}
+.followup-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.followup-kicker{display:inline-block;color:#ff5a0a;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:6px}
+.followup-heading h2{margin:0 0 5px;color:#064d2b}.followup-heading p{font-size:13px;color:#64736a;line-height:1.5}
+.followup-total{background:#064d2b;color:#fff;border-radius:12px;padding:12px 16px;text-align:center;min-width:95px}.followup-total strong{display:block;font-size:25px}.followup-total span{font-size:11px}
+.followup-item{background:#fff;border:1px solid #e4eae5;border-radius:12px;padding:15px;margin:12px 0}.followup-item h3{margin:0 0 8px}.followup-item p{white-space:pre-line;line-height:1.6;margin:5px 0;font-size:14px}
+.followup-item .task-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.task-form input,.task-form select,.task-form textarea{width:100%;margin:0;padding:11px;border:1px solid #ccd8ce;border-radius:8px;font:14px Arial}.task-form textarea{grid-column:1/-1;min-height:75px}.task-form button{grid-column:1/-1;margin:0}
+.consultant-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:10px 0 15px}.consultant-count{background:#f6f8f5;border:1px solid #e4eae5;border-radius:10px;padding:12px}.consultant-count strong{color:#064d2b;font-size:22px;display:block}.consultant-count span{font-size:12px;color:#64736a}
+@media(max-width:600px){.followup-heading{align-items:flex-start}.task-form{grid-template-columns:1fr!important}}
 @media(max-width:600px) {
   header {
     justify-content:center;
     text-align:center;
   }
 
-  .header-text { text-align:center; }
-  .header-text h1 { font-size:19px; }
+  .header-text {
+    text-align:center;
+  }
+
+  .header-text h1 {
+    font-size:19px;
+  }
 
   .container {
     margin:12px auto 30px;
     padding:12px;
   }
 
-  .card { padding:20px; }
-  .hero { padding-top:25px; }
-  .hero h2 { font-size:22px; }
+  .card {
+    padding:20px;
+  }
 
-  .stats-grid { grid-template-columns:1fr; }
+  .hero {
+    padding-top:25px;
+  }
 
-  .lead-toolbar { display:block; }
-  .lead-toolbar button { width:100%; }
+  .hero h2 {
+    font-size:22px;
+  }
 
-  .assignment-row { display:block; }
-  .assignment-row button { width:100%; }
+  .stats-grid {
+    grid-template-columns:1fr;
+  }
+
+  .lead-toolbar {
+    display:block;
+  }
+
+  .lead-toolbar button {
+    width:100%;
+  }
 }
 </style>
 </head>
@@ -411,8 +349,6 @@ footer {
 </div>
 
 <div class="container">
-
-  <!-- LOGIN AND REGISTRATION -->
 
   <div class="card" id="authCard">
     <h2>CRM Login</h2>
@@ -443,15 +379,11 @@ footer {
     <div id="message"></div>
   </div>
 
-  <!-- PENDING ACCOUNT -->
-
   <div class="card hidden" id="pendingCard">
     <h2>Account Status</h2>
     <div class="status" id="pendingStatus"></div>
     <button id="logoutPending" class="secondary">Logout</button>
   </div>
-
-  <!-- OWNER DASHBOARD -->
 
   <div class="card hidden" id="ownerCard">
     <h2>Owner Dashboard</h2>
@@ -471,6 +403,12 @@ footer {
       View and monitor buyer and seller enquiries received by JameenGhar.
     </p>
 
+    <section class="followup-panel" id="ownerFollowupPanel">
+      <div class="followup-heading"><div><span class="followup-kicker">DAILY ACTION</span><h2>Due Follow-ups</h2><p>Monitor today's and overdue follow-ups across all consultants.</p></div><div class="followup-total"><strong id="ownerDueCount">0</strong><span>Pending due</span></div></div>
+      <div id="ownerConsultantCounts" class="consultant-counts"></div>
+      <div id="ownerTodayLeads"></div>
+    </section>
+
     <div class="stats-grid">
       <div class="stat-box">
         <strong id="totalLeads">0</strong>
@@ -486,45 +424,7 @@ footer {
         <strong id="sellerLeads">0</strong>
         <span>Seller Enquiries</span>
       </div>
-
-      <div class="stat-box">
-        <strong id="todayFollowupCount">0</strong>
-        <span>Today's Follow-ups</span>
-      </div>
-
-      <div class="stat-box">
-        <strong id="overdueFollowupCount">0</strong>
-        <span>Overdue Leads</span>
-      </div>
     </div>
-
-    <!-- TODAY'S FOLLOW-UPS -->
-
-    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
-
-    <h2>Today's Follow-ups</h2>
-    <p class="card-description">
-      Leads whose follow-up date is today.
-    </p>
-
-    <div id="todayFollowupsList"></div>
-
-    <!-- OVERDUE FOLLOW-UPS -->
-
-    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
-
-    <h2>Overdue Leads</h2>
-    <p class="card-description">
-      Leads with a past follow-up date that are not closed yet.
-    </p>
-
-    <div id="overdueFollowupsList"></div>
-
-    <!-- ALL LEADS -->
-
-    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
-
-    <h2>All Leads</h2>
 
     <div class="lead-toolbar">
       <input
@@ -542,27 +442,19 @@ footer {
     <button id="ownerLogout">Logout</button>
   </div>
 
-  <!-- CONSULTANT DASHBOARD -->
-
   <div class="card hidden" id="approvedCard">
     <h2>My Assigned Leads</h2>
+    <p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
 
-    <p class="card-description">
-      Buyer and seller enquiries assigned to your CRM account by the Owner.
-      Update lead status, follow-up date and remarks here.
-    </p>
-
+    <section class="followup-panel" id="consultantFollowupPanel">
+      <div class="followup-heading"><div><span class="followup-kicker">DAILY ACTION</span><h2>Due Follow-ups</h2><p>Work on today's and overdue leads one by one. Save your update to complete today's task.</p></div><div class="followup-total"><strong id="consultantDueCount">0</strong><span>Due / overdue</span></div></div>
+      <div id="consultantTodayLeads"></div>
+    </section>
     <div class="stats-grid">
-      <div class="stat-box">
-        <strong id="myLeadCount">0</strong>
-        <span>Assigned Leads</span>
-      </div>
+      <div class="stat-box"><strong id="myLeadCount">0</strong><span>Assigned Leads</span></div>
     </div>
-
     <p class="small" id="myLeadStatus">Loading your leads...</p>
-
     <div id="myLeadsList"></div>
-
     <button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
     <button id="approvedLogout" class="secondary">Logout</button>
   </div>
@@ -633,8 +525,6 @@ function hideAll() {
   $("approvedCard").classList.add("hidden");
 }
 
-// LOGIN / REGISTER SWITCH
-
 $("showRegister").onclick = () => {
   $("loginBox").classList.add("hidden");
   $("registerBox").classList.remove("hidden");
@@ -646,8 +536,6 @@ $("showLogin").onclick = () => {
   $("loginBox").classList.remove("hidden");
   message("");
 };
-
-// REGISTER CRM ACCOUNT
 
 $("registerBtn").onclick = async () => {
   const name = $("regName").value.trim();
@@ -689,8 +577,6 @@ $("registerBtn").onclick = async () => {
   }
 };
 
-// LOGIN
-
 $("loginBtn").onclick = async () => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
@@ -707,8 +593,6 @@ $("loginBtn").onclick = async () => {
     message(error.message);
   }
 };
-
-// OWNER: PENDING CRM USERS
 
 async function loadPendingUsers() {
   const list = $("pendingUsers");
@@ -787,8 +671,6 @@ async function loadPendingUsers() {
   }
 }
 
-// DATE HELPERS
-
 function formatDate(timestamp) {
   if (!timestamp || typeof timestamp.toDate !== "function") {
     return "Date not available";
@@ -800,48 +682,17 @@ function formatDate(timestamp) {
   });
 }
 
-// Return browser-local date as YYYY-MM-DD
-
-function getLocalDateISO(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function formatFollowupDate(dateString) {
-  if (!dateString) return "Not scheduled";
-
-  const parts = dateString.split("-");
-
-  if (parts.length !== 3) return dateString;
-
-  return `${parts[2]}-${parts[1]}-${parts[0]}`;
-}
-
-function isClosedLead(lead) {
-  const status = String(lead.status || "").toLowerCase();
-
-  return status === "closed-won" ||
-         status === "closed-lost" ||
-         status === "closed won" ||
-         status === "closed lost";
-}
-
-// OWNER: LOAD APPROVED AGENTS
-
 async function loadApprovedAgents() {
-  const snapshot = await getDocs(collection(db, "agents"));
+  // CRM consultants are stored in the users collection, not agents.
+  const snapshot = await getDocs(collection(db, "users"));
   approvedAgents = [];
 
-  snapshot.forEach(agentDoc => {
-    const agent = agentDoc.data();
-
-    if (agent.role === "agent" && agent.status === "approved") {
+  snapshot.forEach(userDoc => {
+    const consultant = userDoc.data();
+    if (consultant.role === "crm" && consultant.status === "approved") {
       approvedAgents.push({
-        id: agentDoc.id,
-        name: agent.name || agent.email || agentDoc.id
+        id: userDoc.id,
+        name: consultant.name || consultant.email || userDoc.id
       });
     }
   });
@@ -849,111 +700,26 @@ async function loadApprovedAgents() {
   approvedAgents.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// OWNER: FOLLOW-UP CARD RENDERING
-
-function renderFollowupCards(leads, targetId, type) {
-  const list = $(targetId);
-  list.innerHTML = "";
-
-  if (leads.length === 0) {
-    list.textContent = type === "today"
-      ? "No follow-ups scheduled for today."
-      : "No overdue leads. Great job!";
-    return;
-  }
-
-  leads.forEach(lead => {
-    const box = document.createElement("div");
-
-    box.className = type === "today"
-      ? "followup-card today-card"
-      : "followup-card overdue-card";
-
-    const label = document.createElement("span");
-
-    label.className = type === "today"
-      ? "today-label"
-      : "overdue-label";
-
-    label.textContent = type === "today"
-      ? "FOLLOW-UP TODAY"
-      : "OVERDUE FOLLOW-UP";
-
-    const title = document.createElement("h3");
-    title.textContent = lead.customerName || "Name not provided";
-
-    const details = document.createElement("p");
-
-    details.textContent =
-      "Mobile: " + (lead.phone || "Not provided") +
-      "\nEmail: " + (lead.email || "Not provided") +
-      "\nLocation: " + (lead.propertyLocation || "Not provided") +
-      "\nConsultant: " + (lead.assignedAgentName || "Unassigned") +
-      "\nStatus: " + (lead.status || "new");
-
-    const date = document.createElement("p");
-    date.className = "followup-date";
-    date.textContent =
-      "Follow-up Date: " + formatFollowupDate(lead.followUpDate);
-
-    const remarks = document.createElement("p");
-    remarks.textContent =
-      "Consultant Remarks: " + (lead.remarks || "No remarks yet");
-
-    box.appendChild(label);
-    box.appendChild(title);
-    box.appendChild(details);
-    box.appendChild(date);
-    box.appendChild(remarks);
-
-    list.appendChild(box);
-  });
+function localDateKey(date = new Date()) {
+  const y = date.getFullYear(), m = String(date.getMonth()+1).padStart(2,"0"), d = String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
 }
-
-// OWNER: RENDER TODAY AND OVERDUE FOLLOW-UPS
-
-function renderFollowups() {
-  const today = getLocalDateISO();
-
-  const openLeads = allLeads.filter(lead => {
-    return lead.followUpDate && !isClosedLead(lead);
-  });
-
-  const todayLeads = openLeads.filter(lead => {
-    return lead.followUpDate === today;
-  });
-
-  const overdueLeads = openLeads.filter(lead => {
-    return lead.followUpDate < today;
-  });
-
-  // Sort by date, earliest first
-
-  todayLeads.sort((a, b) =>
-    String(a.followUpDate).localeCompare(String(b.followUpDate))
-  );
-
-  overdueLeads.sort((a, b) =>
-    String(a.followUpDate).localeCompare(String(b.followUpDate))
-  );
-
-  $("todayFollowupCount").textContent = todayLeads.length;
-  $("overdueFollowupCount").textContent = overdueLeads.length;
-
-  renderFollowupCards(
-    todayLeads,
-    "todayFollowupsList",
-    "today"
-  );
-
-  renderFollowupCards(
-    overdueLeads,
-    "overdueFollowupsList",
-    "overdue"
-  );
+function isClosedLead(lead){ return ["closed-won","closed-lost"].includes(String(lead.status||"").toLowerCase()); }
+function dueToday(lead){ return !!lead.followUpDate && lead.followUpDate <= localDateKey() && !isClosedLead(lead) && lead.followUpCompletedDate !== localDateKey(); }
+function safeText(v){return String(v||"");}
+function leadInfoText(lead){return `Mobile: ${lead.phone||"Not provided"}\nLocation: ${lead.propertyLocation||"Not provided"}\nRequirement: ${lead.message||"No message"}\nStatus: ${lead.status||"new"}\nFollow-up date: ${lead.followUpDate||"Not set"}`;}
+function makeTaskForm(lead, isOwner=false){
+ const form=document.createElement("div");form.className="task-form";
+ const status=document.createElement("select");
+ ["new","contacted","follow-up","site-visit","negotiation","closed-won","closed-lost"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;o.selected=(lead.status||"new")===v;status.appendChild(o)});
+ const date=document.createElement("input");date.type="date";date.value=lead.followUpDate||localDateKey();
+ const remarks=document.createElement("textarea");remarks.placeholder="Add call remarks / next action...";remarks.value=lead.remarks||"";
+ const save=document.createElement("button");save.textContent="Save Update & Complete Today's Follow-up";
+ save.onclick=async()=>{if(!date.value){alert("Please select the next follow-up date.");return;}save.disabled=true;save.textContent="Saving...";try{await updateDoc(doc(db,"leads",lead.id),{status:status.value,followUpDate:date.value,remarks:remarks.value.trim(),followUpCompletedDate:localDateKey(),updatedAt:serverTimestamp(),lastFollowUpBy:auth.currentUser.uid});if(isOwner){await loadLeads()}else{await loadMyAssignedLeads(auth.currentUser)} }catch(e){alert("Save failed: "+e.message);save.disabled=false;save.textContent="Save Update & Complete Today's Follow-up";}};
+ form.append(status,date,remarks,save);return form;
 }
-
-// OWNER: RENDER ALL LEADS
+function renderConsultantToday(leads){const root=$("consultantTodayLeads");root.innerHTML="";const due=leads.filter(dueToday);$("consultantDueCount").textContent=due.length;if(!due.length){root.textContent="No pending follow-ups for today. Great work!";return;}due.forEach(lead=>{const box=document.createElement("div");box.className="followup-item";const h=document.createElement("h3");h.textContent=lead.customerName||"Customer";const p=document.createElement("p");p.textContent=leadInfoText(lead);box.append(h,p,makeTaskForm(lead));root.appendChild(box);});}
+function renderOwnerToday(){const due=allLeads.filter(dueToday);$("ownerDueCount").textContent=due.length;const counts=$("ownerConsultantCounts");counts.innerHTML="";const grouped={};due.forEach(l=>{const key=l.assignedAgentName||"Unassigned";grouped[key]=(grouped[key]||0)+1;});Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,count])=>{const div=document.createElement("div");div.className="consultant-count";const n=document.createElement("strong");n.textContent=count;const label=document.createElement("span");label.textContent=name+" — pending";div.append(n,label);counts.appendChild(div);});const root=$("ownerTodayLeads");root.innerHTML="";if(!due.length){root.textContent="No pending follow-ups for today.";return;}due.forEach(lead=>{const box=document.createElement("div");box.className="followup-item";const h=document.createElement("h3");h.textContent=(lead.customerName||"Customer")+" · "+(lead.assignedAgentName||"Unassigned");const p=document.createElement("p");p.textContent=leadInfoText(lead);box.append(h,p,makeTaskForm(lead,true));const transfer=document.createElement("div");transfer.className="task-form";const select=document.createElement("select");const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Transfer to consultant...";select.appendChild(placeholder);approvedAgents.forEach(agent=>{if(agent.id===lead.assignedTo)return;const o=document.createElement("option");o.value=agent.id;o.textContent=agent.name;select.appendChild(o)});const move=document.createElement("button");move.className="secondary";move.textContent="Transfer Lead";move.onclick=async()=>{const target=approvedAgents.find(a=>a.id===select.value);if(!target){alert("Choose a consultant first.");return;}const keep=confirm("Keep the previous consultant's remarks/history?\n\nOK = Retain history\nCancel = Delete history (a second confirmation will appear)");let deleteHistory=false;if(!keep){if(!confirm("Confirm DELETE of prior consultant remarks/history? Customer name, phone, email and enquiry details will be kept. This deletion cannot be undone."))return;deleteHistory=true;}try{const update={assignedTo:target.id,assignedAgentName:target.name,assignedAt:serverTimestamp(),assignedBy:OWNER_UID,status:"new",followUpDate:localDateKey(),followUpCompletedDate:null,updatedAt:serverTimestamp()};if(deleteHistory){update.remarks="";update.followUpHistory=[];update.activityHistory=[];update.previousConsultantRemarks="";}await updateDoc(doc(db,"leads",lead.id),update);await loadLeads();alert("Lead transferred. It will appear as a new lead for "+target.name+".");}catch(e){alert("Transfer failed: "+e.message)}};transfer.append(select,move);box.appendChild(transfer);root.appendChild(box);});}
 
 function renderLeads() {
   const list = $("leadsList");
@@ -967,10 +733,7 @@ function renderLeads() {
       lead.propertyLocation,
       lead.message,
       lead.enquiryType,
-      lead.assignedAgentName,
-      lead.status,
-      lead.remarks,
-      lead.followUpDate
+      lead.assignedAgentName
     ].join(" ").toLowerCase();
 
     return searchable.includes(searchText);
@@ -996,7 +759,6 @@ function renderLeads() {
     title.textContent = lead.customerName || "Name not provided";
 
     const details = document.createElement("p");
-
     details.textContent =
       "Mobile: " + (lead.phone || "Not provided") +
       "\nEmail: " + (lead.email || "Not provided") +
@@ -1005,9 +767,7 @@ function renderLeads() {
       "\nStatus: " + (lead.status || "new") +
       "\nAssigned To: " + (lead.assignedAgentName ||
         (lead.assignedTo && lead.assignedTo !== "pending" &&
-         lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned")) +
-      "\nFollow-up Date: " + formatFollowupDate(lead.followUpDate) +
-      "\nConsultant Remarks: " + (lead.remarks || "No remarks yet");
+         lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned"));
 
     const requirement = document.createElement("p");
     requirement.textContent =
@@ -1015,17 +775,14 @@ function renderLeads() {
 
     const date = document.createElement("p");
     date.className = "lead-meta";
-    date.textContent =
-      "Received: " + formatDate(lead.createdAt) +
-      "\nLast Updated: " + formatDate(lead.updatedAt);
+    date.textContent = "Received: " + formatDate(lead.createdAt);
 
     box.appendChild(title);
     box.appendChild(details);
     box.appendChild(requirement);
     box.appendChild(date);
 
-    // CONSULTANT ASSIGNMENT
-
+    // Assignment occurs only after the Owner selects a consultant and clicks.
     const assignmentRow = document.createElement("div");
     assignmentRow.className = "assignment-row";
 
@@ -1041,34 +798,23 @@ function renderLeads() {
       const option = document.createElement("option");
       option.value = agent.id;
       option.textContent = agent.name;
-
-      if (lead.assignedTo === agent.id) {
-        option.selected = true;
-      }
-
+      if (lead.assignedTo === agent.id) option.selected = true;
       select.appendChild(option);
     });
 
     const assignButton = document.createElement("button");
-
     assignButton.textContent =
       lead.assignedTo && lead.assignedTo !== "pending" &&
-      lead.assignedTo !== "unassigned"
-        ? "Reassign Lead"
-        : "Assign Lead";
+      lead.assignedTo !== "unassigned" ? "Reassign Lead" : "Assign Lead";
 
     assignButton.onclick = async () => {
       const selectedAgentId = select.value;
-
       if (!selectedAgentId) {
         alert("Please choose a consultant first.");
         return;
       }
 
-      const selectedAgent = approvedAgents.find(
-        agent => agent.id === selectedAgentId
-      );
-
+      const selectedAgent = approvedAgents.find(agent => agent.id === selectedAgentId);
       if (!selectedAgent) {
         alert("Selected consultant is not available. Please refresh leads.");
         return;
@@ -1089,12 +835,9 @@ function renderLeads() {
           assignedAt: serverTimestamp(),
           assignedBy: OWNER_UID
         });
-
         await loadLeads();
-
       } catch (error) {
         alert("Could not assign lead: " + error.message);
-
         assignButton.disabled = false;
         assignButton.textContent = "Assign Lead";
       }
@@ -1102,17 +845,13 @@ function renderLeads() {
 
     assignmentRow.appendChild(select);
     assignmentRow.appendChild(assignButton);
-
     box.appendChild(assignmentRow);
     list.appendChild(box);
   });
 }
 
-// OWNER: LOAD LEADS
-
 async function loadLeads() {
   const list = $("leadsList");
-
   list.textContent = "Loading leads...";
   $("leadCountText").textContent = "Please wait...";
 
@@ -1152,269 +891,88 @@ async function loadLeads() {
     $("buyerLeads").textContent = buyers;
     $("sellerLeads").textContent = sellers;
 
-    // Render follow-ups and all leads
-
-    renderFollowups();
     renderLeads();
+    renderOwnerToday();
 
   } catch (error) {
     allLeads = [];
-
     $("totalLeads").textContent = "—";
     $("buyerLeads").textContent = "—";
     $("sellerLeads").textContent = "—";
-    $("todayFollowupCount").textContent = "—";
-    $("overdueFollowupCount").textContent = "—";
-
     $("leadCountText").textContent = "Could not load leads.";
     list.textContent = error.message;
-
-    $("todayFollowupsList").textContent = error.message;
-    $("overdueFollowupsList").textContent = error.message;
   }
 }
 
-// REFRESH OWNER DASHBOARD
-
 $("refreshUsers").onclick = loadPendingUsers;
-
-$("refreshLeads").onclick = async () => {
-  await loadApprovedAgents();
-  await loadLeads();
-};
-
+$("refreshLeads").onclick = loadLeads;
 $("leadSearch").addEventListener("input", renderLeads);
-
-// CONSULTANT: LOAD ASSIGNED LEADS AND UPDATE FORM
 
 async function loadMyAssignedLeads(user) {
   const list = $("myLeadsList");
-  const statusText = $("myLeadStatus");
-
+  const status = $("myLeadStatus");
   list.innerHTML = "Loading your assigned leads...";
-  statusText.textContent = "Please wait...";
+  status.textContent = "Please wait...";
 
   try {
     const assignedQuery = query(
       collection(db, "leads"),
       where("assignedTo", "==", user.uid)
     );
-
     const snapshot = await getDocs(assignedQuery);
     const myLeads = [];
 
-    snapshot.forEach(leadDoc => {
-      myLeads.push({
-        id: leadDoc.id,
-        ...leadDoc.data()
-      });
-    });
-
+    snapshot.forEach(leadDoc => myLeads.push({ id: leadDoc.id, ...leadDoc.data() }));
     myLeads.sort((a, b) => {
-      const aTime = a.createdAt && a.createdAt.toMillis
-        ? a.createdAt.toMillis()
-        : 0;
-
-      const bTime = b.createdAt && b.createdAt.toMillis
-        ? b.createdAt.toMillis()
-        : 0;
-
+      const aTime = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const bTime = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
       return bTime - aTime;
     });
 
     $("myLeadCount").textContent = myLeads.length;
-
-    statusText.textContent =
-      "Showing " + myLeads.length + " assigned lead(s).";
-
+    status.textContent = "Showing " + myLeads.length + " assigned lead(s).";
     list.innerHTML = "";
 
     if (myLeads.length === 0) {
       list.textContent = "No leads have been assigned to you yet.";
+      renderConsultantToday(myLeads);
       return;
     }
-
-    const statusOptions = [
-      "new",
-      "contacted",
-      "follow-up",
-      "site-visit",
-      "negotiation",
-      "closed-won",
-      "closed-lost"
-    ];
 
     myLeads.forEach(lead => {
       const box = document.createElement("div");
       box.className = "leadbox";
-
       const title = document.createElement("h3");
       title.textContent = lead.customerName || "Name not provided";
-
       const details = document.createElement("p");
-
       details.textContent =
         "Mobile: " + (lead.phone || "Not provided") +
         "\nEmail: " + (lead.email || "Not provided") +
         "\nEnquiry Type: " + (lead.enquiryType || "Not specified") +
         "\nLocation: " + (lead.propertyLocation || "Not provided") +
-        "\nCurrent Status: " + (lead.status || "new");
-
+        "\nStatus: " + (lead.status || "new");
       const requirement = document.createElement("p");
-
-      requirement.textContent =
-        "Requirement: " + (lead.message || "No message provided");
-
+      requirement.textContent = "Requirement: " + (lead.message || "No message provided");
       const received = document.createElement("p");
       received.className = "lead-meta";
-
-      received.textContent =
-        "Received: " + formatDate(lead.createdAt);
-
-      // UPDATE SECTION
-
-      const updateSection = document.createElement("div");
-      updateSection.className = "lead-update-section";
-
-      const updateHeading = document.createElement("h3");
-      updateHeading.textContent = "Update Lead";
-
-      // STATUS
-
-      const statusLabel = document.createElement("label");
-      statusLabel.textContent = "Lead Status";
-
-      const statusSelect = document.createElement("select");
-
-      statusOptions.forEach(optionValue => {
-        const option = document.createElement("option");
-
-        option.value = optionValue;
-
-        option.textContent = optionValue
-          .replaceAll("-", " ")
-          .replace(/\b\w/g, char => char.toUpperCase());
-
-        if ((lead.status || "new") === optionValue) {
-          option.selected = true;
-        }
-
-        statusSelect.appendChild(option);
-      });
-
-      statusLabel.appendChild(statusSelect);
-
-      // FOLLOW-UP DATE
-
-      const followUpLabel = document.createElement("label");
-      followUpLabel.textContent = "Follow-up Date";
-
-      const followUpInput = document.createElement("input");
-      followUpInput.type = "date";
-      followUpInput.value = lead.followUpDate || "";
-
-      followUpLabel.appendChild(followUpInput);
-
-      // REMARKS
-
-      const remarksLabel = document.createElement("label");
-      remarksLabel.textContent = "Consultant Remarks";
-
-      const remarksInput = document.createElement("textarea");
-
-      remarksInput.placeholder =
-        "Enter call details, customer response, next action...";
-
-      remarksInput.value = lead.remarks || "";
-
-      remarksLabel.appendChild(remarksInput);
-
-      // LAST UPDATE
-
-      const previousUpdate = document.createElement("p");
-      previousUpdate.className = "lead-meta";
-
-      previousUpdate.textContent =
-        "Last Updated: " + formatDate(lead.updatedAt);
-
-      // SAVE UPDATE
-
-      const saveButton = document.createElement("button");
-      saveButton.textContent = "Save Update";
-
-      saveButton.onclick = async () => {
-        const selectedStatus = statusSelect.value;
-        const followUpDate = followUpInput.value;
-        const remarks = remarksInput.value.trim();
-
-        if (!followUpDate) {
-          alert("Please select a follow-up date.");
-          return;
-        }
-
-        if (!remarks) {
-          alert("Please enter consultant remarks.");
-          return;
-        }
-
-        saveButton.disabled = true;
-        saveButton.textContent = "Saving Update...";
-
-        try {
-          await updateDoc(doc(db, "leads", lead.id), {
-            status: selectedStatus,
-            followUpDate: followUpDate,
-            remarks: remarks,
-            updatedAt: serverTimestamp()
-          });
-
-          alert("Lead update saved successfully!");
-
-          await loadMyAssignedLeads(user);
-
-        } catch (error) {
-          alert("Could not save update: " + error.message);
-
-          saveButton.disabled = false;
-          saveButton.textContent = "Save Update";
-        }
-      };
-
-      updateSection.appendChild(updateHeading);
-      updateSection.appendChild(statusLabel);
-      updateSection.appendChild(followUpLabel);
-      updateSection.appendChild(remarksLabel);
-      updateSection.appendChild(previousUpdate);
-      updateSection.appendChild(saveButton);
-
+      received.textContent = "Received: " + formatDate(lead.createdAt);
       box.appendChild(title);
       box.appendChild(details);
       box.appendChild(requirement);
       box.appendChild(received);
-      box.appendChild(updateSection);
-
       list.appendChild(box);
     });
-
+    renderConsultantToday(myLeads);
   } catch (error) {
     $("myLeadCount").textContent = "—";
-
-    statusText.textContent =
-      "Could not load assigned leads: " + error.message;
-
+    status.textContent = "Could not load assigned leads: " + error.message;
     list.innerHTML = "";
   }
 }
 
-// CONSULTANT REFRESH
-
 $("refreshMyLeads").onclick = () => {
-  if (auth.currentUser) {
-    loadMyAssignedLeads(auth.currentUser);
-  }
+  if (auth.currentUser) loadMyAssignedLeads(auth.currentUser);
 };
-
-// LOGOUT
 
 async function logout() {
   try {
@@ -1428,8 +986,6 @@ $("logoutPending").onclick = logout;
 $("ownerLogout").onclick = logout;
 $("approvedLogout").onclick = logout;
 
-// AUTH STATE
-
 onAuthStateChanged(auth, async user => {
   hideAll();
 
@@ -1438,19 +994,18 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
-  // OWNER LOGIN
-
   if (user.uid === OWNER_UID) {
     $("ownerCard").classList.remove("hidden");
-
-    await loadPendingUsers();
-    await loadApprovedAgents();
-    await loadLeads();
-
+    try {
+      await loadPendingUsers();
+      await loadApprovedAgents();
+      await loadLeads();
+    } catch (error) {
+      $("leadCountText").textContent = "Dashboard could not fully load.";
+      $("leadsList").textContent = error.message;
+    }
     return;
   }
-
-  // CRM USER LOGIN
 
   try {
     const userRef = doc(db, "users", user.uid);
@@ -1458,29 +1013,30 @@ onAuthStateChanged(auth, async user => {
 
     if (!userSnap.exists()) {
       $("pendingCard").classList.remove("hidden");
-
       $("pendingStatus").textContent =
         "Your CRM profile is not available. Please contact Owner.";
-
       return;
     }
 
     const data = userSnap.data();
 
-    if (data.status === "approved" && data.role === "crm") {
+    // Only registered CRM consultants may enter the consultant dashboard.
+    if (data.role !== "crm") {
+      $("pendingCard").classList.remove("hidden");
+      $("pendingStatus").textContent =
+        "This account is not registered as a JameenGhar CRM consultant. Please contact Owner.";
+      return;
+    }
+
+    if (data.status === "approved") {
       $("approvedCard").classList.remove("hidden");
-
       await loadMyAssignedLeads(user);
-
     } else if (data.status === "rejected") {
       $("pendingCard").classList.remove("hidden");
-
       $("pendingStatus").textContent =
         "Your registration has been rejected. Please contact Owner.";
-
     } else {
       $("pendingCard").classList.remove("hidden");
-
       $("pendingStatus").textContent =
         "Your account is pending Owner approval. Please wait.";
     }
