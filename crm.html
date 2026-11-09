@@ -327,6 +327,9 @@ footer {
     width:100%;
   }
 }
+
+.activity-wrap{margin-top:12px}.activity-toggle{width:100%;margin:0}.activity-panel{margin-top:10px;padding:12px;border:1px solid #dce6de;border-radius:10px;background:#fbfdfb}.activity-entry{padding:10px 0;border-bottom:1px solid #e6ece7}.activity-entry:last-child{border-bottom:0}.activity-entry strong{color:#064d2b;font-size:13px}.activity-entry p{margin:5px 0;white-space:pre-wrap;font-size:13px}.activity-entry small{color:#68756c}
+
 </style>
 </head>
 
@@ -487,6 +490,9 @@ import {
   getDocs,
   collection,
   updateDoc,
+  addDoc,
+  writeBatch,
+  orderBy,
   serverTimestamp,
   query,
   where
@@ -708,6 +714,49 @@ function isClosedLead(lead){ return ["closed-won","closed-lost"].includes(String
 function dueToday(lead){ return !!lead.followUpDate && lead.followUpDate <= localDateKey() && !isClosedLead(lead) && lead.followUpCompletedDate !== localDateKey(); }
 function safeText(v){return String(v||"");}
 function leadInfoText(lead){return `Mobile: ${lead.phone||"Not provided"}\nLocation: ${lead.propertyLocation||"Not provided"}\nRequirement: ${lead.message||"No message"}\nStatus: ${lead.status||"new"}\nFollow-up date: ${lead.followUpDate||"Not set"}`;}
+
+function activityPanel(lead){
+  const wrap=document.createElement("div");
+  wrap.className="activity-wrap";
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="secondary activity-toggle";
+  button.textContent="View Activity History";
+  const panel=document.createElement("div");
+  panel.className="activity-panel hidden";
+  panel.textContent="Activity history not loaded.";
+  let loaded=false;
+  button.onclick=async()=>{
+    panel.classList.toggle("hidden");
+    if(panel.classList.contains("hidden"))return;
+    if(loaded)return;
+    panel.textContent="Loading activity history...";
+    try{
+      const q=query(collection(db,"leads",lead.id,"activities"),orderBy("createdAt","desc"));
+      const snap=await getDocs(q);
+      panel.innerHTML="";
+      if(snap.empty){panel.textContent="No activity recorded yet. New updates will appear here.";loaded=true;return;}
+      snap.forEach(activityDoc=>{
+        const a=activityDoc.data();
+        const item=document.createElement("div");item.className="activity-entry";
+        const heading=document.createElement("strong");heading.textContent=(a.eventType||"update").replaceAll("-"," ").toUpperCase()+" · "+(a.actorName||"CRM user");
+        const summary=document.createElement("p");summary.textContent=a.summary||"Activity recorded.";
+        const meta=document.createElement("small");meta.textContent=formatDate(a.createdAt);
+        item.append(heading,summary,meta);
+        if(a.status){const st=document.createElement("p");st.textContent="Status: "+a.status;item.appendChild(st);}
+        if(a.followUpDate){const fd=document.createElement("p");fd.textContent="Next follow-up: "+a.followUpDate;item.appendChild(fd);}
+        if(a.remarks){const rm=document.createElement("p");rm.textContent="Remarks: "+a.remarks;item.appendChild(rm);}
+        panel.appendChild(item);
+      });
+      loaded=true;
+    }catch(e){panel.textContent="Could not load activity history: "+e.message;}
+  };
+  wrap.append(button,panel);return wrap;
+}
+
+function activityRecord({eventType,summary,status="",followUpDate="",remarks=""}){
+  return {eventType,actorUid:auth.currentUser.uid,actorName:auth.currentUser.displayName||auth.currentUser.email||"CRM user",summary,status,followUpDate,remarks,createdAt:serverTimestamp()};
+}
 function makeTaskForm(lead, isOwner=false){
  const form=document.createElement("div");form.className="task-form";
  const status=document.createElement("select");
@@ -715,11 +764,24 @@ function makeTaskForm(lead, isOwner=false){
  const date=document.createElement("input");date.type="date";date.value=lead.followUpDate||localDateKey();
  const remarks=document.createElement("textarea");remarks.placeholder="Add call remarks / next action...";remarks.value=lead.remarks||"";
  const save=document.createElement("button");save.textContent="Save Update & Complete Today's Follow-up";
- save.onclick=async()=>{if(!date.value){alert("Please select the next follow-up date.");return;}save.disabled=true;save.textContent="Saving...";try{await updateDoc(doc(db,"leads",lead.id),{status:status.value,followUpDate:date.value,remarks:remarks.value.trim(),followUpCompletedDate:localDateKey(),updatedAt:serverTimestamp(),lastFollowUpBy:auth.currentUser.uid});if(isOwner){await loadLeads()}else{await loadMyAssignedLeads(auth.currentUser)} }catch(e){alert("Save failed: "+e.message);save.disabled=false;save.textContent="Save Update & Complete Today's Follow-up";}};
+ save.onclick=async()=>{
+  if(!date.value){alert("Please select the next follow-up date.");return;}
+  save.disabled=true;save.textContent="Saving...";
+  try{
+   const leadRef=doc(db,"leads",lead.id);
+   const activityRef=doc(collection(db,"leads",lead.id,"activities"));
+   const summary=`Follow-up updated from ${lead.status||"new"} to ${status.value}.`;
+   const batch=writeBatch(db);
+   batch.update(leadRef,{status:status.value,followUpDate:date.value,remarks:remarks.value.trim(),followUpCompletedDate:localDateKey(),updatedAt:serverTimestamp(),lastFollowUpBy:auth.currentUser.uid});
+   batch.set(activityRef,activityRecord({eventType:"follow-up",summary,status:status.value,followUpDate:date.value,remarks:remarks.value.trim()}));
+   await batch.commit();
+   if(isOwner){await loadLeads()}else{await loadMyAssignedLeads(auth.currentUser)}
+  }catch(e){alert("Save failed: "+e.message);save.disabled=false;save.textContent="Save Update & Complete Today's Follow-up";}
+ };
  form.append(status,date,remarks,save);return form;
 }
 function renderConsultantToday(leads){const root=$("consultantTodayLeads");root.innerHTML="";const due=leads.filter(dueToday);$("consultantDueCount").textContent=due.length;if(!due.length){root.textContent="No pending follow-ups for today. Great work!";return;}due.forEach(lead=>{const box=document.createElement("div");box.className="followup-item";const h=document.createElement("h3");h.textContent=lead.customerName||"Customer";const p=document.createElement("p");p.textContent=leadInfoText(lead);box.append(h,p,makeTaskForm(lead));root.appendChild(box);});}
-function renderOwnerToday(){const due=allLeads.filter(dueToday);$("ownerDueCount").textContent=due.length;const counts=$("ownerConsultantCounts");counts.innerHTML="";const grouped={};due.forEach(l=>{const key=l.assignedAgentName||"Unassigned";grouped[key]=(grouped[key]||0)+1;});Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,count])=>{const div=document.createElement("div");div.className="consultant-count";const n=document.createElement("strong");n.textContent=count;const label=document.createElement("span");label.textContent=name+" — pending";div.append(n,label);counts.appendChild(div);});const root=$("ownerTodayLeads");root.innerHTML="";if(!due.length){root.textContent="No pending follow-ups for today.";return;}due.forEach(lead=>{const box=document.createElement("div");box.className="followup-item";const h=document.createElement("h3");h.textContent=(lead.customerName||"Customer")+" · "+(lead.assignedAgentName||"Unassigned");const p=document.createElement("p");p.textContent=leadInfoText(lead);box.append(h,p,makeTaskForm(lead,true));const transfer=document.createElement("div");transfer.className="task-form";const select=document.createElement("select");const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Transfer to consultant...";select.appendChild(placeholder);approvedAgents.forEach(agent=>{if(agent.id===lead.assignedTo)return;const o=document.createElement("option");o.value=agent.id;o.textContent=agent.name;select.appendChild(o)});const move=document.createElement("button");move.className="secondary";move.textContent="Transfer Lead";move.onclick=async()=>{const target=approvedAgents.find(a=>a.id===select.value);if(!target){alert("Choose a consultant first.");return;}const keep=confirm("Keep the previous consultant's remarks/history?\n\nOK = Retain history\nCancel = Delete history (a second confirmation will appear)");let deleteHistory=false;if(!keep){if(!confirm("Confirm DELETE of prior consultant remarks/history? Customer name, phone, email and enquiry details will be kept. This deletion cannot be undone."))return;deleteHistory=true;}try{const update={assignedTo:target.id,assignedAgentName:target.name,assignedAt:serverTimestamp(),assignedBy:OWNER_UID,status:"new",followUpDate:localDateKey(),followUpCompletedDate:null,updatedAt:serverTimestamp()};if(deleteHistory){update.remarks="";update.followUpHistory=[];update.activityHistory=[];update.previousConsultantRemarks="";}await updateDoc(doc(db,"leads",lead.id),update);await loadLeads();alert("Lead transferred. It will appear as a new lead for "+target.name+".");}catch(e){alert("Transfer failed: "+e.message)}};transfer.append(select,move);box.appendChild(transfer);root.appendChild(box);});}
+function renderOwnerToday(){const due=allLeads.filter(dueToday);$("ownerDueCount").textContent=due.length;const counts=$("ownerConsultantCounts");counts.innerHTML="";const grouped={};due.forEach(l=>{const key=l.assignedAgentName||"Unassigned";grouped[key]=(grouped[key]||0)+1;});Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,count])=>{const div=document.createElement("div");div.className="consultant-count";const n=document.createElement("strong");n.textContent=count;const label=document.createElement("span");label.textContent=name+" — pending";div.append(n,label);counts.appendChild(div);});const root=$("ownerTodayLeads");root.innerHTML="";if(!due.length){root.textContent="No pending follow-ups for today.";return;}due.forEach(lead=>{const box=document.createElement("div");box.className="followup-item";const h=document.createElement("h3");h.textContent=(lead.customerName||"Customer")+" · "+(lead.assignedAgentName||"Unassigned");const p=document.createElement("p");p.textContent=leadInfoText(lead);box.append(h,p,makeTaskForm(lead,true));const transfer=document.createElement("div");transfer.className="task-form";const select=document.createElement("select");const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Transfer to consultant...";select.appendChild(placeholder);approvedAgents.forEach(agent=>{if(agent.id===lead.assignedTo)return;const o=document.createElement("option");o.value=agent.id;o.textContent=agent.name;select.appendChild(o)});const move=document.createElement("button");move.className="secondary";move.textContent="Transfer Lead";move.onclick=async()=>{const target=approvedAgents.find(a=>a.id===select.value);if(!target){alert("Choose a consultant first.");return;}if(!confirm("Transfer this lead to "+target.name+"? Previous remarks and Activity History will be preserved."))return;try{const batch=writeBatch(db);const leadRef=doc(db,"leads",lead.id);const activityRef=doc(collection(db,"leads",lead.id,"activities"));batch.update(leadRef,{assignedTo:target.id,assignedAgentName:target.name,assignedAt:serverTimestamp(),assignedBy:OWNER_UID,status:"new",followUpDate:localDateKey(),followUpCompletedDate:null,updatedAt:serverTimestamp()});batch.set(activityRef,activityRecord({eventType:"transfer",summary:`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous remarks and history preserved.`,status:"new",followUpDate:localDateKey(),remarks:lead.remarks||""}));await batch.commit();await loadLeads();alert("Lead transferred successfully to "+target.name+".");}catch(e){alert("Transfer failed: "+e.message)}};transfer.append(select,move);box.appendChild(transfer);root.appendChild(box);});}
 
 function renderLeads() {
   const list = $("leadsList");
@@ -781,6 +843,7 @@ function renderLeads() {
     box.appendChild(details);
     box.appendChild(requirement);
     box.appendChild(date);
+    box.appendChild(activityPanel(lead));
 
     // Assignment occurs only after the Owner selects a consultant and clicks.
     const assignmentRow = document.createElement("div");
@@ -829,12 +892,22 @@ function renderLeads() {
       assignButton.textContent = "Saving...";
 
       try {
-        await updateDoc(doc(db, "leads", lead.id), {
+        const batch = writeBatch(db);
+        const leadRef = doc(db, "leads", lead.id);
+        const activityRef = doc(collection(db, "leads", lead.id, "activities"));
+        batch.update(leadRef, {
           assignedTo: selectedAgentId,
           assignedAgentName: selectedAgent.name,
           assignedAt: serverTimestamp(),
           assignedBy: OWNER_UID
         });
+        batch.set(activityRef, activityRecord({
+          eventType: "assignment",
+          summary: `Lead assigned to ${selectedAgent.name}.`,
+          status: lead.status || "new",
+          followUpDate: lead.followUpDate || ""
+        }));
+        await batch.commit();
         await loadLeads();
       } catch (error) {
         alert("Could not assign lead: " + error.message);
@@ -960,6 +1033,7 @@ async function loadMyAssignedLeads(user) {
       box.appendChild(details);
       box.appendChild(requirement);
       box.appendChild(received);
+      box.appendChild(activityPanel(lead));
       list.appendChild(box);
     });
     renderConsultantToday(myLeads);
