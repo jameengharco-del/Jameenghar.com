@@ -119,7 +119,7 @@ h3 {
   margin-bottom:12px;
 }
 
-input,button,select {
+input,button,select,textarea {
   width:100%;
   padding:14px;
   margin:8px 0;
@@ -127,13 +127,19 @@ input,button,select {
   font-size:15px;
 }
 
-input,select {
+input,select,textarea {
   border:1px solid #ccd8ce;
   background:white;
   color:var(--ink);
 }
 
-input:focus {
+textarea {
+  min-height:100px;
+  font-family:Arial,Helvetica,sans-serif;
+  resize:vertical;
+}
+
+input:focus,select:focus,textarea:focus {
   outline:2px solid #b8d7c1;
   border-color:var(--green2);
 }
@@ -149,6 +155,11 @@ button {
 
 button:hover {
   background:#e84b00;
+}
+
+button:disabled {
+  opacity:.6;
+  cursor:not-allowed;
 }
 
 .secondary {
@@ -181,8 +192,7 @@ button:hover {
   color:var(--ink);
 }
 
-.userbox,
-.leadbox {
+.userbox,.leadbox {
   border:1px solid var(--line);
   padding:17px;
   border-radius:12px;
@@ -190,11 +200,11 @@ button:hover {
   background:#fff;
 }
 
-.userbox p,
-.leadbox p {
+.userbox p,.leadbox p {
   line-height:1.8;
   overflow-wrap:anywhere;
   margin-bottom:7px;
+  white-space:pre-wrap;
 }
 
 .leadbox h3 {
@@ -250,6 +260,42 @@ button:hover {
 .lead-toolbar button {
   width:auto;
   min-width:130px;
+}
+
+.assignment-row {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.assignment-row select {
+  flex:1;
+  min-width:180px;
+}
+
+.assignment-row button {
+  width:auto;
+  min-width:140px;
+}
+
+.lead-update-section {
+  margin-top:18px;
+  padding-top:15px;
+  border-top:1px solid var(--line);
+}
+
+.lead-update-section label {
+  display:block;
+  margin-top:10px;
+  font-size:14px;
+  font-weight:bold;
+  color:var(--green);
+}
+
+.lead-update-section button {
+  margin-top:12px;
 }
 
 .small {
@@ -316,6 +362,14 @@ footer {
   .lead-toolbar button {
     width:100%;
   }
+
+  .assignment-row {
+    display:block;
+  }
+
+  .assignment-row button {
+    width:100%;
+  }
 }
 </style>
 </head>
@@ -339,6 +393,8 @@ footer {
 </div>
 
 <div class="container">
+
+  <!-- LOGIN AND REGISTRATION -->
 
   <div class="card" id="authCard">
     <h2>CRM Login</h2>
@@ -369,11 +425,15 @@ footer {
     <div id="message"></div>
   </div>
 
+  <!-- PENDING ACCOUNT -->
+
   <div class="card hidden" id="pendingCard">
     <h2>Account Status</h2>
     <div class="status" id="pendingStatus"></div>
     <button id="logoutPending" class="secondary">Logout</button>
   </div>
+
+  <!-- OWNER DASHBOARD -->
 
   <div class="card hidden" id="ownerCard">
     <h2>Owner Dashboard</h2>
@@ -426,14 +486,27 @@ footer {
     <button id="ownerLogout">Logout</button>
   </div>
 
+  <!-- CONSULTANT DASHBOARD -->
+
   <div class="card hidden" id="approvedCard">
     <h2>My Assigned Leads</h2>
-    <p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
+
+    <p class="card-description">
+      Buyer and seller enquiries assigned to your CRM account by the Owner.
+      Update lead status, follow-up date and remarks here.
+    </p>
+
     <div class="stats-grid">
-      <div class="stat-box"><strong id="myLeadCount">0</strong><span>Assigned Leads</span></div>
+      <div class="stat-box">
+        <strong id="myLeadCount">0</strong>
+        <span>Assigned Leads</span>
+      </div>
     </div>
+
     <p class="small" id="myLeadStatus">Loading your leads...</p>
+
     <div id="myLeadsList"></div>
+
     <button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
     <button id="approvedLogout" class="secondary">Logout</button>
   </div>
@@ -504,6 +577,8 @@ function hideAll() {
   $("approvedCard").classList.add("hidden");
 }
 
+// LOGIN / REGISTER SWITCH
+
 $("showRegister").onclick = () => {
   $("loginBox").classList.add("hidden");
   $("registerBox").classList.remove("hidden");
@@ -515,6 +590,8 @@ $("showLogin").onclick = () => {
   $("loginBox").classList.remove("hidden");
   message("");
 };
+
+// REGISTER CRM ACCOUNT
 
 $("registerBtn").onclick = async () => {
   const name = $("regName").value.trim();
@@ -556,6 +633,8 @@ $("registerBtn").onclick = async () => {
   }
 };
 
+// LOGIN
+
 $("loginBtn").onclick = async () => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
@@ -572,6 +651,8 @@ $("loginBtn").onclick = async () => {
     message(error.message);
   }
 };
+
+// OWNER: PENDING CRM USERS
 
 async function loadPendingUsers() {
   const list = $("pendingUsers");
@@ -650,6 +731,8 @@ async function loadPendingUsers() {
   }
 }
 
+// DATE FORMAT
+
 function formatDate(timestamp) {
   if (!timestamp || typeof timestamp.toDate !== "function") {
     return "Date not available";
@@ -661,12 +744,15 @@ function formatDate(timestamp) {
   });
 }
 
+// OWNER: LOAD APPROVED AGENTS
+
 async function loadApprovedAgents() {
   const snapshot = await getDocs(collection(db, "agents"));
   approvedAgents = [];
 
   snapshot.forEach(agentDoc => {
     const agent = agentDoc.data();
+
     if (agent.role === "agent" && agent.status === "approved") {
       approvedAgents.push({
         id: agentDoc.id,
@@ -677,6 +763,8 @@ async function loadApprovedAgents() {
 
   approvedAgents.sort((a, b) => a.name.localeCompare(b.name));
 }
+
+// OWNER: RENDER LEADS
 
 function renderLeads() {
   const list = $("leadsList");
@@ -690,7 +778,9 @@ function renderLeads() {
       lead.propertyLocation,
       lead.message,
       lead.enquiryType,
-      lead.assignedAgentName
+      lead.assignedAgentName,
+      lead.status,
+      lead.remarks
     ].join(" ").toLowerCase();
 
     return searchable.includes(searchText);
@@ -716,6 +806,7 @@ function renderLeads() {
     title.textContent = lead.customerName || "Name not provided";
 
     const details = document.createElement("p");
+
     details.textContent =
       "Mobile: " + (lead.phone || "Not provided") +
       "\nEmail: " + (lead.email || "Not provided") +
@@ -724,7 +815,9 @@ function renderLeads() {
       "\nStatus: " + (lead.status || "new") +
       "\nAssigned To: " + (lead.assignedAgentName ||
         (lead.assignedTo && lead.assignedTo !== "pending" &&
-         lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned"));
+         lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned")) +
+      "\nFollow-up Date: " + (lead.followUpDate || "Not scheduled") +
+      "\nConsultant Remarks: " + (lead.remarks || "No remarks yet");
 
     const requirement = document.createElement("p");
     requirement.textContent =
@@ -732,14 +825,17 @@ function renderLeads() {
 
     const date = document.createElement("p");
     date.className = "lead-meta";
-    date.textContent = "Received: " + formatDate(lead.createdAt);
+    date.textContent =
+      "Received: " + formatDate(lead.createdAt) +
+      "\nLast Updated: " + formatDate(lead.updatedAt);
 
     box.appendChild(title);
     box.appendChild(details);
     box.appendChild(requirement);
     box.appendChild(date);
 
-    // Assignment occurs only after the Owner selects a consultant and clicks.
+    // CONSULTANT ASSIGNMENT
+
     const assignmentRow = document.createElement("div");
     assignmentRow.className = "assignment-row";
 
@@ -755,23 +851,34 @@ function renderLeads() {
       const option = document.createElement("option");
       option.value = agent.id;
       option.textContent = agent.name;
-      if (lead.assignedTo === agent.id) option.selected = true;
+
+      if (lead.assignedTo === agent.id) {
+        option.selected = true;
+      }
+
       select.appendChild(option);
     });
 
     const assignButton = document.createElement("button");
+
     assignButton.textContent =
       lead.assignedTo && lead.assignedTo !== "pending" &&
-      lead.assignedTo !== "unassigned" ? "Reassign Lead" : "Assign Lead";
+      lead.assignedTo !== "unassigned"
+        ? "Reassign Lead"
+        : "Assign Lead";
 
     assignButton.onclick = async () => {
       const selectedAgentId = select.value;
+
       if (!selectedAgentId) {
         alert("Please choose a consultant first.");
         return;
       }
 
-      const selectedAgent = approvedAgents.find(agent => agent.id === selectedAgentId);
+      const selectedAgent = approvedAgents.find(
+        agent => agent.id === selectedAgentId
+      );
+
       if (!selectedAgent) {
         alert("Selected consultant is not available. Please refresh leads.");
         return;
@@ -792,9 +899,12 @@ function renderLeads() {
           assignedAt: serverTimestamp(),
           assignedBy: OWNER_UID
         });
+
         await loadLeads();
+
       } catch (error) {
         alert("Could not assign lead: " + error.message);
+
         assignButton.disabled = false;
         assignButton.textContent = "Assign Lead";
       }
@@ -802,13 +912,17 @@ function renderLeads() {
 
     assignmentRow.appendChild(select);
     assignmentRow.appendChild(assignButton);
+
     box.appendChild(assignmentRow);
     list.appendChild(box);
   });
 }
 
+// OWNER: LOAD LEADS
+
 async function loadLeads() {
   const list = $("leadsList");
+
   list.textContent = "Loading leads...";
   $("leadCountText").textContent = "Please wait...";
 
@@ -852,41 +966,68 @@ async function loadLeads() {
 
   } catch (error) {
     allLeads = [];
+
     $("totalLeads").textContent = "—";
     $("buyerLeads").textContent = "—";
     $("sellerLeads").textContent = "—";
+
     $("leadCountText").textContent = "Could not load leads.";
     list.textContent = error.message;
   }
 }
 
+// REFRESH OWNER DASHBOARD
+
 $("refreshUsers").onclick = loadPendingUsers;
-$("refreshLeads").onclick = loadLeads;
+$("refreshLeads").onclick = async () => {
+  await loadApprovedAgents();
+  await loadLeads();
+};
+
 $("leadSearch").addEventListener("input", renderLeads);
+
+// CONSULTANT: LOAD ASSIGNED LEADS AND UPDATE FORM
 
 async function loadMyAssignedLeads(user) {
   const list = $("myLeadsList");
-  const status = $("myLeadStatus");
+  const statusText = $("myLeadStatus");
+
   list.innerHTML = "Loading your assigned leads...";
-  status.textContent = "Please wait...";
+  statusText.textContent = "Please wait...";
 
   try {
     const assignedQuery = query(
       collection(db, "leads"),
       where("assignedTo", "==", user.uid)
     );
+
     const snapshot = await getDocs(assignedQuery);
     const myLeads = [];
 
-    snapshot.forEach(leadDoc => myLeads.push({ id: leadDoc.id, ...leadDoc.data() }));
+    snapshot.forEach(leadDoc => {
+      myLeads.push({
+        id: leadDoc.id,
+        ...leadDoc.data()
+      });
+    });
+
     myLeads.sort((a, b) => {
-      const aTime = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-      const bTime = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      const aTime = a.createdAt && a.createdAt.toMillis
+        ? a.createdAt.toMillis()
+        : 0;
+
+      const bTime = b.createdAt && b.createdAt.toMillis
+        ? b.createdAt.toMillis()
+        : 0;
+
       return bTime - aTime;
     });
 
     $("myLeadCount").textContent = myLeads.length;
-    status.textContent = "Showing " + myLeads.length + " assigned lead(s).";
+
+    statusText.textContent =
+      "Showing " + myLeads.length + " assigned lead(s).";
+
     list.innerHTML = "";
 
     if (myLeads.length === 0) {
@@ -894,39 +1035,187 @@ async function loadMyAssignedLeads(user) {
       return;
     }
 
+    const statusOptions = [
+      "new",
+      "contacted",
+      "follow-up",
+      "site-visit",
+      "negotiation",
+      "closed-won",
+      "closed-lost"
+    ];
+
     myLeads.forEach(lead => {
       const box = document.createElement("div");
       box.className = "leadbox";
+
       const title = document.createElement("h3");
       title.textContent = lead.customerName || "Name not provided";
+
       const details = document.createElement("p");
+
       details.textContent =
         "Mobile: " + (lead.phone || "Not provided") +
         "\nEmail: " + (lead.email || "Not provided") +
         "\nEnquiry Type: " + (lead.enquiryType || "Not specified") +
         "\nLocation: " + (lead.propertyLocation || "Not provided") +
-        "\nStatus: " + (lead.status || "new");
+        "\nCurrent Status: " + (lead.status || "new");
+
       const requirement = document.createElement("p");
-      requirement.textContent = "Requirement: " + (lead.message || "No message provided");
+
+      requirement.textContent =
+        "Requirement: " + (lead.message || "No message provided");
+
       const received = document.createElement("p");
       received.className = "lead-meta";
-      received.textContent = "Received: " + formatDate(lead.createdAt);
+
+      received.textContent =
+        "Received: " + formatDate(lead.createdAt);
+
+      // UPDATE SECTION
+
+      const updateSection = document.createElement("div");
+      updateSection.className = "lead-update-section";
+
+      const updateHeading = document.createElement("h3");
+      updateHeading.textContent = "Update Lead";
+
+      // STATUS
+
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "Lead Status";
+
+      const statusSelect = document.createElement("select");
+
+      statusOptions.forEach(optionValue => {
+        const option = document.createElement("option");
+
+        option.value = optionValue;
+
+        option.textContent = optionValue
+          .replaceAll("-", " ")
+          .replace(/\b\w/g, char => char.toUpperCase());
+
+        if ((lead.status || "new") === optionValue) {
+          option.selected = true;
+        }
+
+        statusSelect.appendChild(option);
+      });
+
+      statusLabel.appendChild(statusSelect);
+
+      // FOLLOW-UP DATE
+
+      const followUpLabel = document.createElement("label");
+      followUpLabel.textContent = "Follow-up Date";
+
+      const followUpInput = document.createElement("input");
+      followUpInput.type = "date";
+      followUpInput.value = lead.followUpDate || "";
+
+      followUpLabel.appendChild(followUpInput);
+
+      // REMARKS
+
+      const remarksLabel = document.createElement("label");
+      remarksLabel.textContent = "Consultant Remarks";
+
+      const remarksInput = document.createElement("textarea");
+
+      remarksInput.placeholder =
+        "Enter call details, customer response, next action...";
+
+      remarksInput.value = lead.remarks || "";
+
+      remarksLabel.appendChild(remarksInput);
+
+      // LAST UPDATE
+
+      const previousUpdate = document.createElement("p");
+      previousUpdate.className = "lead-meta";
+
+      previousUpdate.textContent =
+        "Last Updated: " + formatDate(lead.updatedAt);
+
+      // SAVE UPDATE
+
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "Save Update";
+
+      saveButton.onclick = async () => {
+        const selectedStatus = statusSelect.value;
+        const followUpDate = followUpInput.value;
+        const remarks = remarksInput.value.trim();
+
+        if (!followUpDate) {
+          alert("Please select a follow-up date.");
+          return;
+        }
+
+        if (!remarks) {
+          alert("Please enter consultant remarks.");
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving Update...";
+
+        try {
+          await updateDoc(doc(db, "leads", lead.id), {
+            status: selectedStatus,
+            followUpDate: followUpDate,
+            remarks: remarks,
+            updatedAt: serverTimestamp()
+          });
+
+          alert("Lead update saved successfully!");
+
+          await loadMyAssignedLeads(user);
+
+        } catch (error) {
+          alert("Could not save update: " + error.message);
+
+          saveButton.disabled = false;
+          saveButton.textContent = "Save Update";
+        }
+      };
+
+      updateSection.appendChild(updateHeading);
+      updateSection.appendChild(statusLabel);
+      updateSection.appendChild(followUpLabel);
+      updateSection.appendChild(remarksLabel);
+      updateSection.appendChild(previousUpdate);
+      updateSection.appendChild(saveButton);
+
       box.appendChild(title);
       box.appendChild(details);
       box.appendChild(requirement);
       box.appendChild(received);
+      box.appendChild(updateSection);
+
       list.appendChild(box);
     });
+
   } catch (error) {
     $("myLeadCount").textContent = "—";
-    status.textContent = "Could not load assigned leads: " + error.message;
+
+    statusText.textContent =
+      "Could not load assigned leads: " + error.message;
+
     list.innerHTML = "";
   }
 }
 
+// CONSULTANT REFRESH
+
 $("refreshMyLeads").onclick = () => {
-  if (auth.currentUser) loadMyAssignedLeads(auth.currentUser);
+  if (auth.currentUser) {
+    loadMyAssignedLeads(auth.currentUser);
+  }
 };
+
+// LOGOUT
 
 async function logout() {
   try {
@@ -940,6 +1229,8 @@ $("logoutPending").onclick = logout;
 $("ownerLogout").onclick = logout;
 $("approvedLogout").onclick = logout;
 
+// AUTH STATE
+
 onAuthStateChanged(auth, async user => {
   hideAll();
 
@@ -948,13 +1239,19 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
+  // OWNER LOGIN
+
   if (user.uid === OWNER_UID) {
     $("ownerCard").classList.remove("hidden");
+
     await loadPendingUsers();
     await loadApprovedAgents();
     await loadLeads();
+
     return;
   }
+
+  // CRM USER LOGIN
 
   try {
     const userRef = doc(db, "users", user.uid);
@@ -962,22 +1259,29 @@ onAuthStateChanged(auth, async user => {
 
     if (!userSnap.exists()) {
       $("pendingCard").classList.remove("hidden");
+
       $("pendingStatus").textContent =
         "Your CRM profile is not available. Please contact Owner.";
+
       return;
     }
 
     const data = userSnap.data();
 
-    if (data.status === "approved") {
+    if (data.status === "approved" && data.role === "crm") {
       $("approvedCard").classList.remove("hidden");
+
       await loadMyAssignedLeads(user);
+
     } else if (data.status === "rejected") {
       $("pendingCard").classList.remove("hidden");
+
       $("pendingStatus").textContent =
         "Your registration has been rejected. Please contact Owner.";
+
     } else {
       $("pendingCard").classList.remove("hidden");
+
       $("pendingStatus").textContent =
         "Your account is pending Owner approval. Please wait.";
     }
