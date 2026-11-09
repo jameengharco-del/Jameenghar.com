@@ -119,7 +119,7 @@ h3 {
   margin-bottom:12px;
 }
 
-input,button {
+input,button,select {
   width:100%;
   padding:14px;
   margin:8px 0;
@@ -127,7 +127,7 @@ input,button {
   font-size:15px;
 }
 
-input {
+input,select {
   border:1px solid #ccd8ce;
   background:white;
   color:var(--ink);
@@ -427,16 +427,14 @@ footer {
   </div>
 
   <div class="card hidden" id="approvedCard">
-    <h2>CRM Dashboard</h2>
-
-    <div class="status">
-      <strong>Welcome to JameenGhar CRM!</strong>
-      <br><br>
-      Your account has been approved successfully.
-      <br><br>
-      Your CRM dashboard modules will be activated as development progresses.
+    <h2>My Assigned Leads</h2>
+    <p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
+    <div class="stats-grid">
+      <div class="stat-box"><strong id="myLeadCount">0</strong><span>Assigned Leads</span></div>
     </div>
-
+    <p class="small" id="myLeadStatus">Loading your leads...</p>
+    <div id="myLeadsList"></div>
+    <button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
     <button id="approvedLogout" class="secondary">Logout</button>
   </div>
 
@@ -468,7 +466,9 @@ import {
   getDocs,
   collection,
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  where
 }
 from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
@@ -864,6 +864,70 @@ $("refreshUsers").onclick = loadPendingUsers;
 $("refreshLeads").onclick = loadLeads;
 $("leadSearch").addEventListener("input", renderLeads);
 
+async function loadMyAssignedLeads(user) {
+  const list = $("myLeadsList");
+  const status = $("myLeadStatus");
+  list.innerHTML = "Loading your assigned leads...";
+  status.textContent = "Please wait...";
+
+  try {
+    const assignedQuery = query(
+      collection(db, "leads"),
+      where("assignedTo", "==", user.uid)
+    );
+    const snapshot = await getDocs(assignedQuery);
+    const myLeads = [];
+
+    snapshot.forEach(leadDoc => myLeads.push({ id: leadDoc.id, ...leadDoc.data() }));
+    myLeads.sort((a, b) => {
+      const aTime = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const bTime = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+
+    $("myLeadCount").textContent = myLeads.length;
+    status.textContent = "Showing " + myLeads.length + " assigned lead(s).";
+    list.innerHTML = "";
+
+    if (myLeads.length === 0) {
+      list.textContent = "No leads have been assigned to you yet.";
+      return;
+    }
+
+    myLeads.forEach(lead => {
+      const box = document.createElement("div");
+      box.className = "leadbox";
+      const title = document.createElement("h3");
+      title.textContent = lead.customerName || "Name not provided";
+      const details = document.createElement("p");
+      details.textContent =
+        "Mobile: " + (lead.phone || "Not provided") +
+        "\nEmail: " + (lead.email || "Not provided") +
+        "\nEnquiry Type: " + (lead.enquiryType || "Not specified") +
+        "\nLocation: " + (lead.propertyLocation || "Not provided") +
+        "\nStatus: " + (lead.status || "new");
+      const requirement = document.createElement("p");
+      requirement.textContent = "Requirement: " + (lead.message || "No message provided");
+      const received = document.createElement("p");
+      received.className = "lead-meta";
+      received.textContent = "Received: " + formatDate(lead.createdAt);
+      box.appendChild(title);
+      box.appendChild(details);
+      box.appendChild(requirement);
+      box.appendChild(received);
+      list.appendChild(box);
+    });
+  } catch (error) {
+    $("myLeadCount").textContent = "—";
+    status.textContent = "Could not load assigned leads: " + error.message;
+    list.innerHTML = "";
+  }
+}
+
+$("refreshMyLeads").onclick = () => {
+  if (auth.currentUser) loadMyAssignedLeads(auth.currentUser);
+};
+
 async function logout() {
   try {
     await signOut(auth);
@@ -885,16 +949,17 @@ onAuthStateChanged(auth, async user => {
   }
 
   if (user.uid === OWNER_UID) {
-  $("ownerCard").classList.remove("hidden");
-  await loadPendingUsers();
-  await loadApprovedAgents();
-  await loadLeads();
-  return;
-}
+    $("ownerCard").classList.remove("hidden");
+    await loadPendingUsers();
+    await loadApprovedAgents();
+    await loadLeads();
+    return;
+  }
 
-try {
-  const userRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userRef);
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
     if (!userSnap.exists()) {
       $("pendingCard").classList.remove("hidden");
       $("pendingStatus").textContent =
@@ -906,6 +971,7 @@ try {
 
     if (data.status === "approved") {
       $("approvedCard").classList.remove("hidden");
+      await loadMyAssignedLeads(user);
     } else if (data.status === "rejected") {
       $("pendingCard").classList.remove("hidden");
       $("pendingStatus").textContent =
