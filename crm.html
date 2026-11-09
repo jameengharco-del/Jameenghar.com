@@ -16,6 +16,8 @@
   --cream:#f6f8f5;
   --line:#e4eae5;
   --white:#ffffff;
+  --red:#b42318;
+  --yellow:#fff4d6;
 }
 
 * {
@@ -32,7 +34,7 @@ body {
 }
 
 header {
-  background:var(--white);
+  background:white;
   border-bottom:1px solid var(--line);
   padding:14px 5%;
   display:flex;
@@ -43,9 +45,7 @@ header {
   box-shadow:0 2px 10px #00000008;
 }
 
-.logo-link {
-  display:block;
-}
+.logo-link { display:block; }
 
 header img {
   display:block;
@@ -55,9 +55,7 @@ header img {
   object-fit:contain;
 }
 
-.header-text {
-  text-align:right;
-}
+.header-text { text-align:right; }
 
 .header-text h1 {
   color:var(--green);
@@ -88,13 +86,13 @@ header img {
 }
 
 .container {
-  max-width:1000px;
+  max-width:1100px;
   margin:20px auto 45px;
   padding:15px;
 }
 
 .card {
-  background:var(--white);
+  background:white;
   padding:28px;
   border:1px solid var(--line);
   border-radius:16px;
@@ -153,34 +151,20 @@ button {
   transition:background .2s;
 }
 
-button:hover {
-  background:#e84b00;
-}
+button:hover { background:#e84b00; }
 
 button:disabled {
   opacity:.6;
   cursor:not-allowed;
 }
 
-.secondary {
-  background:var(--green);
-}
+.secondary { background:var(--green); }
+.secondary:hover { background:var(--green2); }
 
-.secondary:hover {
-  background:var(--green2);
-}
+.reject { background:var(--red); }
+.reject:hover { background:#941b13; }
 
-.reject {
-  background:#b42318;
-}
-
-.reject:hover {
-  background:#941b13;
-}
-
-.hidden {
-  display:none!important;
-}
+.hidden { display:none!important; }
 
 .status {
   padding:17px;
@@ -197,7 +181,7 @@ button:disabled {
   padding:17px;
   border-radius:12px;
   margin:14px 0;
-  background:#fff;
+  background:white;
 }
 
 .userbox p,.leadbox p {
@@ -220,7 +204,7 @@ button:disabled {
 
 .stats-grid {
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:12px;
   margin:20px 0;
 }
@@ -243,6 +227,63 @@ button:disabled {
 .stat-box span {
   color:var(--muted);
   font-size:13px;
+}
+
+.followup-card {
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:18px;
+  margin:14px 0;
+  background:white;
+}
+
+.followup-card h3 {
+  margin:0 0 10px;
+  font-size:17px;
+}
+
+.followup-card p {
+  line-height:1.7;
+  margin:5px 0;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap;
+}
+
+.today-card {
+  border-left:5px solid #e5a000;
+  background:#fffdf7;
+}
+
+.overdue-card {
+  border-left:5px solid var(--red);
+  background:#fffafa;
+}
+
+.followup-date {
+  font-weight:bold;
+  color:var(--green);
+}
+
+.overdue-label {
+  display:inline-block;
+  background:#fde8e7;
+  color:var(--red);
+  padding:5px 9px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+.today-label {
+  display:inline-block;
+  background:var(--yellow);
+  color:#805900;
+  padding:5px 9px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+  margin-bottom:8px;
 }
 
 .lead-toolbar {
@@ -294,9 +335,7 @@ button:disabled {
   color:var(--green);
 }
 
-.lead-update-section button {
-  margin-top:12px;
-}
+.lead-update-section button { margin-top:12px; }
 
 .small {
   font-size:13px;
@@ -306,7 +345,7 @@ button:disabled {
 #message {
   white-space:pre-wrap;
   margin:12px 0;
-  color:#b42318;
+  color:var(--red);
   font-size:14px;
   line-height:1.5;
 }
@@ -320,56 +359,35 @@ footer {
   background:white;
 }
 
+@media(max-width:850px) {
+  .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
 @media(max-width:600px) {
   header {
     justify-content:center;
     text-align:center;
   }
 
-  .header-text {
-    text-align:center;
-  }
-
-  .header-text h1 {
-    font-size:19px;
-  }
+  .header-text { text-align:center; }
+  .header-text h1 { font-size:19px; }
 
   .container {
     margin:12px auto 30px;
     padding:12px;
   }
 
-  .card {
-    padding:20px;
-  }
+  .card { padding:20px; }
+  .hero { padding-top:25px; }
+  .hero h2 { font-size:22px; }
 
-  .hero {
-    padding-top:25px;
-  }
+  .stats-grid { grid-template-columns:1fr; }
 
-  .hero h2 {
-    font-size:22px;
-  }
+  .lead-toolbar { display:block; }
+  .lead-toolbar button { width:100%; }
 
-  .stats-grid {
-    grid-template-columns:1fr;
-  }
-
-  .lead-toolbar {
-    display:block;
-  }
-
-  .lead-toolbar button {
-    width:100%;
-  }
-
-  .assignment-row {
-    display:block;
-  }
-
-  .assignment-row button {
-    width:100%;
-  }
+  .assignment-row { display:block; }
+  .assignment-row button { width:100%; }
 }
 </style>
 </head>
@@ -468,7 +486,45 @@ footer {
         <strong id="sellerLeads">0</strong>
         <span>Seller Enquiries</span>
       </div>
+
+      <div class="stat-box">
+        <strong id="todayFollowupCount">0</strong>
+        <span>Today's Follow-ups</span>
+      </div>
+
+      <div class="stat-box">
+        <strong id="overdueFollowupCount">0</strong>
+        <span>Overdue Leads</span>
+      </div>
     </div>
+
+    <!-- TODAY'S FOLLOW-UPS -->
+
+    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
+    <h2>Today's Follow-ups</h2>
+    <p class="card-description">
+      Leads whose follow-up date is today.
+    </p>
+
+    <div id="todayFollowupsList"></div>
+
+    <!-- OVERDUE FOLLOW-UPS -->
+
+    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
+    <h2>Overdue Leads</h2>
+    <p class="card-description">
+      Leads with a past follow-up date that are not closed yet.
+    </p>
+
+    <div id="overdueFollowupsList"></div>
+
+    <!-- ALL LEADS -->
+
+    <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
+    <h2>All Leads</h2>
 
     <div class="lead-toolbar">
       <input
@@ -731,7 +787,7 @@ async function loadPendingUsers() {
   }
 }
 
-// DATE FORMAT
+// DATE HELPERS
 
 function formatDate(timestamp) {
   if (!timestamp || typeof timestamp.toDate !== "function") {
@@ -742,6 +798,35 @@ function formatDate(timestamp) {
     dateStyle: "medium",
     timeStyle: "short"
   });
+}
+
+// Return browser-local date as YYYY-MM-DD
+
+function getLocalDateISO(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatFollowupDate(dateString) {
+  if (!dateString) return "Not scheduled";
+
+  const parts = dateString.split("-");
+
+  if (parts.length !== 3) return dateString;
+
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
+function isClosedLead(lead) {
+  const status = String(lead.status || "").toLowerCase();
+
+  return status === "closed-won" ||
+         status === "closed-lost" ||
+         status === "closed won" ||
+         status === "closed lost";
 }
 
 // OWNER: LOAD APPROVED AGENTS
@@ -764,7 +849,111 @@ async function loadApprovedAgents() {
   approvedAgents.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// OWNER: RENDER LEADS
+// OWNER: FOLLOW-UP CARD RENDERING
+
+function renderFollowupCards(leads, targetId, type) {
+  const list = $(targetId);
+  list.innerHTML = "";
+
+  if (leads.length === 0) {
+    list.textContent = type === "today"
+      ? "No follow-ups scheduled for today."
+      : "No overdue leads. Great job!";
+    return;
+  }
+
+  leads.forEach(lead => {
+    const box = document.createElement("div");
+
+    box.className = type === "today"
+      ? "followup-card today-card"
+      : "followup-card overdue-card";
+
+    const label = document.createElement("span");
+
+    label.className = type === "today"
+      ? "today-label"
+      : "overdue-label";
+
+    label.textContent = type === "today"
+      ? "FOLLOW-UP TODAY"
+      : "OVERDUE FOLLOW-UP";
+
+    const title = document.createElement("h3");
+    title.textContent = lead.customerName || "Name not provided";
+
+    const details = document.createElement("p");
+
+    details.textContent =
+      "Mobile: " + (lead.phone || "Not provided") +
+      "\nEmail: " + (lead.email || "Not provided") +
+      "\nLocation: " + (lead.propertyLocation || "Not provided") +
+      "\nConsultant: " + (lead.assignedAgentName || "Unassigned") +
+      "\nStatus: " + (lead.status || "new");
+
+    const date = document.createElement("p");
+    date.className = "followup-date";
+    date.textContent =
+      "Follow-up Date: " + formatFollowupDate(lead.followUpDate);
+
+    const remarks = document.createElement("p");
+    remarks.textContent =
+      "Consultant Remarks: " + (lead.remarks || "No remarks yet");
+
+    box.appendChild(label);
+    box.appendChild(title);
+    box.appendChild(details);
+    box.appendChild(date);
+    box.appendChild(remarks);
+
+    list.appendChild(box);
+  });
+}
+
+// OWNER: RENDER TODAY AND OVERDUE FOLLOW-UPS
+
+function renderFollowups() {
+  const today = getLocalDateISO();
+
+  const openLeads = allLeads.filter(lead => {
+    return lead.followUpDate && !isClosedLead(lead);
+  });
+
+  const todayLeads = openLeads.filter(lead => {
+    return lead.followUpDate === today;
+  });
+
+  const overdueLeads = openLeads.filter(lead => {
+    return lead.followUpDate < today;
+  });
+
+  // Sort by date, earliest first
+
+  todayLeads.sort((a, b) =>
+    String(a.followUpDate).localeCompare(String(b.followUpDate))
+  );
+
+  overdueLeads.sort((a, b) =>
+    String(a.followUpDate).localeCompare(String(b.followUpDate))
+  );
+
+  $("todayFollowupCount").textContent = todayLeads.length;
+  $("overdueFollowupCount").textContent = overdueLeads.length;
+
+  renderFollowupCards(
+    todayLeads,
+    "todayFollowupsList",
+    "today"
+  );
+
+  renderFollowupCards(
+    overdueLeads,
+    "overdueFollowupsList",
+    "overdue"
+  );
+}
+
+// OWNER: RENDER ALL LEADS
 
 function renderLeads() {
   const list = $("leadsList");
@@ -780,7 +969,8 @@ function renderLeads() {
       lead.enquiryType,
       lead.assignedAgentName,
       lead.status,
-      lead.remarks
+      lead.remarks,
+      lead.followUpDate
     ].join(" ").toLowerCase();
 
     return searchable.includes(searchText);
@@ -816,7 +1006,7 @@ function renderLeads() {
       "\nAssigned To: " + (lead.assignedAgentName ||
         (lead.assignedTo && lead.assignedTo !== "pending" &&
          lead.assignedTo !== "unassigned" ? lead.assignedTo : "Unassigned")) +
-      "\nFollow-up Date: " + (lead.followUpDate || "Not scheduled") +
+      "\nFollow-up Date: " + formatFollowupDate(lead.followUpDate) +
       "\nConsultant Remarks: " + (lead.remarks || "No remarks yet");
 
     const requirement = document.createElement("p");
@@ -962,6 +1152,9 @@ async function loadLeads() {
     $("buyerLeads").textContent = buyers;
     $("sellerLeads").textContent = sellers;
 
+    // Render follow-ups and all leads
+
+    renderFollowups();
     renderLeads();
 
   } catch (error) {
@@ -970,15 +1163,21 @@ async function loadLeads() {
     $("totalLeads").textContent = "—";
     $("buyerLeads").textContent = "—";
     $("sellerLeads").textContent = "—";
+    $("todayFollowupCount").textContent = "—";
+    $("overdueFollowupCount").textContent = "—";
 
     $("leadCountText").textContent = "Could not load leads.";
     list.textContent = error.message;
+
+    $("todayFollowupsList").textContent = error.message;
+    $("overdueFollowupsList").textContent = error.message;
   }
 }
 
 // REFRESH OWNER DASHBOARD
 
 $("refreshUsers").onclick = loadPendingUsers;
+
 $("refreshLeads").onclick = async () => {
   await loadApprovedAgents();
   await loadLeads();
