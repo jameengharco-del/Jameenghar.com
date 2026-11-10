@@ -5,98 +5,391 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JameenGhar CRM | Real Estate Management</title>
+
 <style>
-:root{--green:#064d2b;--green2:#0b6840;--orange:#ff5a0a;--ink:#17251d;--muted:#64736a;--cream:#f6f8f5;--line:#e4eae5;--white:#fff}
+:root{
+--green:#064d2b;
+--green2:#0b6840;
+--orange:#ff5a0a;
+--ink:#17251d;
+--muted:#64736a;
+--cream:#f6f8f5;
+--line:#e4eae5;
+--white:#fff
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
-header{background:#fff;border-bottom:1px solid var(--line);padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;box-shadow:0 2px 10px #00000008}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:var(--cream);
+color:var(--ink);
+min-height:100vh
+}
+
+header{
+background:#fff;
+border-bottom:1px solid var(--line);
+padding:14px 5%;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:15px;
+flex-wrap:wrap;
+box-shadow:0 2px 10px #00000008
+}
+
 .logo-link{display:block}
-header img{display:block;width:210px;max-width:65vw;max-height:65px;object-fit:contain}
+
+header img{
+display:block;
+width:210px;
+max-width:65vw;
+max-height:65px;
+object-fit:contain
+}
+
 .header-text{text-align:right}
 .header-text h1{color:var(--green);font-size:22px}
 .header-text p{color:var(--muted);font-size:13px;margin-top:5px}
+
 .hero{text-align:center;padding:35px 15px 10px}
 .hero h2{color:var(--green);font-size:26px;margin-bottom:8px}
 .hero p{color:var(--muted);font-size:14px;line-height:1.6}
-.container{max-width:1000px;margin:20px auto 45px;padding:15px}
-.card{background:#fff;padding:28px;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px #12331b0d;margin-bottom:22px}
+
+.container{
+max-width:1000px;
+margin:20px auto 45px;
+padding:15px
+}
+
+.card{
+background:#fff;
+padding:28px;
+border:1px solid var(--line);
+border-radius:16px;
+box-shadow:0 8px 28px #12331b0d;
+margin-bottom:22px
+}
+
 h2{margin-bottom:18px;color:var(--green)}
 h3{color:var(--green);margin:20px 0 12px}
-.card-description{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:12px}
-input,button,select{width:100%;padding:14px;margin:8px 0;border-radius:9px;font-size:15px}
-input,select{border:1px solid #ccd8ce;background:white;color:var(--ink)}
-input:focus{outline:2px solid #b8d7c1;border-color:var(--green2)}
-button{border:none;background:var(--orange);color:white;font-weight:bold;cursor:pointer;transition:background .2s}
+
+.card-description{
+color:var(--muted);
+font-size:14px;
+line-height:1.6;
+margin-bottom:12px
+}
+
+input,button,select{
+width:100%;
+padding:14px;
+margin:8px 0;
+border-radius:9px;
+font-size:15px
+}
+
+input,select{
+border:1px solid #ccd8ce;
+background:white;
+color:var(--ink)
+}
+
+input:focus,select:focus,textarea:focus{
+outline:2px solid #b8d7c1;
+border-color:var(--green2)
+}
+
+button{
+border:none;
+background:var(--orange);
+color:white;
+font-weight:bold;
+cursor:pointer;
+transition:background .2s
+}
+
 button:hover{background:#e84b00}
 button:disabled{opacity:.6;cursor:not-allowed}
+
 .secondary{background:var(--green)}
 .secondary:hover{background:var(--green2)}
+
 .reject{background:#b42318}
 .reject:hover{background:#941b13}
+
 .hidden{display:none!important}
-.status{padding:17px;border-radius:10px;background:#e8f4eb;border:1px solid #d5e8da;margin:14px 0;line-height:1.7;color:var(--ink)}
-.userbox,.leadbox{border:1px solid var(--line);padding:17px;border-radius:12px;margin:14px 0;background:#fff}
-.userbox p,.leadbox p{line-height:1.8;overflow-wrap:anywhere;margin-bottom:7px}
-.leadbox h3{margin:0 0 10px;font-size:17px}
-.lead-meta{color:var(--muted);font-size:12px;margin-top:10px}
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
-.stat-box{background:#f6f8f5;border:1px solid var(--line);border-radius:12px;padding:18px 12px;text-align:center}
-.stat-box strong{display:block;color:var(--green);font-size:27px;margin-bottom:6px}
+
+.status{
+padding:17px;
+border-radius:10px;
+background:#e8f4eb;
+border:1px solid #d5e8da;
+margin:14px 0;
+line-height:1.7;
+color:var(--ink)
+}
+
+.userbox,.leadbox{
+border:1px solid var(--line);
+padding:17px;
+border-radius:12px;
+margin:14px 0;
+background:#fff
+}
+
+.userbox p,.leadbox p{
+line-height:1.8;
+overflow-wrap:anywhere;
+margin-bottom:7px
+}
+
+.leadbox h3{
+margin:0 0 10px;
+font-size:17px
+}
+
+.lead-meta{
+color:var(--muted);
+font-size:12px;
+margin-top:10px
+}
+
+.stats-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+margin:20px 0
+}
+
+.stat-box{
+background:#f6f8f5;
+border:1px solid var(--line);
+border-radius:12px;
+padding:18px 12px;
+text-align:center
+}
+
+.stat-box strong{
+display:block;
+color:var(--green);
+font-size:27px;
+margin-bottom:6px
+}
+
 .stat-box span{color:var(--muted);font-size:13px}
-.lead-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+.lead-toolbar{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap
+}
+
 .lead-toolbar input{flex:1;min-width:180px}
 .lead-toolbar button{width:auto;min-width:130px}
+
 .small{font-size:13px;color:var(--muted)}
-#message{white-space:pre-wrap;margin:12px 0;color:#b42318;font-size:14px;line-height:1.5}
-footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);background:white}
-.followup-panel{border:2px solid #ff5a0a;background:linear-gradient(135deg,#fffaf5,#fff);border-radius:16px;padding:20px;margin:18px 0 24px;box-shadow:0 8px 24px #ff5a0a12}
-.followup-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
-.followup-kicker{display:inline-block;color:#ff5a0a;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-bottom:6px}
+
+#message{
+white-space:pre-wrap;
+margin:12px 0;
+color:#b42318;
+font-size:14px;
+line-height:1.5
+}
+
+footer{
+text-align:center;
+padding:20px;
+color:var(--muted);
+font-size:12px;
+border-top:1px solid var(--line);
+background:white
+}
+
+.followup-panel{
+border:2px solid #ff5a0a;
+background:linear-gradient(135deg,#fffaf5,#fff);
+border-radius:16px;
+padding:20px;
+margin:18px 0 24px;
+box-shadow:0 8px 24px #ff5a0a12
+}
+
+.followup-heading{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:14px;
+margin-bottom:14px
+}
+
+.followup-kicker{
+display:inline-block;
+color:#ff5a0a;
+font-size:11px;
+font-weight:800;
+letter-spacing:1.5px;
+margin-bottom:6px
+}
+
 .followup-heading h2{margin:0 0 5px;color:#064d2b}
 .followup-heading p{font-size:13px;color:#64736a;line-height:1.5}
-.followup-total{background:#064d2b;color:#fff;border-radius:12px;padding:12px 16px;text-align:center;min-width:95px}
+
+.followup-total{
+background:#064d2b;
+color:#fff;
+border-radius:12px;
+padding:12px 16px;
+text-align:center;
+min-width:95px
+}
+
 .followup-total strong{display:block;font-size:25px}
 .followup-total span{font-size:11px}
-.followup-item{background:#fff;border:1px solid #e4eae5;border-radius:12px;padding:15px;margin:12px 0}
+
+.followup-item{
+background:#fff;
+border:1px solid #e4eae5;
+border-radius:12px;
+padding:15px;
+margin:12px 0
+}
+
 .followup-item h3{margin:0 0 8px}
-.followup-item p{white-space:pre-line;line-height:1.6;margin:5px 0;font-size:14px}
-.followup-item .task-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.task-form input,.task-form select,.task-form textarea{width:100%;margin:0;padding:11px;border:1px solid #ccd8ce;border-radius:8px;font:14px Arial}
-.task-form textarea{grid-column:1/-1;min-height:75px}
-.task-form button{grid-column:1/-1;margin:0}
-.consultant-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:10px 0 15px}
-.consultant-count{background:#f6f8f5;border:1px solid #e4eae5;border-radius:10px;padding:12px}
-.consultant-count strong{color:#064d2b;font-size:22px;display:block}
+.followup-item p{
+white-space:pre-line;
+line-height:1.6;
+margin:5px 0;
+font-size:14px
+}
+
+.task-form{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:12px
+}
+
+.task-form input,
+.task-form select,
+.task-form textarea{
+width:100%;
+margin:0;
+padding:11px;
+border:1px solid #ccd8ce;
+border-radius:8px;
+font:14px Arial
+}
+
+.task-form textarea{
+grid-column:1/-1;
+min-height:75px;
+resize:vertical
+}
+
+.task-form button{
+grid-column:1/-1;
+margin:0
+}
+
+.consultant-counts{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:9px;
+margin:10px 0 15px
+}
+
+.consultant-count{
+background:#f6f8f5;
+border:1px solid #e4eae5;
+border-radius:10px;
+padding:12px
+}
+
+.consultant-count strong{
+color:#064d2b;
+font-size:22px;
+display:block
+}
+
 .consultant-count span{font-size:12px;color:#64736a}
+
 .activity-wrap{margin-top:12px}
 .activity-toggle{width:100%;margin:0}
-.activity-panel{margin-top:10px;padding:12px;border:1px solid #dce6de;border-radius:10px;background:#fbfdfb}
-.activity-entry{padding:10px 0;border-bottom:1px solid #e6ece7}
+
+.activity-panel{
+margin-top:10px;
+padding:12px;
+border:1px solid #dce6de;
+border-radius:10px;
+background:#fbfdfb
+}
+
+.activity-entry{
+padding:10px 0;
+border-bottom:1px solid #e6ece7
+}
+
 .activity-entry:last-child{border-bottom:0}
 .activity-entry strong{color:#064d2b;font-size:13px}
 .activity-entry p{margin:5px 0;white-space:pre-wrap;font-size:13px}
 .activity-entry small{color:#68756c}
-.transfer-choice{position:fixed;inset:0;background:#0009;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
-.transfer-choice-box{background:#fff;padding:24px;border-radius:14px;max-width:420px;width:100%;box-shadow:0 10px 40px #0003}
+
+.transfer-choice{
+position:fixed;
+inset:0;
+background:#0009;
+z-index:99999;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:18px
+}
+
+.transfer-choice-box{
+background:#fff;
+padding:24px;
+border-radius:14px;
+max-width:420px;
+width:100%;
+box-shadow:0 10px 40px #0003
+}
+
 .transfer-choice-box h3{margin:0 0 12px}
 .transfer-choice-box p{line-height:1.6;margin-bottom:18px;color:#64736a}
 .transfer-choice-box button{margin:6px 0}
+
+.assignment-row{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:12px
+}
+
+.assignment-row select,
+.assignment-row button{margin:0}
+
 @media(max-width:600px){
- header{justify-content:center;text-align:center}
- .header-text{text-align:center}
- .header-text h1{font-size:19px}
- .container{margin:12px auto 30px;padding:12px}
- .card{padding:20px}
- .hero{padding-top:25px}
- .hero h2{font-size:22px}
- .stats-grid{grid-template-columns:1fr}
- .lead-toolbar{display:block}
- .lead-toolbar button{width:100%}
- .followup-heading{align-items:flex-start}
- .task-form{grid-template-columns:1fr!important}
+header{justify-content:center;text-align:center}
+.header-text{text-align:center}
+.header-text h1{font-size:19px}
+.container{margin:12px auto 30px;padding:12px}
+.card{padding:20px}
+.hero{padding-top:25px}
+.hero h2{font-size:22px}
+.stats-grid{grid-template-columns:1fr}
+.lead-toolbar{display:block}
+.lead-toolbar button{width:100%}
+.followup-heading{align-items:flex-start}
+.task-form{grid-template-columns:1fr!important}
+.assignment-row{grid-template-columns:1fr}
 }
 </style>
 </head>
+
 <body>
 
 <header>
@@ -119,12 +412,14 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <div class="card" id="authCard">
 <h2>CRM Login</h2>
 <p class="card-description">Login to access your JameenGhar CRM account.</p>
+
 <div id="loginBox">
 <input id="loginEmail" type="email" placeholder="Email Address">
 <input id="loginPassword" type="password" placeholder="Password">
 <button id="loginBtn">Login to CRM</button>
 <button class="secondary" id="showRegister">Create CRM Account</button>
 </div>
+
 <div id="registerBox" class="hidden">
 <h2>Create Your Account</h2>
 <input id="regName" type="text" placeholder="Full Name">
@@ -134,6 +429,7 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <button id="registerBtn">Register Account</button>
 <button class="secondary" id="showLogin">Back to Login</button>
 </div>
+
 <div id="message"></div>
 </div>
 
@@ -146,17 +442,27 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <div class="card hidden" id="ownerCard">
 <h2>Owner Dashboard</h2>
 <p class="card-description">Manage CRM user registrations and property enquiries.</p>
+
 <h3>CRM User Approvals</h3>
 <div id="pendingUsers"></div>
 <button id="refreshUsers" class="secondary">Refresh Users</button>
+
 <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
 <h2>Lead Management</h2>
 <p class="card-description">View and monitor buyer and seller enquiries received by JameenGhar.</p>
 
 <section class="followup-panel" id="ownerFollowupPanel">
 <div class="followup-heading">
-<div><span class="followup-kicker">DAILY ACTION</span><h2>Due Follow-ups</h2><p>Monitor today's and overdue follow-ups across all consultants.</p></div>
-<div class="followup-total"><strong id="ownerDueCount">0</strong><span>Pending due</span></div>
+<div>
+<span class="followup-kicker">DAILY ACTION</span>
+<h2>Due Follow-ups</h2>
+<p>Monitor today's and overdue follow-ups across all consultants.</p>
+</div>
+<div class="followup-total">
+<strong id="ownerDueCount">0</strong>
+<span>Pending due</span>
+</div>
 </div>
 <div id="ownerConsultantCounts" class="consultant-counts"></div>
 <div id="ownerTodayLeads"></div>
@@ -167,10 +473,12 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <div class="stat-box"><strong id="buyerLeads">0</strong><span>Buyer Enquiries</span></div>
 <div class="stat-box"><strong id="sellerLeads">0</strong><span>Seller Enquiries</span></div>
 </div>
+
 <div class="lead-toolbar">
 <input id="leadSearch" type="search" placeholder="Search name, mobile, email or location...">
 <button id="refreshLeads" class="secondary">Refresh Leads</button>
 </div>
+
 <p class="small" id="leadCountText">Loading leads...</p>
 <div id="leadsList"></div>
 <button id="ownerLogout">Logout</button>
@@ -179,18 +487,32 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <div class="card hidden" id="approvedCard">
 <h2>My Assigned Leads</h2>
 <p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
+
 <section class="followup-panel" id="consultantFollowupPanel">
 <div class="followup-heading">
-<div><span class="followup-kicker">DAILY ACTION</span><h2>Due Follow-ups</h2><p>Work on today's and overdue leads one by one. Save your update to complete today's task.</p></div>
-<div class="followup-total"><strong id="consultantDueCount">0</strong><span>Due / overdue</span></div>
+<div>
+<span class="followup-kicker">DAILY ACTION</span>
+<h2>Due Follow-ups</h2>
+<p>Work on today's and overdue leads one by one. Save your update to complete today's task.</p>
+</div>
+<div class="followup-total">
+<strong id="consultantDueCount">0</strong>
+<span>Due / overdue</span>
+</div>
 </div>
 <div id="consultantTodayLeads"></div>
 </section>
+
 <div class="stats-grid">
-<div class="stat-box"><strong id="myLeadCount">0</strong><span>Assigned Leads</span></div>
+<div class="stat-box">
+<strong id="myLeadCount">0</strong>
+<span>Assigned Leads</span>
 </div>
+</div>
+
 <p class="small" id="myLeadStatus">Loading your leads...</p>
 <div id="myLeadsList"></div>
+
 <button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
 <button id="approvedLogout" class="secondary">Logout</button>
 </div>
@@ -200,9 +522,32 @@ footer{text-align:center;padding:20px;color:var(--muted);font-size:12px;border-t
 <footer>© 2026 JameenGhar.com | Real Estate Management Portal</footer>
 
 <script type="module">
+
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import {getFirestore,doc,setDoc,getDoc,getDocs,collection,updateDoc,writeBatch,orderBy,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+import {
+getFirestore,
+doc,
+setDoc,
+getDoc,
+getDocs,
+collection,
+updateDoc,
+writeBatch,
+orderBy,
+serverTimestamp,
+query,
+where
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
 
 const firebaseConfig={
 apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
@@ -215,282 +560,634 @@ measurementId:"G-RQJWG3PBY9"
 };
 
 const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
+
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
+
 const $=id=>document.getElementById(id);
+
 let allLeads=[];
 let approvedAgents=[];
 
-function message(text){$("message").textContent=text}
-function hideAll(){
-["authCard","pendingCard","ownerCard","approvedCard"].forEach(id=>$(id).classList.add("hidden"));
+
+function message(text){
+$("message").textContent=text;
 }
+
+function hideAll(){
+["authCard","pendingCard","ownerCard","approvedCard"].forEach(id=>{
+$(id).classList.add("hidden");
+});
+}
+
 
 $("showRegister").onclick=()=>{
 $("loginBox").classList.add("hidden");
 $("registerBox").classList.remove("hidden");
 message("");
 };
+
 $("showLogin").onclick=()=>{
 $("registerBox").classList.add("hidden");
 $("loginBox").classList.remove("hidden");
 message("");
 };
 
+
 $("registerBtn").onclick=async()=>{
 const name=$("regName").value.trim();
 const phone=$("regPhone").value.trim();
 const email=$("regEmail").value.trim();
 const password=$("regPassword").value;
-if(!name||!phone||!email||!password){message("Please fill all fields.");return}
-if(password.length<6){message("Password must be at least 6 characters.");return}
+
+if(!name||!phone||!email||!password){
+message("Please fill all fields.");
+return;
+}
+
+if(password.length<6){
+message("Password must be at least 6 characters.");
+return;
+}
+
 try{
 const result=await createUserWithEmailAndPassword(auth,email,password);
+
 await setDoc(doc(db,"users",result.user.uid),{
-uid:result.user.uid,name,phone,email,role:"crm",status:"pending",createdAt:serverTimestamp()
+uid:result.user.uid,
+name,
+phone,
+email,
+role:"crm",
+status:"pending",
+createdAt:serverTimestamp()
 });
+
 message("Registration successful. Please wait for Owner approval.");
-}catch(error){message(error.message)}
+
+}catch(error){
+message(error.message);
+}
 };
+
 
 $("loginBtn").onclick=async()=>{
 const email=$("loginEmail").value.trim();
 const password=$("loginPassword").value;
-if(!email||!password){message("Enter email and password.");return}
-try{await signInWithEmailAndPassword(auth,email,password);message("")}
-catch(error){message(error.message)}
+
+if(!email||!password){
+message("Enter email and password.");
+return;
+}
+
+try{
+await signInWithEmailAndPassword(auth,email,password);
+message("");
+}catch(error){
+message(error.message);
+}
 };
 
+
 async function loadPendingUsers(){
+
 const list=$("pendingUsers");
 list.innerHTML="Loading users...";
+
 try{
 const snapshot=await getDocs(collection(db,"users"));
+
 list.innerHTML="";
 let count=0;
+
 snapshot.forEach(userDoc=>{
 const user=userDoc.data();
+
 if(user.status==="pending"&&user.uid!==OWNER_UID){
+
 count++;
+
 const box=document.createElement("div");
 box.className="userbox";
+
 const details=document.createElement("p");
-details.textContent="Name: "+(user.name||"")+" | Email: "+(user.email||"")+" | Mobile: "+(user.phone||"");
+details.textContent=
+"Name: "+(user.name||"")+
+" | Email: "+(user.email||"")+
+" | Mobile: "+(user.phone||"");
+
 const approve=document.createElement("button");
 approve.textContent="Approve User";
+
 approve.onclick=async()=>{
-try{await updateDoc(doc(db,"users",userDoc.id),{status:"approved",approvedAt:serverTimestamp()});await loadPendingUsers()}
-catch(error){alert(error.message)}
+try{
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"approved",
+approvedAt:serverTimestamp()
+});
+await loadPendingUsers();
+await loadApprovedAgents();
+}catch(error){
+alert(error.message);
+}
 };
+
 const reject=document.createElement("button");
 reject.textContent="Reject User";
 reject.className="reject";
+
 reject.onclick=async()=>{
-try{await updateDoc(doc(db,"users",userDoc.id),{status:"rejected",rejectedAt:serverTimestamp()});await loadPendingUsers()}
-catch(error){alert(error.message)}
+try{
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"rejected",
+rejectedAt:serverTimestamp()
+});
+await loadPendingUsers();
+}catch(error){
+alert(error.message);
+}
 };
+
 box.append(details,approve,reject);
 list.appendChild(box);
 }
 });
-if(count===0)list.textContent="No pending CRM users.";
-}catch(error){list.textContent=error.message}
+
+if(count===0){
+list.textContent="No pending CRM users.";
 }
+
+}catch(error){
+list.textContent=error.message;
+}
+}
+
 
 function formatDate(timestamp){
-if(!timestamp||typeof timestamp.toDate!=="function")return "Date not available";
-return timestamp.toDate().toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
+if(!timestamp||typeof timestamp.toDate!=="function"){
+return "Date not available";
 }
 
+return timestamp.toDate().toLocaleString("en-IN",{
+dateStyle:"medium",
+timeStyle:"short"
+});
+}
+
+
 async function loadApprovedAgents(){
+
 const snapshot=await getDocs(collection(db,"users"));
+
 approvedAgents=[];
+
 snapshot.forEach(userDoc=>{
 const consultant=userDoc.data();
+
 if(consultant.role==="crm"&&consultant.status==="approved"){
-approvedAgents.push({id:userDoc.id,name:consultant.name||consultant.email||userDoc.id});
+approvedAgents.push({
+id:userDoc.id,
+name:consultant.name||consultant.email||userDoc.id
+});
 }
 });
+
 approvedAgents.sort((a,b)=>a.name.localeCompare(b.name));
 }
 
+
 function localDateKey(date=new Date()){
-const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");
+const y=date.getFullYear();
+const m=String(date.getMonth()+1).padStart(2,"0");
+const d=String(date.getDate()).padStart(2,"0");
+
 return `${y}-${m}-${d}`;
 }
-function isClosedLead(lead){return ["closed-won","closed-lost"].includes(String(lead.status||"").toLowerCase())}
-function dueToday(lead){return !!lead.followUpDate&&lead.followUpDate<=localDateKey()&&!isClosedLead(lead)&&lead.followUpCompletedDate!==localDateKey()}
-function leadInfoText(lead){
-return `Mobile: ${lead.phone||"Not provided"}\nLocation: ${lead.propertyLocation||"Not provided"}\nRequirement: ${lead.message||"No message"}\nStatus: ${lead.status||"new"}\nFollow-up date: ${lead.followUpDate||"Not set"}`;
+
+
+function isClosedLead(lead){
+return ["closed-won","closed-lost"].includes(
+String(lead.status||"").toLowerCase()
+);
 }
 
+
+function dueToday(lead){
+return !!lead.followUpDate&&
+lead.followUpDate<=localDateKey()&&
+!isClosedLead(lead)&&
+lead.followUpCompletedDate!==localDateKey();
+}
+
+
+function leadInfoText(lead){
+return `Mobile: ${lead.phone||"Not provided"}
+Location: ${lead.propertyLocation||"Not provided"}
+Requirement: ${lead.message||"No message"}
+Status: ${lead.status||"new"}
+Follow-up date: ${lead.followUpDate||"Not set"}`;
+}
+
+
 function activityPanel(lead){
+
 const wrap=document.createElement("div");
 wrap.className="activity-wrap";
+
 const button=document.createElement("button");
 button.type="button";
 button.className="secondary activity-toggle";
 button.textContent="View Activity History";
+
 const panel=document.createElement("div");
 panel.className="activity-panel hidden";
 panel.textContent="Activity history not loaded.";
+
 let loaded=false;
+
 button.onclick=async()=>{
+
 panel.classList.toggle("hidden");
+
 if(panel.classList.contains("hidden")||loaded)return;
+
 panel.textContent="Loading activity history...";
+
 try{
-const q=query(collection(db,"leads",lead.id,"activities"),orderBy("createdAt","desc"));
+
+const q=query(
+collection(db,"leads",lead.id,"activities"),
+orderBy("createdAt","desc")
+);
+
 const snap=await getDocs(q);
+
 panel.innerHTML="";
-if(snap.empty){panel.textContent="No activity recorded yet. New updates will appear here.";loaded=true;return}
+
+if(snap.empty){
+panel.textContent="No activity recorded yet. New updates will appear here.";
+loaded=true;
+return;
+}
+
 snap.forEach(activityDoc=>{
+
 const a=activityDoc.data();
-const item=document.createElement("div");item.className="activity-entry";
+
+const item=document.createElement("div");
+item.className="activity-entry";
+
 const heading=document.createElement("strong");
-heading.textContent=(a.eventType||"update").replaceAll("-"," ").toUpperCase()+" · "+(a.actorName||"CRM user");
-const summary=document.createElement("p");summary.textContent=a.summary||"Activity recorded.";
-const meta=document.createElement("small");meta.textContent=formatDate(a.createdAt);
+
+heading.textContent=
+(a.eventType||"update").replaceAll("-"," ").toUpperCase()+
+" · "+
+(a.actorName||"CRM user");
+
+const summary=document.createElement("p");
+summary.textContent=a.summary||"Activity recorded.";
+
+const meta=document.createElement("small");
+meta.textContent=formatDate(a.createdAt);
+
 item.append(heading,summary,meta);
-if(a.status){const st=document.createElement("p");st.textContent="Status: "+a.status;item.appendChild(st)}
-if(a.followUpDate){const fd=document.createElement("p");fd.textContent="Next follow-up: "+a.followUpDate;item.appendChild(fd)}
-if(a.remarks){const rm=document.createElement("p");rm.textContent="Remarks: "+a.remarks;item.appendChild(rm)}
+
+if(a.status){
+const st=document.createElement("p");
+st.textContent="Status: "+a.status;
+item.appendChild(st);
+}
+
+if(a.followUpDate){
+const fd=document.createElement("p");
+fd.textContent="Next follow-up: "+a.followUpDate;
+item.appendChild(fd);
+}
+
+if(a.remarks){
+const rm=document.createElement("p");
+rm.textContent="Remarks: "+a.remarks;
+item.appendChild(rm);
+}
+
 panel.appendChild(item);
 });
+
 loaded=true;
-}catch(e){panel.textContent="Could not load activity history: "+e.message}
+
+}catch(e){
+panel.textContent="Could not load activity history: "+e.message;
+}
 };
+
 wrap.append(button,panel);
+
 return wrap;
 }
 
-function activityRecord({eventType,summary,status="",followUpDate="",remarks=""}){
+
+function activityRecord({
+eventType,
+summary,
+status="",
+followUpDate="",
+remarks=""
+}){
+
 return {
 eventType,
 actorUid:auth.currentUser.uid,
 actorName:auth.currentUser.displayName||auth.currentUser.email||"CRM user",
-summary,status,followUpDate,remarks,createdAt:serverTimestamp()
+summary,
+status,
+followUpDate,
+remarks,
+createdAt:serverTimestamp()
 };
 }
 
-// Shared Owner popup for both Transfer Lead and Reassign Lead.
+
+// Owner popup for Transfer Lead and Reassign Lead.
+
 function askHistoryChoice(targetName){
+
 return new Promise(resolve=>{
+
 const overlay=document.createElement("div");
 overlay.className="transfer-choice";
+
 const box=document.createElement("div");
 box.className="transfer-choice-box";
+
 const title=document.createElement("h3");
 title.textContent="Transfer Lead — Activity History";
+
 const description=document.createElement("p");
-description.textContent="You are transferring this lead to "+targetName+". Do you want to preserve the previous Activity History?";
+
+description.textContent=
+"You are transferring this lead to "+targetName+
+". Do you want to preserve the previous Activity History?";
+
 const yes=document.createElement("button");
 yes.textContent="YES — Preserve History";
 yes.className="secondary";
+
 const no=document.createElement("button");
 no.textContent="NO — Delete Old History";
 no.className="reject";
+
 const cancel=document.createElement("button");
 cancel.textContent="Cancel";
 cancel.style.background="#64736a";
-function finish(value){overlay.remove();resolve(value)}
+
+function finish(value){
+overlay.remove();
+resolve(value);
+}
+
 yes.onclick=()=>finish("preserve");
+
 no.onclick=()=>{
-if(confirm("WARNING: All previous Activity History records for this lead will be permanently deleted. This cannot be undone. Continue?")){
+if(confirm(
+"WARNING: All previous Activity History records for this lead will be permanently deleted. This cannot be undone. Continue?"
+)){
 finish("delete");
 }
 };
+
 cancel.onclick=()=>finish(null);
+
 box.append(title,description,yes,no,cancel);
 overlay.appendChild(box);
 document.body.appendChild(overlay);
+
 });
 }
 
+
+// Follow-up form.
+// This form is now shown on EVERY assigned lead in consultant dashboard.
+
 function makeTaskForm(lead,isOwner=false){
-const form=document.createElement("div");form.className="task-form";
+
+const form=document.createElement("div");
+form.className="task-form";
+
 const status=document.createElement("select");
-["new","contacted","follow-up","site-visit","negotiation","closed-won","closed-lost"].forEach(v=>{
-const o=document.createElement("option");o.value=v;o.textContent=v;o.selected=(lead.status||"new")===v;status.appendChild(o);
+
+[
+"new",
+"contacted",
+"follow-up",
+"site-visit",
+"negotiation",
+"closed-won",
+"closed-lost"
+].forEach(v=>{
+
+const o=document.createElement("option");
+o.value=v;
+o.textContent=v;
+o.selected=(lead.status||"new")===v;
+status.appendChild(o);
+
 });
-const date=document.createElement("input");date.type="date";date.value=lead.followUpDate||localDateKey();
-const remarks=document.createElement("textarea");remarks.placeholder="Add call remarks / next action...";remarks.value=lead.remarks||"";
-const save=document.createElement("button");save.textContent="Save Update & Complete Today's Follow-up";
+
+const date=document.createElement("input");
+date.type="date";
+date.value=lead.followUpDate||localDateKey();
+
+const remarks=document.createElement("textarea");
+remarks.placeholder="Add call remarks / next action...";
+remarks.value=lead.remarks||"";
+
+const save=document.createElement("button");
+save.textContent="Save Follow-up Update";
+
 save.onclick=async()=>{
-if(!date.value){alert("Please select the next follow-up date.");return}
-save.disabled=true;save.textContent="Saving...";
+
+if(!date.value){
+alert("Please select the next follow-up date.");
+return;
+}
+
+save.disabled=true;
+save.textContent="Saving...";
+
 try{
+
 const leadRef=doc(db,"leads",lead.id);
 const activityRef=doc(collection(db,"leads",lead.id,"activities"));
-const summary=`Follow-up updated from ${lead.status||"new"} to ${status.value}.`;
+
+const summary=
+`Follow-up updated from ${lead.status||"new"} to ${status.value}.`;
+
 const batch=writeBatch(db);
+
 batch.update(leadRef,{
-status:status.value,followUpDate:date.value,remarks:remarks.value.trim(),
-followUpCompletedDate:localDateKey(),updatedAt:serverTimestamp(),
+
+status:status.value,
+followUpDate:date.value,
+remarks:remarks.value.trim(),
+followUpCompletedDate:localDateKey(),
+updatedAt:serverTimestamp(),
 lastFollowUpBy:auth.currentUser.uid
+
 });
+
 batch.set(activityRef,activityRecord({
-eventType:"follow-up",summary,status:status.value,
-followUpDate:date.value,remarks:remarks.value.trim()
+
+eventType:"follow-up",
+summary,
+status:status.value,
+followUpDate:date.value,
+remarks:remarks.value.trim()
+
 }));
+
 await batch.commit();
-if(isOwner){await loadLeads()}else{await loadMyAssignedLeads(auth.currentUser)}
-}catch(e){alert("Save failed: "+e.message);save.disabled=false;save.textContent="Save Update & Complete Today's Follow-up"}
+
+alert("Follow-up update saved successfully.");
+
+if(isOwner){
+await loadLeads();
+}else{
+await loadMyAssignedLeads(auth.currentUser);
+}
+
+}catch(e){
+
+alert("Save failed: "+e.message);
+
+save.disabled=false;
+save.textContent="Save Follow-up Update";
+
+}
+
 };
+
 form.append(status,date,remarks,save);
+
 return form;
 }
 
+
+// Consultant Due Follow-ups panel.
+// This panel only shows due/overdue leads.
+// The separate form appears on every assigned lead below.
+
 function renderConsultantToday(leads){
-const root=$("consultantTodayLeads");root.innerHTML="";
+
+const root=$("consultantTodayLeads");
+root.innerHTML="";
+
 const due=leads.filter(dueToday);
+
 $("consultantDueCount").textContent=due.length;
-if(!due.length){root.textContent="No pending follow-ups for today. Great work!";return}
-due.forEach(lead=>{
-const box=document.createElement("div");box.className="followup-item";
-const h=document.createElement("h3");h.textContent=lead.customerName||"Customer";
-const p=document.createElement("p");p.textContent=leadInfoText(lead);
-box.append(h,p,makeTaskForm(lead));
-root.appendChild(box);
-});
+
+if(!due.length){
+root.textContent="No pending follow-ups for today. Great work!";
+return;
 }
 
+due.forEach(lead=>{
+
+const box=document.createElement("div");
+box.className="followup-item";
+
+const h=document.createElement("h3");
+h.textContent=lead.customerName||"Customer";
+
+const p=document.createElement("p");
+p.textContent=leadInfoText(lead);
+
+box.append(h,p);
+root.appendChild(box);
+
+});
+
+}
+
+
 function renderOwnerToday(){
+
 const due=allLeads.filter(dueToday);
+
 $("ownerDueCount").textContent=due.length;
-const counts=$("ownerConsultantCounts");counts.innerHTML="";
+
+const counts=$("ownerConsultantCounts");
+counts.innerHTML="";
+
 const grouped={};
+
 due.forEach(l=>{
 const key=l.assignedAgentName||"Unassigned";
 grouped[key]=(grouped[key]||0)+1;
 });
-Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,count])=>{
-const div=document.createElement("div");div.className="consultant-count";
-const n=document.createElement("strong");n.textContent=count;
-const label=document.createElement("span");label.textContent=name+" — pending";
-div.append(n,label);counts.appendChild(div);
+
+Object.entries(grouped)
+.sort((a,b)=>a[0].localeCompare(b[0]))
+.forEach(([name,count])=>{
+
+const div=document.createElement("div");
+div.className="consultant-count";
+
+const n=document.createElement("strong");
+n.textContent=count;
+
+const label=document.createElement("span");
+label.textContent=name+" — pending";
+
+div.append(n,label);
+counts.appendChild(div);
+
 });
-const root=$("ownerTodayLeads");root.innerHTML="";
-if(!due.length){root.textContent="No pending follow-ups for today.";return}
+
+const root=$("ownerTodayLeads");
+root.innerHTML="";
+
+if(!due.length){
+root.textContent="No pending follow-ups for today.";
+return;
+}
 
 due.forEach(lead=>{
-const box=document.createElement("div");box.className="followup-item";
+
+const box=document.createElement("div");
+box.className="followup-item";
+
 const h=document.createElement("h3");
-h.textContent=(lead.customerName||"Customer")+" · "+(lead.assignedAgentName||"Unassigned");
-const p=document.createElement("p");p.textContent=leadInfoText(lead);
+
+h.textContent=
+(lead.customerName||"Customer")+
+" · "+
+(lead.assignedAgentName||"Unassigned");
+
+const p=document.createElement("p");
+p.textContent=leadInfoText(lead);
+
 box.append(h,p,makeTaskForm(lead,true));
 
-const transfer=document.createElement("div");transfer.className="task-form";
+const transfer=document.createElement("div");
+transfer.className="task-form";
+
 const select=document.createElement("select");
+
 const placeholder=document.createElement("option");
-placeholder.value="";placeholder.textContent="Transfer to consultant...";
+placeholder.value="";
+placeholder.textContent="Transfer to consultant...";
 select.appendChild(placeholder);
 
 approvedAgents.forEach(agent=>{
+
 if(agent.id===lead.assignedTo)return;
+
 const o=document.createElement("option");
-o.value=agent.id;o.textContent=agent.name;select.appendChild(o);
+o.value=agent.id;
+o.textContent=agent.name;
+select.appendChild(o);
+
 });
 
 const move=document.createElement("button");
@@ -498,24 +1195,37 @@ move.className="secondary";
 move.textContent="Transfer Lead";
 
 move.onclick=async()=>{
+
 const target=approvedAgents.find(a=>a.id===select.value);
-if(!target){alert("Choose a consultant first.");return}
+
+if(!target){
+alert("Choose a consultant first.");
+return;
+}
 
 const choice=await askHistoryChoice(target.name);
+
 if(!choice)return;
 
 move.disabled=true;
 move.textContent="Transferring...";
 
 try{
+
 const activitiesRef=collection(db,"leads",lead.id,"activities");
-const oldHistory=choice==="delete"?await getDocs(activitiesRef):null;
+
+const oldHistory=choice==="delete"
+?await getDocs(activitiesRef)
+:null;
 
 if(oldHistory&&oldHistory.size>498){
-throw new Error("This lead has more than 498 history records. Transfer cannot safely delete them in one batch.");
+throw new Error(
+"This lead has more than 498 history records. Transfer cannot safely delete them in one batch."
+);
 }
 
 const batch=writeBatch(db);
+
 const leadRef=doc(db,"leads",lead.id);
 const activityRef=doc(activitiesRef);
 
@@ -526,6 +1236,7 @@ batch.delete(activityDoc.ref);
 }
 
 batch.update(leadRef,{
+
 assignedTo:target.id,
 assignedAgentName:target.name,
 assignedAt:serverTimestamp(),
@@ -534,16 +1245,21 @@ status:"new",
 followUpDate:localDateKey(),
 followUpCompletedDate:null,
 updatedAt:serverTimestamp()
+
 });
 
 batch.set(activityRef,activityRecord({
+
 eventType:"transfer",
+
 summary:choice==="delete"
 ?`Lead transferred to ${target.name}. Previous Activity History was deleted by Owner.`
 :`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
+
 status:"new",
 followUpDate:localDateKey(),
 remarks:choice==="preserve"?(lead.remarks||""):""
+
 }));
 
 await batch.commit();
@@ -551,78 +1267,134 @@ await loadLeads();
 
 alert(choice==="delete"
 ?"Lead transferred successfully. Previous Activity History deleted."
-:"Lead transferred successfully. Previous Activity History preserved.");
+:"Lead transferred successfully. Previous Activity History preserved."
+);
 
 }catch(e){
+
 alert("Transfer failed: "+e.message);
+
 move.disabled=false;
 move.textContent="Transfer Lead";
+
 }
+
 };
 
 transfer.append(select,move);
 box.appendChild(transfer);
 root.appendChild(box);
+
 });
+
 }
 
+
 function renderLeads(){
+
 const list=$("leadsList");
+
 const searchText=$("leadSearch").value.trim().toLowerCase();
+
 const filtered=allLeads.filter(lead=>{
+
 const searchable=[
-lead.customerName,lead.phone,lead.email,lead.propertyLocation,
-lead.message,lead.enquiryType,lead.assignedAgentName
+lead.customerName,
+lead.phone,
+lead.email,
+lead.propertyLocation,
+lead.message,
+lead.enquiryType,
+lead.assignedAgentName
 ].join(" ").toLowerCase();
+
 return searchable.includes(searchText);
+
 });
-$("leadCountText").textContent="Showing "+filtered.length+" of "+allLeads.length+" leads";
+
+$("leadCountText").textContent=
+"Showing "+filtered.length+" of "+allLeads.length+" leads";
+
 list.innerHTML="";
+
 if(filtered.length===0){
-list.textContent=allLeads.length===0?"No leads found in Firestore.":"No matching leads found.";
+
+list.textContent=allLeads.length===0
+?"No leads found in Firestore."
+:"No matching leads found.";
+
 return;
+
 }
 
 filtered.forEach(lead=>{
-const box=document.createElement("div");box.className="leadbox";
-const title=document.createElement("h3");title.textContent=lead.customerName||"Name not provided";
+
+const box=document.createElement("div");
+box.className="leadbox";
+
+const title=document.createElement("h3");
+title.textContent=lead.customerName||"Name not provided";
+
 const details=document.createElement("p");
+
 details.textContent=
 "Mobile: "+(lead.phone||"Not provided")+
 "\nEmail: "+(lead.email||"Not provided")+
 "\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
 "\nLocation: "+(lead.propertyLocation||"Not provided")+
 "\nStatus: "+(lead.status||"new")+
-"\nAssigned To: "+(lead.assignedAgentName||
-(lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"?lead.assignedTo:"Unassigned"));
+"\nAssigned To: "+
+(lead.assignedAgentName||
+(lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"
+?lead.assignedTo
+:"Unassigned"));
+
 const requirement=document.createElement("p");
 requirement.textContent="Requirement: "+(lead.message||"No message provided");
+
 const date=document.createElement("p");
-date.className="lead-meta";date.textContent="Received: "+formatDate(lead.createdAt);
+date.className="lead-meta";
+date.textContent="Received: "+formatDate(lead.createdAt);
+
 box.append(title,details,requirement,date,activityPanel(lead));
 
 const assignmentRow=document.createElement("div");
 assignmentRow.className="assignment-row";
+
 const select=document.createElement("select");
 select.setAttribute("aria-label","Select consultant for lead");
+
 const placeholder=document.createElement("option");
-placeholder.value="";placeholder.textContent="Choose consultant...";
+placeholder.value="";
+placeholder.textContent="Choose consultant...";
 select.appendChild(placeholder);
+
 approvedAgents.forEach(agent=>{
+
 const option=document.createElement("option");
-option.value=agent.id;option.textContent=agent.name;
-if(lead.assignedTo===agent.id)option.selected=true;
+option.value=agent.id;
+option.textContent=agent.name;
+
+if(lead.assignedTo===agent.id){
+option.selected=true;
+}
+
 select.appendChild(option);
+
 });
 
 const assignButton=document.createElement("button");
+
 const alreadyAssigned=!!lead.assignedTo&&
 lead.assignedTo!=="pending"&&
 lead.assignedTo!=="unassigned";
 
-assignButton.textContent=alreadyAssigned?"Reassign Lead":"Assign Lead";
+assignButton.textContent=alreadyAssigned
+?"Reassign Lead"
+:"Assign Lead";
 
 assignButton.onclick=async()=>{
+
 const selectedAgentId=select.value;
 
 if(!selectedAgentId){
@@ -630,7 +1402,9 @@ alert("Please choose a consultant first.");
 return;
 }
 
-const selectedAgent=approvedAgents.find(agent=>agent.id===selectedAgentId);
+const selectedAgent=approvedAgents.find(
+agent=>agent.id===selectedAgentId
+);
 
 if(!selectedAgent){
 alert("Selected consultant is not available. Please refresh leads.");
@@ -642,242 +1416,429 @@ alert("This lead is already assigned to this consultant.");
 return;
 }
 
-// Show history-choice popup only when an already assigned lead
-// is being reassigned to a different consultant.
 const isReassignment=alreadyAssigned;
+
 let historyChoice="preserve";
 
 if(isReassignment){
+
 historyChoice=await askHistoryChoice(selectedAgent.name);
+
 if(!historyChoice)return;
+
 }
 
 assignButton.disabled=true;
-assignButton.textContent=isReassignment?"Reassigning...":"Assigning...";
+
+assignButton.textContent=isReassignment
+?"Reassigning..."
+:"Assigning...";
 
 try{
+
 const leadRef=doc(db,"leads",lead.id);
 const activitiesRef=collection(db,"leads",lead.id,"activities");
 
-// Read old activity history only if Owner chooses permanent deletion.
 const oldHistory=(isReassignment&&historyChoice==="delete")
 ?await getDocs(activitiesRef)
 :null;
 
-// Firestore batch limit is 500 writes.
-// One write updates the lead and one creates the new activity record.
 if(oldHistory&&oldHistory.size>498){
+
 throw new Error(
-"This lead has more than 498 history records. " +
-"History cannot safely be deleted in one batch."
+"This lead has more than 498 history records. History cannot safely be deleted in one batch."
 );
+
 }
 
 const batch=writeBatch(db);
 
-// Delete old activity records only when Owner selected NO.
 if(oldHistory){
+
 oldHistory.forEach(activityDoc=>{
 batch.delete(activityDoc.ref);
 });
+
 }
 
 batch.update(leadRef,{
+
 assignedTo:selectedAgentId,
 assignedAgentName:selectedAgent.name,
 assignedAt:serverTimestamp(),
 assignedBy:OWNER_UID,
 updatedAt:serverTimestamp()
+
 });
 
 let summary;
 
 if(!isReassignment){
+
 summary=`Lead assigned to ${selectedAgent.name}.`;
+
 }else if(historyChoice==="delete"){
+
 summary=
 `Lead reassigned to ${selectedAgent.name}. `+
 "Previous Activity History was deleted by Owner.";
+
 }else{
+
 summary=
 `Lead reassigned from ${lead.assignedAgentName||"Previous consultant"} `+
 `to ${selectedAgent.name}. Previous Activity History preserved.`;
+
 }
 
 const activityRef=doc(activitiesRef);
 
 batch.set(activityRef,activityRecord({
+
 eventType:"assignment",
 summary,
 status:lead.status||"new",
 followUpDate:lead.followUpDate||"",
 remarks:historyChoice==="preserve"?(lead.remarks||""):""
+
 }));
 
 await batch.commit();
 await loadLeads();
 
 if(isReassignment){
-alert(
-historyChoice==="delete"
+
+alert(historyChoice==="delete"
 ?"Lead reassigned successfully. Previous Activity History deleted."
 :"Lead reassigned successfully. Previous Activity History preserved."
 );
+
 }else{
+
 alert("Lead assigned successfully.");
+
 }
 
 }catch(error){
+
 alert("Could not assign/reassign lead: "+error.message);
+
 assignButton.disabled=false;
-assignButton.textContent=isReassignment?"Reassign Lead":"Assign Lead";
+
+assignButton.textContent=isReassignment
+?"Reassign Lead"
+:"Assign Lead";
+
 }
+
 };
 
 assignmentRow.append(select,assignButton);
 box.appendChild(assignmentRow);
 list.appendChild(box);
+
 });
+
 }
 
+
 async function loadLeads(){
+
 const list=$("leadsList");
+
 list.textContent="Loading leads...";
 $("leadCountText").textContent="Please wait...";
+
 try{
+
 const snapshot=await getDocs(collection(db,"leads"));
+
 allLeads=[];
-snapshot.forEach(leadDoc=>allLeads.push({id:leadDoc.id,...leadDoc.data()}));
-allLeads.sort((a,b)=>{
-const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
-const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
-return bTime-aTime;
+
+snapshot.forEach(leadDoc=>{
+allLeads.push({
+id:leadDoc.id,
+...leadDoc.data()
 });
-const buyers=allLeads.filter(lead=>String(lead.enquiryType||"").toLowerCase()==="buyer").length;
-const sellers=allLeads.filter(lead=>String(lead.enquiryType||"").toLowerCase()==="seller").length;
+});
+
+allLeads.sort((a,b)=>{
+
+const aTime=a.createdAt&&a.createdAt.toMillis
+?a.createdAt.toMillis():0;
+
+const bTime=b.createdAt&&b.createdAt.toMillis
+?b.createdAt.toMillis():0;
+
+return bTime-aTime;
+
+});
+
+const buyers=allLeads.filter(
+lead=>String(lead.enquiryType||"").toLowerCase()==="buyer"
+).length;
+
+const sellers=allLeads.filter(
+lead=>String(lead.enquiryType||"").toLowerCase()==="seller"
+).length;
+
 $("totalLeads").textContent=allLeads.length;
 $("buyerLeads").textContent=buyers;
 $("sellerLeads").textContent=sellers;
+
 renderLeads();
 renderOwnerToday();
+
 }catch(error){
+
 allLeads=[];
+
 $("totalLeads").textContent="—";
 $("buyerLeads").textContent="—";
 $("sellerLeads").textContent="—";
+
 $("leadCountText").textContent="Could not load leads.";
 list.textContent=error.message;
+
 }
+
 }
+
 
 $("refreshUsers").onclick=loadPendingUsers;
 $("refreshLeads").onclick=loadLeads;
+
 $("leadSearch").addEventListener("input",renderLeads);
 
+
 async function loadMyAssignedLeads(user){
+
 const list=$("myLeadsList");
 const status=$("myLeadStatus");
+
 list.innerHTML="Loading your assigned leads...";
 status.textContent="Please wait...";
+
 try{
-const assignedQuery=query(collection(db,"leads"),where("assignedTo","==",user.uid));
+
+const assignedQuery=query(
+collection(db,"leads"),
+where("assignedTo","==",user.uid)
+);
+
 const snapshot=await getDocs(assignedQuery);
+
 const myLeads=[];
-snapshot.forEach(leadDoc=>myLeads.push({id:leadDoc.id,...leadDoc.data()}));
-myLeads.sort((a,b)=>{
-const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
-const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
-return bTime-aTime;
+
+snapshot.forEach(leadDoc=>{
+
+myLeads.push({
+id:leadDoc.id,
+...leadDoc.data()
 });
+
+});
+
+myLeads.sort((a,b)=>{
+
+const aTime=a.createdAt&&a.createdAt.toMillis
+?a.createdAt.toMillis():0;
+
+const bTime=b.createdAt&&b.createdAt.toMillis
+?b.createdAt.toMillis():0;
+
+return bTime-aTime;
+
+});
+
 $("myLeadCount").textContent=myLeads.length;
-status.textContent="Showing "+myLeads.length+" assigned lead(s).";
+
+status.textContent=
+"Showing "+myLeads.length+" assigned lead(s).";
+
 list.innerHTML="";
+
 if(myLeads.length===0){
+
 list.textContent="No leads have been assigned to you yet.";
+
 renderConsultantToday(myLeads);
+
 return;
+
 }
+
 myLeads.forEach(lead=>{
-const box=document.createElement("div");box.className="leadbox";
-const title=document.createElement("h3");title.textContent=lead.customerName||"Name not provided";
+
+const box=document.createElement("div");
+box.className="leadbox";
+
+const title=document.createElement("h3");
+title.textContent=lead.customerName||"Name not provided";
+
 const details=document.createElement("p");
+
 details.textContent=
 "Mobile: "+(lead.phone||"Not provided")+
 "\nEmail: "+(lead.email||"Not provided")+
 "\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
 "\nLocation: "+(lead.propertyLocation||"Not provided")+
-"\nStatus: "+(lead.status||"new");
+"\nStatus: "+(lead.status||"new")+
+"\nNext Follow-up: "+(lead.followUpDate||"Not set");
+
 const requirement=document.createElement("p");
-requirement.textContent="Requirement: "+(lead.message||"No message provided");
+
+requirement.textContent=
+"Requirement: "+(lead.message||"No message provided");
+
 const received=document.createElement("p");
-received.className="lead-meta";received.textContent="Received: "+formatDate(lead.createdAt);
-box.append(title,details,requirement,received,activityPanel(lead));
+received.className="lead-meta";
+received.textContent="Received: "+formatDate(lead.createdAt);
+
+// IMPORTANT: Update form is attached to every assigned lead.
+box.append(
+title,
+details,
+requirement,
+received,
+activityPanel(lead),
+makeTaskForm(lead)
+);
+
 list.appendChild(box);
+
 });
+
 renderConsultantToday(myLeads);
+
 }catch(error){
+
 $("myLeadCount").textContent="—";
 status.textContent="Could not load assigned leads: "+error.message;
 list.innerHTML="";
+
 }
+
 }
+
 
 $("refreshMyLeads").onclick=()=>{
-if(auth.currentUser)loadMyAssignedLeads(auth.currentUser);
+
+if(auth.currentUser){
+loadMyAssignedLeads(auth.currentUser);
+}
+
 };
 
+
 async function logout(){
-try{await signOut(auth)}
-catch(error){alert(error.message)}
+
+try{
+await signOut(auth);
+}catch(error){
+alert(error.message);
 }
+
+}
+
 $("logoutPending").onclick=logout;
 $("ownerLogout").onclick=logout;
 $("approvedLogout").onclick=logout;
 
+
 onAuthStateChanged(auth,async user=>{
+
 hideAll();
-if(!user){$("authCard").classList.remove("hidden");return}
+
+if(!user){
+
+$("authCard").classList.remove("hidden");
+return;
+
+}
+
 if(user.uid===OWNER_UID){
+
 $("ownerCard").classList.remove("hidden");
+
 try{
+
 await loadPendingUsers();
 await loadApprovedAgents();
 await loadLeads();
+
 }catch(error){
+
 $("leadCountText").textContent="Dashboard could not fully load.";
 $("leadsList").textContent=error.message;
+
 }
+
 return;
+
 }
+
 try{
+
 const userRef=doc(db,"users",user.uid);
 const userSnap=await getDoc(userRef);
+
 if(!userSnap.exists()){
+
 $("pendingCard").classList.remove("hidden");
-$("pendingStatus").textContent="Your CRM profile is not available. Please contact Owner.";
+
+$("pendingStatus").textContent=
+"Your CRM profile is not available. Please contact Owner.";
+
 return;
+
 }
+
 const data=userSnap.data();
+
 if(data.role!=="crm"){
+
 $("pendingCard").classList.remove("hidden");
-$("pendingStatus").textContent="This account is not registered as a JameenGhar CRM consultant. Please contact Owner.";
+
+$("pendingStatus").textContent=
+"This account is not registered as a JameenGhar CRM consultant. Please contact Owner.";
+
 return;
+
 }
+
 if(data.status==="approved"){
+
 $("approvedCard").classList.remove("hidden");
+
 await loadMyAssignedLeads(user);
+
 }else if(data.status==="rejected"){
+
 $("pendingCard").classList.remove("hidden");
-$("pendingStatus").textContent="Your registration has been rejected. Please contact Owner.";
+
+$("pendingStatus").textContent=
+"Your registration has been rejected. Please contact Owner.";
+
 }else{
+
 $("pendingCard").classList.remove("hidden");
-$("pendingStatus").textContent="Your account is pending Owner approval. Please wait.";
+
+$("pendingStatus").textContent=
+"Your account is pending Owner approval. Please wait.";
+
 }
+
 }catch(error){
+
 $("authCard").classList.remove("hidden");
 message(error.message);
+
 }
+
 });
+
 </script>
+
 </body>
 </html>
