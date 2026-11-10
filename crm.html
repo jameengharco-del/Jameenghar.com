@@ -374,7 +374,7 @@ summary,status,followUpDate,remarks,createdAt:serverTimestamp()
 };
 }
 
-// Owner transfer popup: preserve, permanently delete, or cancel.
+// Shared Owner popup for both Transfer Lead and Reassign Lead.
 function askHistoryChoice(targetName){
 return new Promise(resolve=>{
 const overlay=document.createElement("div");
@@ -511,8 +511,6 @@ try{
 const activitiesRef=collection(db,"leads",lead.id,"activities");
 const oldHistory=choice==="delete"?await getDocs(activitiesRef):null;
 
-// Firestore batch limit is 500 writes.
-// Two writes are reserved for updating the lead and adding the new transfer record.
 if(oldHistory&&oldHistory.size>498){
 throw new Error("This lead has more than 498 history records. Transfer cannot safely delete them in one batch.");
 }
@@ -618,37 +616,124 @@ select.appendChild(option);
 });
 
 const assignButton=document.createElement("button");
-assignButton.textContent=lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"?"Reassign Lead":"Assign Lead";
+const alreadyAssigned=!!lead.assignedTo&&
+lead.assignedTo!=="pending"&&
+lead.assignedTo!=="unassigned";
+
+assignButton.textContent=alreadyAssigned?"Reassign Lead":"Assign Lead";
+
 assignButton.onclick=async()=>{
 const selectedAgentId=select.value;
-if(!selectedAgentId){alert("Please choose a consultant first.");return}
+
+if(!selectedAgentId){
+alert("Please choose a consultant first.");
+return;
+}
+
 const selectedAgent=approvedAgents.find(agent=>agent.id===selectedAgentId);
-if(!selectedAgent){alert("Selected consultant is not available. Please refresh leads.");return}
-if(lead.assignedTo===selectedAgentId){alert("This lead is already assigned to this consultant.");return}
-assignButton.disabled=true;assignButton.textContent="Saving...";
+
+if(!selectedAgent){
+alert("Selected consultant is not available. Please refresh leads.");
+return;
+}
+
+if(lead.assignedTo===selectedAgentId){
+alert("This lead is already assigned to this consultant.");
+return;
+}
+
+// Show history-choice popup only when an already assigned lead
+// is being reassigned to a different consultant.
+const isReassignment=alreadyAssigned;
+let historyChoice="preserve";
+
+if(isReassignment){
+historyChoice=await askHistoryChoice(selectedAgent.name);
+if(!historyChoice)return;
+}
+
+assignButton.disabled=true;
+assignButton.textContent=isReassignment?"Reassigning...":"Assigning...";
+
 try{
-const batch=writeBatch(db);
 const leadRef=doc(db,"leads",lead.id);
-const activityRef=doc(collection(db,"leads",lead.id,"activities"));
+const activitiesRef=collection(db,"leads",lead.id,"activities");
+
+// Read old activity history only if Owner chooses permanent deletion.
+const oldHistory=(isReassignment&&historyChoice==="delete")
+?await getDocs(activitiesRef)
+:null;
+
+// Firestore batch limit is 500 writes.
+// One write updates the lead and one creates the new activity record.
+if(oldHistory&&oldHistory.size>498){
+throw new Error(
+"This lead has more than 498 history records. " +
+"History cannot safely be deleted in one batch."
+);
+}
+
+const batch=writeBatch(db);
+
+// Delete old activity records only when Owner selected NO.
+if(oldHistory){
+oldHistory.forEach(activityDoc=>{
+batch.delete(activityDoc.ref);
+});
+}
+
 batch.update(leadRef,{
 assignedTo:selectedAgentId,
 assignedAgentName:selectedAgent.name,
 assignedAt:serverTimestamp(),
-assignedBy:OWNER_UID
+assignedBy:OWNER_UID,
+updatedAt:serverTimestamp()
 });
+
+let summary;
+
+if(!isReassignment){
+summary=`Lead assigned to ${selectedAgent.name}.`;
+}else if(historyChoice==="delete"){
+summary=
+`Lead reassigned to ${selectedAgent.name}. `+
+"Previous Activity History was deleted by Owner.";
+}else{
+summary=
+`Lead reassigned from ${lead.assignedAgentName||"Previous consultant"} `+
+`to ${selectedAgent.name}. Previous Activity History preserved.`;
+}
+
+const activityRef=doc(activitiesRef);
+
 batch.set(activityRef,activityRecord({
 eventType:"assignment",
-summary:`Lead assigned to ${selectedAgent.name}.`,
+summary,
 status:lead.status||"new",
-followUpDate:lead.followUpDate||""
+followUpDate:lead.followUpDate||"",
+remarks:historyChoice==="preserve"?(lead.remarks||""):""
 }));
+
 await batch.commit();
 await loadLeads();
+
+if(isReassignment){
+alert(
+historyChoice==="delete"
+?"Lead reassigned successfully. Previous Activity History deleted."
+:"Lead reassigned successfully. Previous Activity History preserved."
+);
+}else{
+alert("Lead assigned successfully.");
+}
+
 }catch(error){
-alert("Could not assign lead: "+error.message);
-assignButton.disabled=false;assignButton.textContent="Assign Lead";
+alert("Could not assign/reassign lead: "+error.message);
+assignButton.disabled=false;
+assignButton.textContent=isReassignment?"Reassign Lead":"Assign Lead";
 }
 };
+
 assignmentRow.append(select,assignButton);
 box.appendChild(assignmentRow);
 list.appendChild(box);
