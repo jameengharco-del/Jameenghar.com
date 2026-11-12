@@ -465,6 +465,14 @@ header{justify-content:center;text-align:center}
 <section class="card" id="performanceReports">
 <h2>Performance Reports</h2>
 <p class="card-description">Consultant-wise lead pipeline and follow-up activity. Pipeline figures show each consultant's currently assigned leads.</p>
+<div class="report-history-setting" style="margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fbfdfb">
+<strong style="display:block;color:var(--green);margin-bottom:6px">Lead Transfer Performance History</strong>
+<label for="preserveTransferHistory" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px">
+<input id="preserveTransferHistory" type="checkbox" checked style="width:18px;height:18px;margin:0;accent-color:var(--green)">
+<span><b>Preserve previous consultant performance after transfer</b><small style="display:block;color:var(--muted);margin-top:3px">ON: retain historical credit. OFF: show pipeline under the current assigned consultant.</small></span>
+</label>
+<p id="historySettingStatus" class="report-note" style="margin-top:8px">Default: ON. Only Owner can change this setting.</p>
+</div>
 <div class="report-toolbar">
 <select id="reportPeriod" aria-label="Follow-up activity period">
 <option value="all">All-time follow-ups</option>
@@ -480,7 +488,7 @@ header{justify-content:center;text-align:center}
 <div class="stat-box"><strong id="reportConversion">0%</strong><span>Overall Conversion</span></div>
 </div>
 <div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
-<p class="report-note">Follow-up activity is counted from saved Activity History entries. Site visits, negotiations and closed outcomes are based on each lead's current status. Conversion = Closed Won ÷ Currently Assigned Leads.</p>
+<p class="report-note">Follow-ups are counted from saved Activity History. When history preservation is ON, stage outcomes are credited to consultants recorded in follow-up and transfer history; older transfers made before this feature may not contain complete attribution. Currently Assigned is always based on today's assignment. Conversion = credited Closed Won ÷ currently assigned leads.</p>
 </section>
 
 <div class="lead-toolbar">
@@ -577,6 +585,8 @@ const $=id=>document.getElementById(id);
 
 let allLeads=[];
 let approvedAgents=[];
+let preserveTransferHistory=true;
+let historySettingLoaded=false;
 let registrationInProgress=false;
 
 function message(text){
@@ -1259,7 +1269,11 @@ eventType:"transfer",
 
 summary:
 `Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
-
+previousAssignedTo:lead.assignedTo||"",
+previousAssignedAgentName:lead.assignedAgentName||"Unassigned",
+newAssignedTo:target.id,
+newAssignedAgentName:target.name,
+previousStatus:lead.status||"new",
 status:"new",
 followUpDate:localDateKey(),
 remarks:lead.remarks||""
@@ -1463,6 +1477,11 @@ batch.set(activityRef,activityRecord({
 
 eventType:isReassignment?"reassignment":"assignment",
 summary,
+previousAssignedTo:lead.assignedTo||"",
+previousAssignedAgentName:previousName,
+newAssignedTo:selectedAgentId,
+newAssignedAgentName:selectedAgent.name,
+previousStatus:lead.status||"new",
 status:lead.status||"new",
 followUpDate:lead.followUpDate||"",
 remarks:lead.remarks||""
@@ -1566,6 +1585,58 @@ list.textContent=error.message;
 }
 
 
+async function loadPerformanceHistorySetting(){
+const checkbox=$("preserveTransferHistory");
+const status=$("historySettingStatus");
+if(!checkbox)return;
+checkbox.disabled=true;
+try{
+const settingSnap=await getDoc(doc(db,"settings","performanceReports"));
+if(settingSnap.exists()){
+preserveTransferHistory=settingSnap.data().preserveTransferredHistory!==false;
+}else{
+preserveTransferHistory=true;
+}
+checkbox.checked=preserveTransferHistory;
+historySettingLoaded=true;
+status.textContent=preserveTransferHistory
+?"ON — historical performance remains with the consultant who handled the lead. (Default)"
+:"OFF — pipeline performance follows the current assigned consultant.";
+}catch(error){
+// Keep the safe default ON if the setting cannot be read.
+preserveTransferHistory=true;
+checkbox.checked=true;
+status.textContent="Could not load saved setting. Default ON is being used. Check Firestore rules.";
+console.error("Performance setting load failed:",error);
+}finally{checkbox.disabled=false;}
+}
+
+async function savePerformanceHistorySetting(){
+const checkbox=$("preserveTransferHistory");
+const status=$("historySettingStatus");
+if(!checkbox||!auth.currentUser||auth.currentUser.uid!==OWNER_UID)return;
+const nextValue=checkbox.checked;
+checkbox.disabled=true;
+status.textContent="Saving setting...";
+try{
+await setDoc(doc(db,"settings","performanceReports"),{
+preserveTransferredHistory:nextValue,
+updatedAt:serverTimestamp(),
+updatedBy:auth.currentUser.uid
+},{merge:true});
+preserveTransferHistory=nextValue;
+historySettingLoaded=true;
+status.textContent=nextValue
+?"ON — historical performance remains with the consultant who handled the lead."
+:"OFF — pipeline performance follows the current assigned consultant.";
+await loadPerformanceReports();
+}catch(error){
+checkbox.checked=preserveTransferHistory;
+status.textContent="Could not save. Check Firestore rules: "+error.message;
+alert("Could not save performance history setting: "+error.message);
+}finally{checkbox.disabled=false;}
+}
+
 function reportPeriodStart(period){
 const now=new Date();
 if(period==="today"){
@@ -1591,96 +1662,111 @@ try{
 const period=$("reportPeriod").value||"month";
 const start=reportPeriodStart(period);
 const rows=new Map();
-
 approvedAgents.forEach(agent=>{
-rows.set(agent.id,{
-id:agent.id,name:agent.name,assigned:0,followups:0,
-siteVisits:0,negotiations:0,won:0,lost:0
+rows.set(agent.id,{id:agent.id,name:agent.name,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0});
 });
-});
-
 let totalAssigned=0,totalWon=0;
 allLeads.forEach(lead=>{
 const row=rows.get(lead.assignedTo);
-if(!row)return;
-row.assigned++;
-totalAssigned++;
-const status=String(lead.status||"new").toLowerCase();
-if(status==="site-visit")row.siteVisits++;
-if(status==="negotiation")row.negotiations++;
-if(status==="closed-won"){row.won++;totalWon++;}
-if(status==="closed-lost")row.lost++;
+if(row){row.assigned++;totalAssigned++;}
 });
 
+// Read each lead's activity history once. The Owner setting decides how pipeline stages are attributed.
 const activityJobs=allLeads.map(async lead=>{
 const snap=await getDocs(collection(db,"leads",lead.id,"activities"));
+const leadStageCredits=new Map();
+let hasFollowupActivity=false;
 snap.forEach(activityDoc=>{
 const activity=activityDoc.data();
-if(String(activity.eventType||"").toLowerCase()!=="follow-up")return;
+const type=String(activity.eventType||"").toLowerCase();
 const actorId=activity.actorUid;
-const row=rows.get(actorId);
-if(!row)return;
 let eventDate=null;
-if(activity.createdAt&&typeof activity.createdAt.toDate==="function"){
-eventDate=activity.createdAt.toDate();
+if(activity.createdAt&&typeof activity.createdAt.toDate==="function")eventDate=activity.createdAt.toDate();
+const inPeriod=!start||(eventDate&&eventDate>=start);
+if(type==="follow-up"){
+if(inPeriod){
+const actorRow=rows.get(actorId);
+if(actorRow)actorRow.followups++;
 }
-if(start&&(!eventDate||eventDate<start))return;
-row.followups++;
+hasFollowupActivity=true;
+if(preserveTransferHistory&&actorId){
+const stage=String(activity.status||"").toLowerCase();
+if(["site-visit","negotiation","closed-won","closed-lost"].includes(stage)){
+if(!leadStageCredits.has(stage))leadStageCredits.set(stage,new Set());
+leadStageCredits.get(stage).add(actorId);
+}
+}
+}
+if(preserveTransferHistory&&["transfer","reassignment"].includes(type)){
+const previousId=activity.previousAssignedTo;
+const previousStage=String(activity.previousStatus||"").toLowerCase();
+if(previousId&&["site-visit","negotiation","closed-won","closed-lost"].includes(previousStage)){
+if(!leadStageCredits.has(previousStage))leadStageCredits.set(previousStage,new Set());
+leadStageCredits.get(previousStage).add(previousId);
+}
+}
 });
+
+if(preserveTransferHistory){
+for(const [stage,consultantIds] of leadStageCredits.entries()){
+consultantIds.forEach(id=>{
+const row=rows.get(id);
+if(!row)return;
+if(stage==="site-visit")row.siteVisits++;
+if(stage==="negotiation")row.negotiations++;
+if(stage==="closed-won")row.won++;
+if(stage==="closed-lost")row.lost++;
+});
+}
+// For stages with no recorded history, use the current lead snapshot as a fallback.
+const currentStage=String(lead.status||"new").toLowerCase();
+if(!leadStageCredits.has(currentStage)){
+const currentRow=rows.get(lead.assignedTo);
+if(currentRow){
+if(currentStage==="site-visit")currentRow.siteVisits++;
+if(currentStage==="negotiation")currentRow.negotiations++;
+if(currentStage==="closed-won")currentRow.won++;
+if(currentStage==="closed-lost")currentRow.lost++;
+}
+}
+}else{
+const currentRow=rows.get(lead.assignedTo);
+const currentStage=String(lead.status||"new").toLowerCase();
+if(currentRow){
+if(currentStage==="site-visit")currentRow.siteVisits++;
+if(currentStage==="negotiation")currentRow.negotiations++;
+if(currentStage==="closed-won")currentRow.won++;
+if(currentStage==="closed-lost")currentRow.lost++;
+}
+}
 });
 await Promise.all(activityJobs);
-
+totalWon=Array.from(rows.values()).reduce((sum,row)=>sum+row.won,0);
 $("reportAssigned").textContent=totalAssigned;
 $("reportWon").textContent=totalWon;
-$("reportConversion").textContent=totalAssigned
-?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
-
+$("reportConversion").textContent=totalAssigned?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
 const activeRows=Array.from(rows.values()).sort((a,b)=>a.name.localeCompare(b.name));
-if(!activeRows.length){
-root.className="report-empty";
-root.textContent="No approved consultants found.";
-return;
-}
-
-const wrap=document.createElement("div");
-wrap.className="performance-table-wrap";
-const table=document.createElement("table");
-table.className="performance-table";
-const thead=document.createElement("thead");
-const header=document.createElement("tr");
-["Consultant","Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{
-const th=document.createElement("th");th.textContent=label;header.appendChild(th);
-});
-thead.appendChild(header);
-const tbody=document.createElement("tbody");
+if(!activeRows.length){root.className="report-empty";root.textContent="No approved consultants found.";return;}
+const wrap=document.createElement("div");wrap.className="performance-table-wrap";
+const table=document.createElement("table");table.className="performance-table";
+const thead=document.createElement("thead");const header=document.createElement("tr");
+["Consultant","Currently Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{const th=document.createElement("th");th.textContent=label;header.appendChild(th);});
+thead.appendChild(header);const tbody=document.createElement("tbody");
 activeRows.forEach(row=>{
 const tr=document.createElement("tr");
 const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
-[
-row.name,row.assigned,row.followups,row.siteVisits,row.negotiations,row.won,row.lost,conversion
-].forEach((value,index)=>{
-const td=document.createElement("td");
-td.textContent=String(value);
-if(index>0)td.className="num";
-tr.appendChild(td);
-});
+[row.name,row.assigned,row.followups,row.siteVisits,row.negotiations,row.won,row.lost,conversion].forEach((value,index)=>{const td=document.createElement("td");td.textContent=String(value);if(index>0)td.className="num";tr.appendChild(td);});
 tbody.appendChild(tr);
 });
-table.append(thead,tbody);
-wrap.appendChild(table);
-root.className="";
-root.innerHTML="";
-root.appendChild(wrap);
-}catch(error){
-root.className="report-empty";
-root.textContent="Could not load performance reports: "+error.message;
-}
+table.append(thead,tbody);wrap.appendChild(table);root.className="";root.innerHTML="";root.appendChild(wrap);
+}catch(error){root.className="report-empty";root.textContent="Could not load performance reports: "+error.message;}
 }
 
 $("refreshUsers").onclick=loadPendingUsers;
 $("refreshLeads").onclick=loadLeads;
 $("refreshReports").onclick=loadPerformanceReports;
 $("reportPeriod").onchange=loadPerformanceReports;
+$("preserveTransferHistory").onchange=savePerformanceHistorySetting;
 
 $("leadSearch").addEventListener("input",renderLeads);
 
@@ -1838,6 +1924,7 @@ try{
 
 await loadPendingUsers();
 await loadApprovedAgents();
+await loadPerformanceHistorySetting();
 await loadLeads();
 
 }catch(error){
