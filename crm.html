@@ -974,7 +974,12 @@ eventType,
 summary,
 status="",
 followUpDate="",
-remarks=""
+remarks="",
+previousAssignedTo="",
+previousAssignedAgentName="",
+newAssignedTo="",
+newAssignedAgentName="",
+previousStatus=""
 }){
 
 return {
@@ -985,6 +990,11 @@ summary,
 status,
 followUpDate,
 remarks,
+previousAssignedTo,
+previousAssignedAgentName,
+newAssignedTo,
+newAssignedAgentName,
+previousStatus,
 createdAt:serverTimestamp()
 };
 
@@ -1707,7 +1717,13 @@ leadStageCredits.get(previousStage).add(previousId);
 }
 });
 
+const currentStage=String(lead.status||"new").toLowerCase();
 if(preserveTransferHistory){
+// Attribute each recorded stage to every consultant who handled it, without double-counting.
+if(lead.assignedTo&&["site-visit","negotiation","closed-won","closed-lost"].includes(currentStage)){
+if(!leadStageCredits.has(currentStage))leadStageCredits.set(currentStage,new Set());
+leadStageCredits.get(currentStage).add(lead.assignedTo);
+}
 for(const [stage,consultantIds] of leadStageCredits.entries()){
 consultantIds.forEach(id=>{
 const row=rows.get(id);
@@ -1718,20 +1734,9 @@ if(stage==="closed-won")row.won++;
 if(stage==="closed-lost")row.lost++;
 });
 }
-// For stages with no recorded history, use the current lead snapshot as a fallback.
-const currentStage=String(lead.status||"new").toLowerCase();
-if(!leadStageCredits.has(currentStage)){
-const currentRow=rows.get(lead.assignedTo);
-if(currentRow){
-if(currentStage==="site-visit")currentRow.siteVisits++;
-if(currentStage==="negotiation")currentRow.negotiations++;
-if(currentStage==="closed-won")currentRow.won++;
-if(currentStage==="closed-lost")currentRow.lost++;
-}
-}
 }else{
+// OFF: attribute the current pipeline stage only to the currently assigned consultant.
 const currentRow=rows.get(lead.assignedTo);
-const currentStage=String(lead.status||"new").toLowerCase();
 if(currentRow){
 if(currentStage==="site-visit")currentRow.siteVisits++;
 if(currentStage==="negotiation")currentRow.negotiations++;
