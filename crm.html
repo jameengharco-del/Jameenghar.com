@@ -348,6 +348,18 @@ margin-top:12px
 .assignment-row select,
 .assignment-row button{margin:0}
 
+
+.performance-table-wrap{width:100%;overflow-x:auto;margin-top:12px}
+.performance-table{width:100%;border-collapse:collapse;min-width:760px;font-size:13px}
+.performance-table th,.performance-table td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.performance-table th{background:#f6f8f5;color:var(--green);font-weight:700}
+.performance-table td.num{text-align:center;font-variant-numeric:tabular-nums}
+.report-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.report-toolbar select{flex:1;min-width:180px;margin:0}
+.report-toolbar button{width:auto;min-width:130px;margin:0}
+.report-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+.report-empty{padding:14px;background:#f6f8f5;border-radius:9px;color:var(--muted);font-size:14px}
+
 @media(max-width:600px){
 header{justify-content:center;text-align:center}
 .header-text{text-align:center}
@@ -449,6 +461,27 @@ header{justify-content:center;text-align:center}
 <div class="stat-box"><strong id="buyerLeads">0</strong><span>Buyer Enquiries</span></div>
 <div class="stat-box"><strong id="sellerLeads">0</strong><span>Seller Enquiries</span></div>
 </div>
+
+<section class="card" id="performanceReports">
+<h2>Performance Reports</h2>
+<p class="card-description">Consultant-wise lead pipeline and follow-up activity. Pipeline figures show each consultant's currently assigned leads.</p>
+<div class="report-toolbar">
+<select id="reportPeriod" aria-label="Follow-up activity period">
+<option value="all">All-time follow-ups</option>
+<option value="today">Today's follow-ups</option>
+<option value="week">Last 7 days' follow-ups</option>
+<option value="month" selected>This month's follow-ups</option>
+</select>
+<button id="refreshReports" class="secondary" type="button">Refresh Reports</button>
+</div>
+<div class="stats-grid">
+<div class="stat-box"><strong id="reportAssigned">0</strong><span>Assigned Leads</span></div>
+<div class="stat-box"><strong id="reportWon">0</strong><span>Closed Won</span></div>
+<div class="stat-box"><strong id="reportConversion">0%</strong><span>Overall Conversion</span></div>
+</div>
+<div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
+<p class="report-note">Follow-up activity is counted from saved Activity History entries. Site visits, negotiations and closed outcomes are based on each lead's current status. Conversion = Closed Won ÷ Currently Assigned Leads.</p>
+</section>
 
 <div class="lead-toolbar">
 <input id="leadSearch" type="search" placeholder="Search name, mobile, email or location...">
@@ -1515,6 +1548,7 @@ $("sellerLeads").textContent=sellers;
 
 renderLeads();
 renderOwnerToday();
+loadPerformanceReports();
 
 }catch(error){
 
@@ -1531,8 +1565,122 @@ list.textContent=error.message;
 
 }
 
+
+function reportPeriodStart(period){
+const now=new Date();
+if(period==="today"){
+return new Date(now.getFullYear(),now.getMonth(),now.getDate());
+}
+if(period==="week"){
+const start=new Date(now);
+start.setDate(start.getDate()-6);
+start.setHours(0,0,0,0);
+return start;
+}
+if(period==="month"){
+return new Date(now.getFullYear(),now.getMonth(),1);
+}
+return null;
+}
+
+async function loadPerformanceReports(){
+const root=$("performanceReportContent");
+if(!root)return;
+root.textContent="Preparing performance report...";
+try{
+const period=$("reportPeriod").value||"month";
+const start=reportPeriodStart(period);
+const rows=new Map();
+
+approvedAgents.forEach(agent=>{
+rows.set(agent.id,{
+id:agent.id,name:agent.name,assigned:0,followups:0,
+siteVisits:0,negotiations:0,won:0,lost:0
+});
+});
+
+let totalAssigned=0,totalWon=0;
+allLeads.forEach(lead=>{
+const row=rows.get(lead.assignedTo);
+if(!row)return;
+row.assigned++;
+totalAssigned++;
+const status=String(lead.status||"new").toLowerCase();
+if(status==="site-visit")row.siteVisits++;
+if(status==="negotiation")row.negotiations++;
+if(status==="closed-won"){row.won++;totalWon++;}
+if(status==="closed-lost")row.lost++;
+});
+
+const activityJobs=allLeads.map(async lead=>{
+const snap=await getDocs(collection(db,"leads",lead.id,"activities"));
+snap.forEach(activityDoc=>{
+const activity=activityDoc.data();
+if(String(activity.eventType||"").toLowerCase()!=="follow-up")return;
+const actorId=activity.actorUid;
+const row=rows.get(actorId);
+if(!row)return;
+let eventDate=null;
+if(activity.createdAt&&typeof activity.createdAt.toDate==="function"){
+eventDate=activity.createdAt.toDate();
+}
+if(start&&(!eventDate||eventDate<start))return;
+row.followups++;
+});
+});
+await Promise.all(activityJobs);
+
+$("reportAssigned").textContent=totalAssigned;
+$("reportWon").textContent=totalWon;
+$("reportConversion").textContent=totalAssigned
+?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
+
+const activeRows=Array.from(rows.values()).sort((a,b)=>a.name.localeCompare(b.name));
+if(!activeRows.length){
+root.className="report-empty";
+root.textContent="No approved consultants found.";
+return;
+}
+
+const wrap=document.createElement("div");
+wrap.className="performance-table-wrap";
+const table=document.createElement("table");
+table.className="performance-table";
+const thead=document.createElement("thead");
+const header=document.createElement("tr");
+["Consultant","Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{
+const th=document.createElement("th");th.textContent=label;header.appendChild(th);
+});
+thead.appendChild(header);
+const tbody=document.createElement("tbody");
+activeRows.forEach(row=>{
+const tr=document.createElement("tr");
+const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
+[
+row.name,row.assigned,row.followups,row.siteVisits,row.negotiations,row.won,row.lost,conversion
+].forEach((value,index)=>{
+const td=document.createElement("td");
+td.textContent=String(value);
+if(index>0)td.className="num";
+tr.appendChild(td);
+});
+tbody.appendChild(tr);
+});
+table.append(thead,tbody);
+wrap.appendChild(table);
+root.className="";
+root.innerHTML="";
+root.appendChild(wrap);
+}catch(error){
+root.className="report-empty";
+root.textContent="Could not load performance reports: "+error.message;
+}
+}
+
 $("refreshUsers").onclick=loadPendingUsers;
 $("refreshLeads").onclick=loadLeads;
+$("refreshReports").onclick=loadPerformanceReports;
+$("reportPeriod").onchange=loadPerformanceReports;
 
 $("leadSearch").addEventListener("input",renderLeads);
 
