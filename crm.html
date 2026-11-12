@@ -338,30 +338,6 @@ border-bottom:1px solid #e6ece7
 .activity-entry p{margin:5px 0;white-space:pre-wrap;font-size:13px}
 .activity-entry small{color:#68756c}
 
-.transfer-choice{
-position:fixed;
-inset:0;
-background:#0009;
-z-index:99999;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:18px
-}
-
-.transfer-choice-box{
-background:#fff;
-padding:24px;
-border-radius:14px;
-max-width:420px;
-width:100%;
-box-shadow:0 10px 40px #0003
-}
-
-.transfer-choice-box h3{margin:0 0 12px}
-.transfer-choice-box p{line-height:1.6;margin-bottom:18px;color:#64736a}
-.transfer-choice-box button{margin:6px 0}
-
 .assignment-row{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -548,7 +524,6 @@ query,
 where
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-
 const firebaseConfig={
 apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
 authDomain:"jameenghar-ffdfd.firebaseapp.com",
@@ -569,7 +544,7 @@ const $=id=>document.getElementById(id);
 
 let allLeads=[];
 let approvedAgents=[];
-
+let registrationInProgress=false;
 
 function message(text){
 $("message").textContent=text;
@@ -580,7 +555,6 @@ function hideAll(){
 $(id).classList.add("hidden");
 });
 }
-
 
 $("showRegister").onclick=()=>{
 $("loginBox").classList.add("hidden");
@@ -594,8 +568,10 @@ $("loginBox").classList.remove("hidden");
 message("");
 };
 
+/* FIX 1: Registration race condition corrected */
 
 $("registerBtn").onclick=async()=>{
+
 const name=$("regName").value.trim();
 const phone=$("regPhone").value.trim();
 const email=$("regEmail").value.trim();
@@ -611,28 +587,55 @@ message("Password must be at least 6 characters.");
 return;
 }
 
+registrationInProgress=true;
+$("registerBtn").disabled=true;
+
 try{
+
 const result=await createUserWithEmailAndPassword(auth,email,password);
 
 await setDoc(doc(db,"users",result.user.uid),{
 uid:result.user.uid,
-name,
-phone,
-email,
+name:name,
+phone:phone,
+email:email,
 role:"crm",
 status:"pending",
 createdAt:serverTimestamp()
 });
 
-message("Registration successful. Please wait for Owner approval.");
+registrationInProgress=false;
+$("registerBtn").disabled=false;
+
+hideAll();
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"Your account is pending Owner approval. Please wait.";
+
+message("");
 
 }catch(error){
-message(error.message);
+
+registrationInProgress=false;
+$("registerBtn").disabled=false;
+
+if(auth.currentUser&&auth.currentUser.uid!==OWNER_UID){
+try{
+await signOut(auth);
+}catch(signOutError){
+console.error("Registration cleanup error:",signOutError);
 }
+}
+
+message(error.message);
+
+}
+
 };
 
-
 $("loginBtn").onclick=async()=>{
+
 const email=$("loginEmail").value.trim();
 const password=$("loginPassword").value;
 
@@ -647,8 +650,8 @@ message("");
 }catch(error){
 message(error.message);
 }
-};
 
+};
 
 async function loadPendingUsers(){
 
@@ -656,12 +659,14 @@ const list=$("pendingUsers");
 list.innerHTML="Loading users...";
 
 try{
+
 const snapshot=await getDocs(collection(db,"users"));
 
 list.innerHTML="";
 let count=0;
 
 snapshot.forEach(userDoc=>{
+
 const user=userDoc.data();
 
 if(user.status==="pending"&&user.uid!==OWNER_UID){
@@ -672,6 +677,7 @@ const box=document.createElement("div");
 box.className="userbox";
 
 const details=document.createElement("p");
+
 details.textContent=
 "Name: "+(user.name||"")+
 " | Email: "+(user.email||"")+
@@ -681,16 +687,21 @@ const approve=document.createElement("button");
 approve.textContent="Approve User";
 
 approve.onclick=async()=>{
+
 try{
+
 await updateDoc(doc(db,"users",userDoc.id),{
 status:"approved",
 approvedAt:serverTimestamp()
 });
+
 await loadPendingUsers();
 await loadApprovedAgents();
+
 }catch(error){
 alert(error.message);
 }
+
 };
 
 const reject=document.createElement("button");
@@ -698,20 +709,27 @@ reject.textContent="Reject User";
 reject.className="reject";
 
 reject.onclick=async()=>{
+
 try{
+
 await updateDoc(doc(db,"users",userDoc.id),{
 status:"rejected",
 rejectedAt:serverTimestamp()
 });
+
 await loadPendingUsers();
+
 }catch(error){
 alert(error.message);
 }
+
 };
 
 box.append(details,approve,reject);
 list.appendChild(box);
+
 }
+
 });
 
 if(count===0){
@@ -721,10 +739,11 @@ list.textContent="No pending CRM users.";
 }catch(error){
 list.textContent=error.message;
 }
+
 }
 
-
 function formatDate(timestamp){
+
 if(!timestamp||typeof timestamp.toDate!=="function"){
 return "Date not available";
 }
@@ -733,8 +752,8 @@ return timestamp.toDate().toLocaleString("en-IN",{
 dateStyle:"medium",
 timeStyle:"short"
 });
-}
 
+}
 
 async function loadApprovedAgents(){
 
@@ -743,52 +762,60 @@ const snapshot=await getDocs(collection(db,"users"));
 approvedAgents=[];
 
 snapshot.forEach(userDoc=>{
+
 const consultant=userDoc.data();
 
 if(consultant.role==="crm"&&consultant.status==="approved"){
+
 approvedAgents.push({
 id:userDoc.id,
 name:consultant.name||consultant.email||userDoc.id
 });
+
 }
+
 });
 
 approvedAgents.sort((a,b)=>a.name.localeCompare(b.name));
+
 }
 
-
 function localDateKey(date=new Date()){
+
 const y=date.getFullYear();
 const m=String(date.getMonth()+1).padStart(2,"0");
 const d=String(date.getDate()).padStart(2,"0");
 
 return `${y}-${m}-${d}`;
+
 }
 
-
 function isClosedLead(lead){
+
 return ["closed-won","closed-lost"].includes(
 String(lead.status||"").toLowerCase()
 );
+
 }
 
-
 function dueToday(lead){
+
 return !!lead.followUpDate&&
 lead.followUpDate<=localDateKey()&&
 !isClosedLead(lead)&&
 lead.followUpCompletedDate!==localDateKey();
+
 }
 
-
 function leadInfoText(lead){
+
 return `Mobile: ${lead.phone||"Not provided"}
 Location: ${lead.propertyLocation||"Not provided"}
 Requirement: ${lead.message||"No message"}
 Status: ${lead.status||"new"}
 Follow-up date: ${lead.followUpDate||"Not set"}`;
-}
 
+}
 
 function activityPanel(lead){
 
@@ -826,9 +853,11 @@ const snap=await getDocs(q);
 panel.innerHTML="";
 
 if(snap.empty){
+
 panel.textContent="No activity recorded yet. New updates will appear here.";
 loaded=true;
 return;
+
 }
 
 snap.forEach(activityDoc=>{
@@ -854,38 +883,48 @@ meta.textContent=formatDate(a.createdAt);
 item.append(heading,summary,meta);
 
 if(a.status){
+
 const st=document.createElement("p");
 st.textContent="Status: "+a.status;
 item.appendChild(st);
+
 }
 
 if(a.followUpDate){
+
 const fd=document.createElement("p");
 fd.textContent="Next follow-up: "+a.followUpDate;
 item.appendChild(fd);
+
 }
 
 if(a.remarks){
+
 const rm=document.createElement("p");
 rm.textContent="Remarks: "+a.remarks;
 item.appendChild(rm);
+
 }
 
 panel.appendChild(item);
+
 });
 
 loaded=true;
 
 }catch(e){
+
 panel.textContent="Could not load activity history: "+e.message;
+
 }
+
 };
 
 wrap.append(button,panel);
 
 return wrap;
-}
 
+}
 
 function activityRecord({
 eventType,
@@ -905,69 +944,16 @@ followUpDate,
 remarks,
 createdAt:serverTimestamp()
 };
+
 }
 
-
-// Owner popup for Transfer Lead and Reassign Lead.
+/* History is always preserved. No delete-history option exists. */
 
 function askHistoryChoice(targetName){
 
-return new Promise(resolve=>{
+return Promise.resolve("preserve");
 
-const overlay=document.createElement("div");
-overlay.className="transfer-choice";
-
-const box=document.createElement("div");
-box.className="transfer-choice-box";
-
-const title=document.createElement("h3");
-title.textContent="Transfer Lead — Activity History";
-
-const description=document.createElement("p");
-
-description.textContent=
-"You are transferring this lead to "+targetName+
-". Do you want to preserve the previous Activity History?";
-
-const yes=document.createElement("button");
-yes.textContent="YES — Preserve History";
-yes.className="secondary";
-
-const no=document.createElement("button");
-no.textContent="NO — Delete Old History";
-no.className="reject";
-
-const cancel=document.createElement("button");
-cancel.textContent="Cancel";
-cancel.style.background="#64736a";
-
-function finish(value){
-overlay.remove();
-resolve(value);
 }
-
-yes.onclick=()=>finish("preserve");
-
-no.onclick=()=>{
-if(confirm(
-"WARNING: All previous Activity History records for this lead will be permanently deleted. This cannot be undone. Continue?"
-)){
-finish("delete");
-}
-};
-
-cancel.onclick=()=>finish(null);
-
-box.append(title,description,yes,no,cancel);
-overlay.appendChild(box);
-document.body.appendChild(overlay);
-
-});
-}
-
-
-// Follow-up form.
-// This form is now shown on EVERY assigned lead in consultant dashboard.
 
 function makeTaskForm(lead,isOwner=false){
 
@@ -1070,12 +1056,8 @@ save.textContent="Save Follow-up Update";
 form.append(status,date,remarks,save);
 
 return form;
+
 }
-
-
-// Consultant Due Follow-ups panel.
-// This panel only shows due/overdue leads.
-// The separate form appears on every assigned lead below.
 
 function renderConsultantToday(leads){
 
@@ -1087,8 +1069,10 @@ const due=leads.filter(dueToday);
 $("consultantDueCount").textContent=due.length;
 
 if(!due.length){
+
 root.textContent="No pending follow-ups for today. Great work!";
 return;
+
 }
 
 due.forEach(lead=>{
@@ -1109,7 +1093,6 @@ root.appendChild(box);
 
 }
 
-
 function renderOwnerToday(){
 
 const due=allLeads.filter(dueToday);
@@ -1122,8 +1105,10 @@ counts.innerHTML="";
 const grouped={};
 
 due.forEach(l=>{
+
 const key=l.assignedAgentName||"Unassigned";
 grouped[key]=(grouped[key]||0)+1;
+
 });
 
 Object.entries(grouped)
@@ -1148,8 +1133,10 @@ const root=$("ownerTodayLeads");
 root.innerHTML="";
 
 if(!due.length){
+
 root.textContent="No pending follow-ups for today.";
 return;
+
 }
 
 due.forEach(lead=>{
@@ -1203,37 +1190,22 @@ alert("Choose a consultant first.");
 return;
 }
 
-const choice=await askHistoryChoice(target.name);
-
-if(!choice)return;
+if(!confirm(
+"Transfer this lead to "+target.name+"? Previous Activity History will be preserved."
+)){
+return;
+}
 
 move.disabled=true;
 move.textContent="Transferring...";
 
 try{
 
-const activitiesRef=collection(db,"leads",lead.id,"activities");
-
-const oldHistory=choice==="delete"
-?await getDocs(activitiesRef)
-:null;
-
-if(oldHistory&&oldHistory.size>498){
-throw new Error(
-"This lead has more than 498 history records. Transfer cannot safely delete them in one batch."
-);
-}
-
 const batch=writeBatch(db);
 
 const leadRef=doc(db,"leads",lead.id);
+const activitiesRef=collection(db,"leads",lead.id,"activities");
 const activityRef=doc(activitiesRef);
-
-if(oldHistory){
-oldHistory.forEach(activityDoc=>{
-batch.delete(activityDoc.ref);
-});
-}
 
 batch.update(leadRef,{
 
@@ -1252,23 +1224,19 @@ batch.set(activityRef,activityRecord({
 
 eventType:"transfer",
 
-summary:choice==="delete"
-?`Lead transferred to ${target.name}. Previous Activity History was deleted by Owner.`
-:`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
+summary:
+`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
 
 status:"new",
 followUpDate:localDateKey(),
-remarks:choice==="preserve"?(lead.remarks||""):""
+remarks:lead.remarks||""
 
 }));
 
 await batch.commit();
 await loadLeads();
 
-alert(choice==="delete"
-?"Lead transferred successfully. Previous Activity History deleted."
-:"Lead transferred successfully. Previous Activity History preserved."
-);
+alert("Lead transferred successfully. Previous Activity History preserved.");
 
 }catch(e){
 
@@ -1288,7 +1256,6 @@ root.appendChild(box);
 });
 
 }
-
 
 function renderLeads(){
 
@@ -1418,14 +1385,17 @@ return;
 
 const isReassignment=alreadyAssigned;
 
-let historyChoice="preserve";
+const previousName=lead.assignedAgentName||
+(lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"
+?lead.assignedTo
+:"Unassigned");
 
-if(isReassignment){
-
-historyChoice=await askHistoryChoice(selectedAgent.name);
-
-if(!historyChoice)return;
-
+if(!confirm(
+(isReassignment?"Reassign":"Assign")+
+" this lead to "+selectedAgent.name+
+"? Previous Activity History will be preserved."
+)){
+return;
 }
 
 assignButton.disabled=true;
@@ -1438,28 +1408,9 @@ try{
 
 const leadRef=doc(db,"leads",lead.id);
 const activitiesRef=collection(db,"leads",lead.id,"activities");
-
-const oldHistory=(isReassignment&&historyChoice==="delete")
-?await getDocs(activitiesRef)
-:null;
-
-if(oldHistory&&oldHistory.size>498){
-
-throw new Error(
-"This lead has more than 498 history records. History cannot safely be deleted in one batch."
-);
-
-}
+const activityRef=doc(activitiesRef);
 
 const batch=writeBatch(db);
-
-if(oldHistory){
-
-oldHistory.forEach(activityDoc=>{
-batch.delete(activityDoc.ref);
-});
-
-}
 
 batch.update(leadRef,{
 
@@ -1471,53 +1422,28 @@ updatedAt:serverTimestamp()
 
 });
 
-let summary;
-
-if(!isReassignment){
-
-summary=`Lead assigned to ${selectedAgent.name}.`;
-
-}else if(historyChoice==="delete"){
-
-summary=
-`Lead reassigned to ${selectedAgent.name}. `+
-"Previous Activity History was deleted by Owner.";
-
-}else{
-
-summary=
-`Lead reassigned from ${lead.assignedAgentName||"Previous consultant"} `+
-`to ${selectedAgent.name}. Previous Activity History preserved.`;
-
-}
-
-const activityRef=doc(activitiesRef);
+const summary=isReassignment
+?`Lead reassigned from ${previousName} to ${selectedAgent.name}. Previous Activity History preserved.`
+:`Lead assigned to ${selectedAgent.name}. Previous Activity History preserved.`;
 
 batch.set(activityRef,activityRecord({
 
-eventType:"assignment",
+eventType:isReassignment?"reassignment":"assignment",
 summary,
 status:lead.status||"new",
 followUpDate:lead.followUpDate||"",
-remarks:historyChoice==="preserve"?(lead.remarks||""):""
+remarks:lead.remarks||""
 
 }));
 
 await batch.commit();
 await loadLeads();
 
-if(isReassignment){
-
-alert(historyChoice==="delete"
-?"Lead reassigned successfully. Previous Activity History deleted."
-:"Lead reassigned successfully. Previous Activity History preserved."
+alert(
+isReassignment
+?"Lead reassigned successfully. Previous Activity History preserved."
+:"Lead assigned successfully."
 );
-
-}else{
-
-alert("Lead assigned successfully.");
-
-}
 
 }catch(error){
 
@@ -1541,7 +1467,6 @@ list.appendChild(box);
 
 }
 
-
 async function loadLeads(){
 
 const list=$("leadsList");
@@ -1556,10 +1481,12 @@ const snapshot=await getDocs(collection(db,"leads"));
 allLeads=[];
 
 snapshot.forEach(leadDoc=>{
+
 allLeads.push({
 id:leadDoc.id,
 ...leadDoc.data()
 });
+
 });
 
 allLeads.sort((a,b)=>{
@@ -1604,12 +1531,10 @@ list.textContent=error.message;
 
 }
 
-
 $("refreshUsers").onclick=loadPendingUsers;
 $("refreshLeads").onclick=loadLeads;
 
 $("leadSearch").addEventListener("input",renderLeads);
-
 
 async function loadMyAssignedLeads(user){
 
@@ -1695,7 +1620,6 @@ const received=document.createElement("p");
 received.className="lead-meta";
 received.textContent="Received: "+formatDate(lead.createdAt);
 
-// IMPORTANT: Update form is attached to every assigned lead.
 box.append(
 title,
 details,
@@ -1721,7 +1645,6 @@ list.innerHTML="";
 
 }
 
-
 $("refreshMyLeads").onclick=()=>{
 
 if(auth.currentUser){
@@ -1729,7 +1652,6 @@ loadMyAssignedLeads(auth.currentUser);
 }
 
 };
-
 
 async function logout(){
 
@@ -1745,8 +1667,11 @@ $("logoutPending").onclick=logout;
 $("ownerLogout").onclick=logout;
 $("approvedLogout").onclick=logout;
 
+/* FIX 2: Auth listener waits for registration profile creation */
 
 onAuthStateChanged(auth,async user=>{
+
+if(registrationInProgress)return;
 
 hideAll();
 
