@@ -4,1466 +4,2002 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Owner Dashboard | JameenGhar.com</title>
+<title>JameenGhar CRM | Real Estate Management</title>
 
 <style>
-:root {
-  --green:#064d2b;
-  --green2:#0b6840;
-  --orange:#ff5a0a;
-  --ink:#17251d;
-  --muted:#64736a;
-  --cream:#f6f8f5;
-  --line:#e4eae5;
+:root{
+--green:#064d2b;
+--green2:#0b6840;
+--orange:#ff5a0a;
+--ink:#17251d;
+--muted:#64736a;
+--cream:#f6f8f5;
+--line:#e4eae5;
+--white:#fff
 }
 
-* {
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:var(--cream);
+color:var(--ink);
+min-height:100vh
 }
 
-body {
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--cream);
-  color:var(--ink);
+header{
+background:#fff;
+border-bottom:1px solid var(--line);
+padding:14px 5%;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:15px;
+flex-wrap:wrap;
+box-shadow:0 2px 10px #00000008
 }
 
-button,input {
-  font:inherit;
+.logo-link{display:block}
+
+header img{
+display:block;
+width:210px;
+max-width:65vw;
+max-height:65px;
+object-fit:contain
 }
 
-button {
-  cursor:pointer;
+.header-text{text-align:right}
+.header-text h1{color:var(--green);font-size:22px}
+.header-text p{color:var(--muted);font-size:13px;margin-top:5px}
+
+.hero{text-align:center;padding:35px 15px 10px}
+.hero h2{color:var(--green);font-size:26px;margin-bottom:8px}
+.hero p{color:var(--muted);font-size:14px;line-height:1.6}
+
+.container{
+max-width:1000px;
+margin:20px auto 45px;
+padding:15px
 }
 
-.hidden {
-  display:none!important;
+.card{
+background:#fff;
+padding:28px;
+border:1px solid var(--line);
+border-radius:16px;
+box-shadow:0 8px 28px #12331b0d;
+margin-bottom:22px
 }
 
-#loginScreen {
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:var(--cream);
+h2{margin-bottom:18px;color:var(--green)}
+h3{color:var(--green);margin:20px 0 12px}
+
+.card-description{
+color:var(--muted);
+font-size:14px;
+line-height:1.6;
+margin-bottom:12px
 }
 
-.login-card {
-  background:white;
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:35px;
-  width:100%;
-  max-width:420px;
-  box-shadow:0 8px 30px #00000014;
+input,button,select{
+width:100%;
+padding:14px;
+margin:8px 0;
+border-radius:9px;
+font-size:15px
 }
 
-.login-card img {
-  display:block;
-  width:190px;
-  max-width:100%;
-  margin:0 auto 25px;
+input,select{
+border:1px solid #ccd8ce;
+background:white;
+color:var(--ink)
 }
 
-.login-card h1 {
-  text-align:center;
-  color:var(--green);
-  margin-bottom:8px;
+input:focus,select:focus,textarea:focus{
+outline:2px solid #b8d7c1;
+border-color:var(--green2)
 }
 
-.login-card p {
-  text-align:center;
-  color:var(--muted);
-  margin-bottom:22px;
+button{
+border:none;
+background:var(--orange);
+color:white;
+font-weight:bold;
+cursor:pointer;
+transition:background .2s
 }
 
-.login-card input {
-  display:block;
-  width:100%;
-  padding:13px;
-  margin:12px 0;
-  border:1px solid var(--line);
-  border-radius:9px;
+button:hover{background:#e84b00}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+.secondary{background:var(--green)}
+.secondary:hover{background:var(--green2)}
+
+.reject{background:#b42318}
+.reject:hover{background:#941b13}
+
+.hidden{display:none!important}
+
+.status{
+padding:17px;
+border-radius:10px;
+background:#e8f4eb;
+border:1px solid #d5e8da;
+margin:14px 0;
+line-height:1.7;
+color:var(--ink)
 }
 
-.primary-btn {
-  width:100%;
-  border:0;
-  border-radius:9px;
-  padding:13px;
-  background:var(--green);
-  color:white;
-  font-weight:bold;
+.userbox,.leadbox{
+border:1px solid var(--line);
+padding:17px;
+border-radius:12px;
+margin:14px 0;
+background:#fff
 }
 
-.primary-btn:hover {
-  background:var(--green2);
+.userbox p,.leadbox p{
+line-height:1.8;
+overflow-wrap:anywhere;
+margin-bottom:7px
 }
 
-.primary-btn:disabled {
-  opacity:.65;
-  cursor:not-allowed;
+.leadbox h3{
+margin:0 0 10px;
+font-size:17px
 }
 
-#loginMessage {
-  margin-top:14px;
-  color:#b42318;
-  font-size:13px;
-  text-align:center;
+.lead-meta{
+color:var(--muted);
+font-size:12px;
+margin-top:10px
 }
 
-.layout {
-  display:flex;
-  min-height:100vh;
+.stats-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+margin:20px 0
 }
 
-.sidebar {
-  width:250px;
-  background:white;
-  border-right:1px solid var(--line);
-  padding:24px 16px;
-  flex-shrink:0;
+.stat-box{
+background:#f6f8f5;
+border:1px solid var(--line);
+border-radius:12px;
+padding:18px 12px;
+text-align:center
 }
 
-.logo {
-  width:100%;
-  max-width:205px;
-  height:auto;
-  display:block;
-  margin:0 auto 35px;
+.stat-box strong{
+display:block;
+color:var(--green);
+font-size:27px;
+margin-bottom:6px
 }
 
-.nav-title {
-  font-size:11px;
-  color:var(--muted);
-  font-weight:bold;
-  letter-spacing:1px;
-  margin:22px 12px 10px;
+.stat-box span{color:var(--muted);font-size:13px}
+
+.lead-toolbar{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap
 }
 
-.nav a {
-  display:block;
-  text-decoration:none;
-  color:var(--ink);
-  padding:13px 14px;
-  margin:5px 0;
-  border-radius:9px;
-  font-size:14px;
-  font-weight:600;
+.lead-toolbar input{flex:1;min-width:180px}
+.lead-toolbar button{width:auto;min-width:130px}
+
+.small{font-size:13px;color:var(--muted)}
+
+#message{
+white-space:pre-wrap;
+margin:12px 0;
+color:#b42318;
+font-size:14px;
+line-height:1.5
 }
 
-.nav a:hover,
-.nav a.active {
-  background:#eaf4ed;
-  color:var(--green);
+footer{
+text-align:center;
+padding:20px;
+color:var(--muted);
+font-size:12px;
+border-top:1px solid var(--line);
+background:white
 }
 
-.nav a.active {
-  border-left:3px solid var(--orange);
+.followup-panel{
+border:2px solid #ff5a0a;
+background:linear-gradient(135deg,#fffaf5,#fff);
+border-radius:16px;
+padding:20px;
+margin:18px 0 24px;
+box-shadow:0 8px 24px #ff5a0a12
 }
 
-.main {
-  flex:1;
-  min-width:0;
-  padding:30px;
+.followup-heading{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:14px;
+margin-bottom:14px
 }
 
-.header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:15px;
-  margin-bottom:28px;
+.followup-kicker{
+display:inline-block;
+color:#ff5a0a;
+font-size:11px;
+font-weight:800;
+letter-spacing:1.5px;
+margin-bottom:6px
 }
 
-.header h1 {
-  font-size:28px;
-  margin-bottom:8px;
+.followup-heading h2{margin:0 0 5px;color:#064d2b}
+.followup-heading p{font-size:13px;color:#64736a;line-height:1.5}
+
+.followup-total{
+background:#064d2b;
+color:#fff;
+border-radius:12px;
+padding:12px 16px;
+text-align:center;
+min-width:95px
 }
 
-.header p {
-  color:var(--muted);
-  font-size:14px;
+.followup-total strong{display:block;font-size:25px}
+.followup-total span{font-size:11px}
+
+.followup-item{
+background:#fff;
+border:1px solid #e4eae5;
+border-radius:12px;
+padding:15px;
+margin:12px 0
 }
 
-.admin-badge {
-  display:inline-block;
-  background:#eaf4ed;
-  color:var(--green);
-  padding:12px 18px;
-  border-radius:10px;
-  font-size:13px;
-  font-weight:bold;
-  margin-right:8px;
+.followup-item h3{margin:0 0 8px}
+.followup-item p{
+white-space:pre-line;
+line-height:1.6;
+margin:5px 0;
+font-size:14px
 }
 
-.logout-btn {
-  border:1px solid var(--line);
-  background:white;
-  padding:10px 14px;
-  border-radius:9px;
-  color:var(--green);
-  font-weight:bold;
+.task-form{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:12px
 }
 
-.stats {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:18px;
-  margin-bottom:25px;
+.task-form input,
+.task-form select,
+.task-form textarea{
+width:100%;
+margin:0;
+padding:11px;
+border:1px solid #ccd8ce;
+border-radius:8px;
+font:14px Arial
 }
 
-.stat-card,
-.section {
-  background:white;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:24px;
+.task-form textarea{
+grid-column:1/-1;
+min-height:75px;
+resize:vertical
 }
 
-.stat-card p {
-  font-size:14px;
-  color:var(--muted);
-  margin-bottom:14px;
+.task-form button{
+grid-column:1/-1;
+margin:0
 }
 
-.stat-card h2 {
-  color:var(--green);
-  font-size:32px;
+.consultant-counts{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:9px;
+margin:10px 0 15px
 }
 
-.stat-card .accent {
-  color:var(--orange);
+.consultant-count{
+background:#f6f8f5;
+border:1px solid #e4eae5;
+border-radius:10px;
+padding:12px
 }
 
-.section {
-  border-radius:15px;
-  padding:25px;
-  margin-bottom:24px;
+.consultant-count strong{
+color:#064d2b;
+font-size:22px;
+display:block
 }
 
-.section-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:20px;
+.consultant-count span{font-size:12px;color:#64736a}
+
+.activity-wrap{margin-top:12px}
+.activity-toggle{width:100%;margin:0}
+
+.activity-panel{
+margin-top:10px;
+padding:12px;
+border:1px solid #dce6de;
+border-radius:10px;
+background:#fbfdfb
 }
 
-.section h2 {
-  font-size:21px;
+.activity-entry{
+padding:10px 0;
+border-bottom:1px solid #e6ece7
 }
 
-.section p {
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.7;
+.activity-entry:last-child{border-bottom:0}
+.activity-entry strong{color:#064d2b;font-size:13px}
+.activity-entry p{margin:5px 0;white-space:pre-wrap;font-size:13px}
+.activity-entry small{color:#68756c}
+
+.assignment-row{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-top:12px
 }
 
-.tag {
-  display:inline-block;
-  background:#fff1df;
-  color:#a85b00;
-  border-radius:20px;
-  padding:7px 12px;
-  font-size:12px;
-  font-weight:bold;
-}
+.assignment-row select,
+.assignment-row button{margin:0}
 
-.table-wrap {
-  overflow-x:auto;
-}
 
-table {
-  width:100%;
-  border-collapse:collapse;
-  min-width:650px;
-}
+.performance-table-wrap{width:100%;overflow-x:auto;margin-top:12px}
+.performance-table{width:100%;border-collapse:collapse;min-width:760px;font-size:13px}
+.performance-table th,.performance-table td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.performance-table th{background:#f6f8f5;color:var(--green);font-weight:700}
+.performance-table td.num{text-align:center;font-variant-numeric:tabular-nums}
+.report-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.report-toolbar select{flex:1;min-width:180px;margin:0}
+.report-toolbar button{width:auto;min-width:130px;margin:0}
+.report-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+.report-empty{padding:14px;background:#f6f8f5;border-radius:9px;color:var(--muted);font-size:14px}
 
-th {
-  text-align:left;
-  color:var(--muted);
-  font-size:12px;
-  padding:15px 12px;
-  border-bottom:1px solid var(--line);
-}
-
-td {
-  padding:16px 12px;
-  border-bottom:1px solid var(--line);
-  font-size:14px;
-  line-height:1.6;
-}
-
-.empty {
-  color:var(--muted);
-  padding:25px 12px;
-}
-
-.info-grid {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px;
-}
-
-.info-card {
-  background:#f9fbf9;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:20px;
-}
-
-.info-card h3 {
-  color:var(--green);
-  font-size:16px;
-  margin-bottom:10px;
-}
-
-.footer {
-  text-align:center;
-  padding:15px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.orange-line {
-  width:45px;
-  height:4px;
-  background:var(--orange);
-  border-radius:10px;
-  margin-top:12px;
-}
-
-.approve-btn {
-  background:#16a34a;
-  color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:5px;
-  margin:3px;
-}
-
-.reject-btn {
-  background:#dc2626;
-  color:white;
-  border:none;
-  padding:8px 12px;
-  border-radius:5px;
-  margin:3px;
-}
-
-.status-approved {
-  color:#15803d;
-  font-weight:bold;
-}
-
-.status-pending {
-  color:#b45309;
-  font-weight:bold;
-}
-
-.status-rejected {
-  color:#dc2626;
-  font-weight:bold;
-}
-
-.status-published {
-  color:#15803d;
-  font-weight:bold;
-}
-
-.status-unpublished {
-  color:#64736a;
-  font-weight:bold;
-}
-
-@media(max-width:1100px) {
-  .stats {
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-}
-
-@media(max-width:768px) {
-  .layout {
-    display:block;
-  }
-
-  .sidebar {
-    width:100%;
-    padding:15px;
-    border-right:none;
-    border-bottom:1px solid var(--line);
-  }
-
-  .logo {
-    max-width:170px;
-    margin-bottom:15px;
-  }
-
-  .nav-title {
-    display:none;
-  }
-
-  .nav {
-    display:flex;
-    overflow-x:auto;
-    gap:5px;
-  }
-
-  .nav a {
-    white-space:nowrap;
-    margin:0;
-    padding:11px 13px;
-    font-size:12px;
-  }
-
-  .main {
-    padding:18px 12px;
-  }
-
-  .header {
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .header h1 {
-    font-size:24px;
-  }
-
-  .stats {
-    gap:10px;
-  }
-
-  .stat-card {
-    padding:16px;
-  }
-
-  .stat-card h2 {
-    font-size:27px;
-  }
-
-  .section {
-    padding:18px 14px;
-  }
-
-  .section h2 {
-    font-size:18px;
-  }
-
-  .info-grid {
-    grid-template-columns:1fr;
-  }
+@media(max-width:600px){
+header{justify-content:center;text-align:center}
+.header-text{text-align:center}
+.header-text h1{font-size:19px}
+.container{margin:12px auto 30px;padding:12px}
+.card{padding:20px}
+.hero{padding-top:25px}
+.hero h2{font-size:22px}
+.stats-grid{grid-template-columns:1fr}
+.lead-toolbar{display:block}
+.lead-toolbar button{width:100%}
+.followup-heading{align-items:flex-start}
+.task-form{grid-template-columns:1fr!important}
+.assignment-row{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
 
-  <!-- Property Listings Updated -->
-  
-<!-- OWNER LOGIN -->
-<div id="loginScreen">
-  <div class="login-card">
+<header>
+<a class="logo-link" href="index.html">
+<img src="jameenghar-logo.png" alt="JameenGhar.com Logo">
+</a>
+<div class="header-text">
+<h1>JameenGhar CRM</h1>
+<p>Real Estate Management Portal</p>
+</div>
+</header>
 
-    <img src="jameenghar-logo.png" alt="JameenGhar Logo">
-
-    <h1>Owner Login</h1>
-    <p>Sign in to manage JameenGhar.com</p>
-
-    <form id="loginForm">
-      <input
-        id="email"
-        type="email"
-        placeholder="Owner Email Address"
-        required
-      >
-
-      <input
-        id="password"
-        type="password"
-        placeholder="Password"
-        required
-      >
-
-      <button
-        class="primary-btn"
-        type="submit"
-        id="loginButton"
-      >
-        Login Securely
-      </button>
-    </form>
-
-    <div id="loginMessage"></div>
-  </div>
+<div class="hero">
+<h2>Welcome to JameenGhar</h2>
+<p>Your Real Estate Business Management Portal</p>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboardScreen" class="layout hidden">
+<div class="container">
 
-  <aside class="sidebar">
+<div class="card" id="authCard">
+<h2>CRM Login</h2>
+<p class="card-description">Login to access your JameenGhar CRM account.</p>
 
-    <a href="index.html">
-      <img
-        src="jameenghar-logo.png"
-        class="logo"
-        alt="JameenGhar Logo"
-      >
-    </a>
-
-    <div class="nav-title">MANAGEMENT</div>
-
-    <nav class="nav">
-      <a href="#dashboard" class="active">▦ Dashboard</a>
-      <a href="#enquiries">♙ Buyer & Seller Enquiries</a>
-      <a href="#properties">⌂ Property Listings</a>
-      <a href="#verification">✓ Property Verification</a>
-      <a href="#agents">♙ Agent Verification</a>
-      <a href="#sales">▣ Sales Team</a>
-      <a href="#settings">⚙ Website Settings</a>
-    </nav>
-
-  </aside>
-
-  <main class="main">
-
-    <header class="header" id="dashboard">
-
-      <div>
-        <h1>Owner Dashboard</h1>
-        <p>Welcome to JameenGhar.com Management Panel</p>
-        <div class="orange-line"></div>
-      </div>
-
-      <div>
-        <span class="admin-badge">👑 Owner</span>
-        <button id="logoutButton" class="logout-btn">Logout</button>
-      </div>
-
-    </header>
-
-    <!-- DASHBOARD STATS -->
-    <div class="stats">
-
-      <div class="stat-card">
-        <p>Total Enquiries</p>
-        <h2 id="totalEnquiries">0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Active Properties</p>
-        <h2 id="activeProperties">0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Pending Verification</p>
-        <h2 class="accent" id="pendingVerification">0</h2>
-      </div>
-
-      <div class="stat-card">
-        <p>Registered Agents</p>
-        <h2 id="registeredAgents">0</h2>
-      </div>
-
-    </div>
-
-    <!-- ENQUIRIES -->
-    <section class="section" id="enquiries">
-
-      <div class="section-header">
-        <h2>Recent Buyer & Seller Enquiries</h2>
-        <span class="tag" id="enquiryStatus">Connecting...</span>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Enquiry Type</th>
-              <th>Location</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody id="enquiryTable">
-            <tr>
-              <td colspan="4" class="empty">Loading enquiries...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </section>
-
-    <!-- PROPERTY LISTINGS -->
-    <section class="section" id="properties">
-
-      <div class="section-header">
-        <h2>Property Listings</h2>
-        <span class="tag" id="propertyListStatus">Connecting...</span>
-      </div>
-
-      <p style="margin-bottom:18px;">
-        All properties registered in JameenGhar.com will appear here.
-      </p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Property ID</th>
-              <th>Property Details</th>
-              <th>Owner / Agent</th>
-              <th>Verification</th>
-              <th>Website Status</th>
-            </tr>
-          </thead>
-
-          <tbody id="propertyListingsTable">
-            <tr>
-              <td colspan="5" class="empty">
-                Loading property listings...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </section>
-
-    <!-- PROPERTY VERIFICATION -->
-    <section class="section" id="verification">
-
-      <div class="section-header">
-        <h2>Property Verification</h2>
-        <span class="tag">Pending Approvals</span>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Property ID</th>
-              <th>Property Details</th>
-              <th>Owner</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody id="propertyVerificationTable">
-            <tr>
-              <td colspan="5" class="empty">
-                Loading pending properties...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </section>
-
-    <!-- AGENT VERIFICATION -->
-    <section class="section" id="agents">
-
-      <div class="section-header">
-        <h2>Agent Verification</h2>
-        <span class="tag">Pending Data</span>
-      </div>
-
-      <p>Agent registration and verification details will appear here.</p>
-
-    </section>
-
-    <!-- SALES TEAM -->
-    <section class="section" id="sales">
-
-      <div class="section-header">
-        <h2>Sales Team Management</h2>
-        <span class="tag">Coming Soon</span>
-      </div>
-
-      <div class="info-grid">
-
-        <div class="info-card">
-          <h3>Sales Manager</h3>
-          <p>Sales team management and lead allocation.</p>
-        </div>
-
-        <div class="info-card">
-          <h3>Sales Agents</h3>
-          <p>Agent profiles and assigned enquiries.</p>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- WEBSITE SETTINGS -->
-    <section class="section" id="settings">
-
-      <div class="section-header">
-        <h2>Website Settings</h2>
-        <span class="tag">Owner Access</span>
-      </div>
-
-      <p>Website configuration and dashboard settings.</p>
-
-    </section>
-
-    <footer class="footer">
-      © 2026 JameenGhar.com | Buy • Sell • Rent
-    </footer>
-
-  </main>
+<div id="loginBox">
+<input id="loginEmail" type="email" placeholder="Email Address">
+<input id="loginPassword" type="password" placeholder="Password">
+<button id="loginBtn">Login to CRM</button>
+<button class="secondary" id="showRegister">Create CRM Account</button>
 </div>
+
+<div id="registerBox" class="hidden">
+<h2>Create Your Account</h2>
+<input id="regName" type="text" placeholder="Full Name">
+<input id="regPhone" type="tel" placeholder="Mobile Number">
+<input id="regEmail" type="email" placeholder="Email Address">
+<input id="regPassword" type="password" placeholder="Create Password (minimum 6 characters)">
+<button id="registerBtn">Register Account</button>
+<button class="secondary" id="showLogin">Back to Login</button>
+</div>
+
+<div id="message"></div>
+</div>
+
+<div class="card hidden" id="pendingCard">
+<h2>Account Status</h2>
+<div class="status" id="pendingStatus"></div>
+<button id="logoutPending" class="secondary">Logout</button>
+</div>
+
+<div class="card hidden" id="ownerCard">
+<h2>Owner Dashboard</h2>
+<p class="card-description">Manage CRM user registrations and property enquiries.</p>
+
+<h3>CRM User Approvals</h3>
+<div id="pendingUsers"></div>
+<button id="refreshUsers" class="secondary">Refresh Users</button>
+
+<hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
+
+<h2>Lead Management</h2>
+<p class="card-description">View and monitor buyer and seller enquiries received by JameenGhar.</p>
+
+<section class="followup-panel" id="ownerFollowupPanel">
+<div class="followup-heading">
+<div>
+<span class="followup-kicker">DAILY ACTION</span>
+<h2>Due Follow-ups</h2>
+<p>Monitor today's and overdue follow-ups across all consultants.</p>
+</div>
+<div class="followup-total">
+<strong id="ownerDueCount">0</strong>
+<span>Pending due</span>
+</div>
+</div>
+<div id="ownerConsultantCounts" class="consultant-counts"></div>
+<div id="ownerTodayLeads"></div>
+</section>
+
+<div class="stats-grid">
+<div class="stat-box"><strong id="totalLeads">0</strong><span>Total Leads</span></div>
+<div class="stat-box"><strong id="buyerLeads">0</strong><span>Buyer Enquiries</span></div>
+<div class="stat-box"><strong id="sellerLeads">0</strong><span>Seller Enquiries</span></div>
+</div>
+
+<section class="card" id="performanceReports">
+<h2>Performance Reports</h2>
+<p class="card-description">Consultant-wise lead pipeline and follow-up activity. Pipeline figures show each consultant's currently assigned leads.</p>
+<div class="report-history-setting" style="margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fbfdfb">
+<strong style="display:block;color:var(--green);margin-bottom:6px">Lead Transfer Performance History</strong>
+<label for="preserveTransferHistory" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px">
+<input id="preserveTransferHistory" type="checkbox" checked style="width:18px;height:18px;margin:0;accent-color:var(--green)">
+<span><b>Preserve previous consultant performance after transfer</b><small style="display:block;color:var(--muted);margin-top:3px">ON: retain historical credit. OFF: show pipeline under the current assigned consultant.</small></span>
+</label>
+<p id="historySettingStatus" class="report-note" style="margin-top:8px">Default: ON. Only Owner can change this setting.</p>
+</div>
+<div class="report-toolbar">
+<select id="reportPeriod" aria-label="Follow-up activity period">
+<option value="all">All-time follow-ups</option>
+<option value="today">Today's follow-ups</option>
+<option value="week">Last 7 days' follow-ups</option>
+<option value="month" selected>This month's follow-ups</option>
+</select>
+<button id="refreshReports" class="secondary" type="button">Refresh Reports</button>
+</div>
+<div class="stats-grid">
+<div class="stat-box"><strong id="reportAssigned">0</strong><span>Assigned Leads</span></div>
+<div class="stat-box"><strong id="reportWon">0</strong><span>Closed Won</span></div>
+<div class="stat-box"><strong id="reportConversion">0%</strong><span>Overall Conversion</span></div>
+</div>
+<div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
+<p class="report-note">Follow-ups are counted from saved Activity History. When history preservation is ON, stage outcomes are credited to consultants recorded in follow-up and transfer history; older transfers made before this feature may not contain complete attribution. Currently Assigned is always based on today's assignment. Conversion = credited Closed Won ÷ currently assigned leads.</p>
+</section>
+
+<div class="lead-toolbar">
+<input id="leadSearch" type="search" placeholder="Search name, mobile, email or location...">
+<button id="refreshLeads" class="secondary">Refresh Leads</button>
+</div>
+
+<p class="small" id="leadCountText">Loading leads...</p>
+<div id="leadsList"></div>
+<button id="ownerLogout">Logout</button>
+</div>
+
+<div class="card hidden" id="approvedCard">
+<h2>My Assigned Leads</h2>
+<p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
+
+<section class="followup-panel" id="consultantFollowupPanel">
+<div class="followup-heading">
+<div>
+<span class="followup-kicker">DAILY ACTION</span>
+<h2>Due Follow-ups</h2>
+<p>Work on today's and overdue leads one by one. Save your update to complete today's task.</p>
+</div>
+<div class="followup-total">
+<strong id="consultantDueCount">0</strong>
+<span>Due / overdue</span>
+</div>
+</div>
+<div id="consultantTodayLeads"></div>
+</section>
+
+<div class="stats-grid">
+<div class="stat-box">
+<strong id="myLeadCount">0</strong>
+<span>Assigned Leads</span>
+</div>
+</div>
+
+<p class="small" id="myLeadStatus">Loading your leads...</p>
+<div id="myLeadsList"></div>
+
+<button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
+<button id="approvedLogout" class="secondary">Logout</button>
+</div>
+
+</div>
+
+<footer>© 2026 JameenGhar.com | Real Estate Management Portal</footer>
 
 <script type="module">
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 
 import {
-  getFirestore,
-  doc,
-  getDoc,
-  collection,
-  onSnapshot,
-  updateDoc
+getFirestore,
+doc,
+setDoc,
+getDoc,
+getDocs,
+collection,
+updateDoc,
+writeBatch,
+orderBy,
+serverTimestamp,
+query,
+where
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-
-/* FIREBASE CONFIG */
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
-  authDomain: "jameenghar-ffdfd.firebaseapp.com",
-  projectId: "jameenghar-ffdfd",
-  storageBucket: "jameenghar-ffdfd.firebasestorage.app",
-  messagingSenderId: "554797022939",
-  appId: "1:554797022939:web:5abc3fd7e68ea6aeca56fe",
-  measurementId: "G-RQJWG3PBY9"
+const firebaseConfig={
+apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
+authDomain:"jameenghar-ffdfd.firebaseapp.com",
+projectId:"jameenghar-ffdfd",
+storageBucket:"jameenghar-ffdfd.firebasestorage.app",
+messagingSenderId:"554797022939",
+appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",
+measurementId:"G-RQJWG3PBY9"
 };
 
+const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
 
-/* INITIALIZE FIREBASE */
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const $=id=>document.getElementById(id);
 
+let allLeads=[];
+let approvedAgents=[];
+let preserveTransferHistory=true;
+let historySettingLoaded=false;
+let registrationInProgress=false;
 
-/* HTML ELEMENTS */
+function message(text){
+$("message").textContent=text;
+}
 
-const loginScreen = document.getElementById("loginScreen");
-const dashboardScreen = document.getElementById("dashboardScreen");
-const loginMessage = document.getElementById("loginMessage");
-const loginButton = document.getElementById("loginButton");
+function hideAll(){
+["authCard","pendingCard","ownerCard","approvedCard"].forEach(id=>{
+$(id).classList.add("hidden");
+});
+}
 
+$("showRegister").onclick=()=>{
+$("loginBox").classList.add("hidden");
+$("registerBox").classList.remove("hidden");
+message("");
+};
 
-/* LISTENER VARIABLES */
+$("showLogin").onclick=()=>{
+$("registerBox").classList.add("hidden");
+$("loginBox").classList.remove("hidden");
+message("");
+};
 
-let stopLeadsListener = null;
-let stopPropertiesListener = null;
-let stopPropertyListingsListener = null;
+/* FIX 1: Registration race condition corrected */
 
+$("registerBtn").onclick=async()=>{
 
-/* LOGIN AND DASHBOARD DISPLAY */
+const name=$("regName").value.trim();
+const phone=$("regPhone").value.trim();
+const email=$("regEmail").value.trim();
+const password=$("regPassword").value;
 
-function showLogin(message = "") {
+if(!name||!phone||!email||!password){
+message("Please fill all fields.");
+return;
+}
 
-  loginScreen.classList.remove("hidden");
-  dashboardScreen.classList.add("hidden");
-  loginMessage.textContent = message;
+if(password.length<6){
+message("Password must be at least 6 characters.");
+return;
+}
+
+registrationInProgress=true;
+$("registerBtn").disabled=true;
+
+try{
+
+const result=await createUserWithEmailAndPassword(auth,email,password);
+
+await setDoc(doc(db,"users",result.user.uid),{
+uid:result.user.uid,
+name:name,
+phone:phone,
+email:email,
+role:"crm",
+status:"pending",
+createdAt:serverTimestamp()
+});
+
+registrationInProgress=false;
+$("registerBtn").disabled=false;
+
+hideAll();
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"Your account is pending Owner approval. Please wait.";
+
+message("");
+
+}catch(error){
+
+registrationInProgress=false;
+$("registerBtn").disabled=false;
+
+if(auth.currentUser&&auth.currentUser.uid!==OWNER_UID){
+try{
+await signOut(auth);
+}catch(signOutError){
+console.error("Registration cleanup error:",signOutError);
+}
+}
+
+message(error.message);
 
 }
 
-function showDashboard() {
+};
 
-  loginScreen.classList.add("hidden");
-  dashboardScreen.classList.remove("hidden");
+$("loginBtn").onclick=async()=>{
 
+const email=$("loginEmail").value.trim();
+const password=$("loginPassword").value;
+
+if(!email||!password){
+message("Enter email and password.");
+return;
 }
 
-
-/* STOP ALL FIRESTORE LISTENERS */
-
-function stopDashboardListeners() {
-
-  if (stopLeadsListener) {
-    stopLeadsListener();
-    stopLeadsListener = null;
-  }
-
-  if (stopPropertiesListener) {
-    stopPropertiesListener();
-    stopPropertiesListener = null;
-  }
-
-  if (stopPropertyListingsListener) {
-    stopPropertyListingsListener();
-    stopPropertyListingsListener = null;
-  }
-
+try{
+await signInWithEmailAndPassword(auth,email,password);
+message("");
+}catch(error){
+message(error.message);
 }
 
+};
 
-/* VERIFY OWNER */
+async function loadPendingUsers(){
 
-async function verifyOwner(user) {
+const list=$("pendingUsers");
+list.innerHTML="Loading users...";
 
-  const userDoc = await getDoc(doc(db, "users", user.uid));
+try{
 
-  if (!userDoc.exists()) {
-    return false;
-  }
+const snapshot=await getDocs(collection(db,"users"));
 
-  const data = userDoc.data();
+list.innerHTML="";
+let count=0;
 
-  return (
-    data.role === "owner" &&
-    data.email === "jameenghar.co@gmail.com"
-  );
+snapshot.forEach(userDoc=>{
 
+const user=userDoc.data();
+
+if(user.status==="pending"&&user.uid!==OWNER_UID){
+
+count++;
+
+const box=document.createElement("div");
+box.className="userbox";
+
+const details=document.createElement("p");
+
+details.textContent=
+"Name: "+(user.name||"")+
+" | Email: "+(user.email||"")+
+" | Mobile: "+(user.phone||"");
+
+const approve=document.createElement("button");
+approve.textContent="Approve User";
+
+approve.onclick=async()=>{
+
+try{
+
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"approved",
+approvedAt:serverTimestamp()
+});
+
+await loadPendingUsers();
+await loadApprovedAgents();
+
+}catch(error){
+alert(error.message);
 }
 
+};
 
-/* HTML SECURITY HELPER */
+const reject=document.createElement("button");
+reject.textContent="Reject User";
+reject.className="reject";
 
-function escapeHTML(value) {
+reject.onclick=async()=>{
 
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[char]));
+try{
 
+await updateDoc(doc(db,"users",userDoc.id),{
+status:"rejected",
+rejectedAt:serverTimestamp()
+});
+
+await loadPendingUsers();
+
+}catch(error){
+alert(error.message);
 }
 
+};
 
-/* FORMAT PROPERTY PRICE */
-
-function formatPrice(price) {
-
-  if (price === undefined || price === null || price === "") {
-    return "Not provided";
-  }
-
-  if (typeof price === "number") {
-    return "₹" + price.toLocaleString("en-IN");
-  }
-
-  return String(price);
+box.append(details,approve,reject);
+list.appendChild(box);
 
 }
-
-
-/* FORMAT PROPERTY DETAILS */
-
-function getPropertyDetails(property) {
-
-  const title = property.title || "Untitled Property";
-  const city = property.city || "Not provided";
-  const area = property.areaGaj || property.area || "Not provided";
-  const facing = property.facing || "Not provided";
-  const price = formatPrice(property.price);
-
-  return `
-    <strong>${escapeHTML(title)}</strong><br>
-    ${escapeHTML(city)} | ${escapeHTML(area)} Gaj<br>
-    Facing: ${escapeHTML(facing)}<br>
-    Price: ${escapeHTML(price)}
-  `;
-
-}
-
-
-/* CONNECT BUYER AND SELLER ENQUIRIES */
-
-function connectLeads() {
-
-  if (stopLeadsListener) {
-    stopLeadsListener();
-    stopLeadsListener = null;
-  }
-
-  const tbody = document.getElementById("enquiryTable");
-  const status = document.getElementById("enquiryStatus");
-
-  stopLeadsListener = onSnapshot(
-    collection(db, "leads"),
-
-    (snapshot) => {
-
-      document.getElementById("totalEnquiries").textContent =
-        snapshot.size;
-
-      if (snapshot.empty) {
-
-        tbody.innerHTML =
-          '<tr><td colspan="4" class="empty">No enquiries found.</td></tr>';
-
-        status.textContent = "No Enquiries";
-        return;
-
-      }
-
-      const rows = [];
-
-      snapshot.forEach((leadDoc) => {
-
-        const lead = leadDoc.data();
-
-        const customer =
-          lead.customerName || lead.name || "Not provided";
-
-        const type =
-          lead.enquiryType || "Not provided";
-
-        const location =
-          lead.propertyLocation || lead.location || "Not provided";
-
-        const leadStatus =
-          lead.status || "new";
-
-        rows.push(`
-          <tr>
-            <td>${escapeHTML(customer)}</td>
-            <td>${escapeHTML(type)}</td>
-            <td>${escapeHTML(location)}</td>
-            <td>${escapeHTML(leadStatus)}</td>
-          </tr>
-        `);
-
-      });
-
-      tbody.innerHTML = rows.join("");
-      status.textContent = "Live Data";
-
-    },
-
-    (error) => {
-
-      status.textContent = "Access Error";
-
-      tbody.innerHTML =
-        '<tr><td colspan="4" class="empty">Could not load enquiries. Check Firestore Rules.</td></tr>';
-
-      console.error("Leads listener error:", error);
-
-    }
-
-  );
-
-}
-
-
-/* CONNECT ALL PROPERTY LISTINGS */
-
-function connectPropertyListings() {
-
-  if (stopPropertyListingsListener) {
-    stopPropertyListingsListener();
-    stopPropertyListingsListener = null;
-  }
-
-  const tbody = document.getElementById("propertyListingsTable");
-  const status = document.getElementById("propertyListStatus");
-
-  stopPropertyListingsListener = onSnapshot(
-    collection(db, "properties"),
-
-    (snapshot) => {
-
-      const allProperties = [];
-
-      let activeCount = 0;
-
-      snapshot.forEach((propertyDoc) => {
-
-        const property = propertyDoc.data();
-
-        allProperties.push({
-          id: propertyDoc.id,
-          ...property
-        });
-
-        if (property.isPublished === true) {
-          activeCount++;
-        }
-
-      });
-
-      document.getElementById("activeProperties").textContent =
-        activeCount;
-
-      if (allProperties.length === 0) {
-
-        tbody.innerHTML =
-          '<tr><td colspan="5" class="empty">No property listings found.</td></tr>';
-
-        status.textContent = "No Properties";
-        return;
-
-      }
-
-      
-tbody.innerHTML = allProperties.map((property) => {
-
-  const verification =
-    property.verificationStatus || property.status || "pending";
-
-  const isApproved =
-    verification === "approved";
-
-  const isPublished =
-    property.isPublished === true;
-
-  const websiteStatus =
-    isPublished ? "Published" : "Not Published";
-
-  let verificationClass = "status-pending";
-
-  if (verification === "approved") {
-    verificationClass = "status-approved";
-  } else if (verification === "rejected") {
-    verificationClass = "status-rejected";
-  }
-
-  const websiteClass =
-    isPublished ? "status-published" : "status-unpublished";
-
-  const owner =
-    property.agentId || property.ownerId || "Not provided";
-
-  let publishButton = "";
-
-  if (isApproved) {
-
-    publishButton = `
-      <button
-        class="approve-btn"
-        data-publish-action="${isPublished ? "unpublish" : "publish"}"
-        data-id="${escapeHTML(property.id)}"
-        style="margin-top:8px;">
-        ${isPublished ? "Unpublish" : "Publish"}
-      </button>
-    `;
-
-  } else {
-
-    publishButton = `
-      <span style="color:#64736a;font-size:12px;">
-        Approve First
-      </span>
-    `;
-
-  }
-
-  return `
-    <tr>
-
-      <td>${escapeHTML(property.id)}</td>
-
-      <td>${getPropertyDetails(property)}</td>
-
-      <td>${escapeHTML(owner)}</td>
-
-      <td class="${verificationClass}">
-        ${escapeHTML(verification)}
-      </td>
-
-      <td class="${websiteClass}">
-        ${escapeHTML(websiteStatus)}
-        <br>
-        ${publishButton}
-      </td>
-
-    </tr>
-  `;
-
-}).join("");
-
-status.textContent = allProperties.length + " Properties";
-
-    },
-
-    (error) => {
-
-      status.textContent = "Access Error";
-
-      tbody.innerHTML =
-        '<tr><td colspan="5" class="empty">Unable to load property listings. Check Firestore Rules.</td></tr>';
-
-      console.error("Property listings error:", error);
-
-    }
-
-  );
-
-}
-
-/* CONNECT PROPERTY VERIFICATION */
-
-function connectProperties() {
-
-  const tbody = document.getElementById("propertyVerificationTable");
-
-  if (stopPropertiesListener) {
-    stopPropertiesListener();
-    stopPropertiesListener = null;
-  }
-
-
-  stopPropertiesListener = onSnapshot(
-    collection(db, "properties"),
-
-    (snapshot) => {
-
-      const pendingProperties = [];
-
-      snapshot.forEach((propertyDoc) => {
-
-        const property = propertyDoc.data();
-
-        if (
-          property.status === "pending" ||
-          property.verificationStatus === "pending"
-        ) {
-
-          pendingProperties.push({
-            id: propertyDoc.id,
-            ...property
-          });
-
-        }
-
-      });
-
-      document.getElementById("pendingVerification").textContent =
-        pendingProperties.length;
-
-      if (pendingProperties.length === 0) {
-
-        tbody.innerHTML =
-          '<tr><td colspan="5" class="empty">No pending properties found.</td></tr>';
-
-        return;
-
-      }
-
-      tbody.innerHTML = pendingProperties.map((property) => {
-
-        const currentStatus =
-          property.verificationStatus || property.status || "pending";
-
-        const owner =
-          property.agentId || property.ownerId || "Not provided";
-
-        return `
-          <tr>
-
-            <td>${escapeHTML(property.id)}</td>
-
-            <td>${getPropertyDetails(property)}</td>
-
-            <td>${escapeHTML(owner)}</td>
-
-            <td>${escapeHTML(currentStatus)}</td>
-
-            <td>
-
-              <button
-                class="approve-btn"
-                data-action="approve"
-                data-id="${escapeHTML(property.id)}">
-                Approve
-              </button>
-
-              <button
-                class="reject-btn"
-                data-action="reject"
-                data-id="${escapeHTML(property.id)}">
-                Reject
-              </button>
-
-            </td>
-
-          </tr>
-        `;
-
-      }).join("");
-
-    },
-
-    (error) => {
-
-      tbody.innerHTML =
-        '<tr><td colspan="5" class="empty">Unable to load properties. Check Firestore Rules.</td></tr>';
-
-      console.error("Properties listener error:", error);
-
-    }
-
-  );
-
-}
-
-/* PROPERTY PUBLISH AND UNPUBLISH BUTTONS */
-
-document.getElementById("propertyListingsTable")
-.addEventListener("click", async (event) => {
-
-  const button = event.target.closest("button[data-publish-action]");
-
-  if (!button) return;
-
-  const propertyId = button.dataset.id;
-  const action = button.dataset.publishAction;
-  const publish = action === "publish";
-
-  if (!confirm(publish
-    ? "Publish this approved property?"
-    : "Unpublish this property?")) {
-    return;
-  }
-
-  try {
-
-    const propertyRef = doc(db, "properties", propertyId);
-    const propertySnapshot = await getDoc(propertyRef);
-
-    if (!propertySnapshot.exists()) {
-      alert("Property not found.");
-      return;
-    }
-
-    const property = propertySnapshot.data();
-
-    if (
-      property.status !== "approved" &&
-      property.verificationStatus !== "approved"
-    ) {
-      alert("Only approved properties can be published.");
-      return;
-    }
-
-    await updateDoc(propertyRef, {
-      isPublished: publish
-    });
-
-    alert(publish
-      ? "Property Published Successfully!"
-      : "Property Unpublished Successfully!");
-
-  } catch (error) {
-
-    console.error(error);
-    alert("Unable to update property. Please check Firestore Rules.");
-
-  }
 
 });
-/* PROPERTY APPROVE AND REJECT BUTTONS */
 
-document
-  .getElementById("propertyVerificationTable")
-  .addEventListener("click", async (event) => {
+if(count===0){
+list.textContent="No pending CRM users.";
+}
 
-    const button = event.target.closest("button[data-action]");
+}catch(error){
+list.textContent=error.message;
+}
 
-    if (!button) {
-      return;
-    }
+}
 
-    const propertyId = button.dataset.id;
-    const action = button.dataset.action;
+function formatDate(timestamp){
 
-    if (action === "approve") {
+if(!timestamp||typeof timestamp.toDate!=="function"){
+return "Date not available";
+}
 
-      const confirmApproval = confirm(
-        "Approve this property for verification?"
-      );
+return timestamp.toDate().toLocaleString("en-IN",{
+dateStyle:"medium",
+timeStyle:"short"
+});
 
-      if (!confirmApproval) {
-        return;
-      }
+}
 
-      try {
+async function loadApprovedAgents(){
 
-        await updateDoc(
-          doc(db, "properties", propertyId),
-          {
-            status: "approved",
-            verificationStatus: "approved",
-            isPublished: false
-          }
-        );
+const snapshot=await getDocs(collection(db,"users"));
 
-        alert("Property verification approved successfully.");
+approvedAgents=[];
 
-      } catch (error) {
+snapshot.forEach(userDoc=>{
 
-        console.error("Approval error:", error);
+const consultant=userDoc.data();
 
-        alert(
-          "Unable to approve property. Check Firestore Rules."
-        );
+if(consultant.role==="crm"&&consultant.status==="approved"){
 
-      }
+approvedAgents.push({
+id:userDoc.id,
+name:consultant.name||consultant.email||userDoc.id
+});
 
-    }
+}
 
-    if (action === "reject") {
+});
 
-      const confirmRejection = confirm(
-        "Reject this property?"
-      );
+approvedAgents.sort((a,b)=>a.name.localeCompare(b.name));
 
-      if (!confirmRejection) {
-        return;
-      }
+}
 
-      try {
+function localDateKey(date=new Date()){
 
-        await updateDoc(
-          doc(db, "properties", propertyId),
-          {
-            status: "rejected",
-            verificationStatus: "rejected",
-            isPublished: false
-          }
-        );
+const y=date.getFullYear();
+const m=String(date.getMonth()+1).padStart(2,"0");
+const d=String(date.getDate()).padStart(2,"0");
 
-        alert("Property rejected successfully.");
+return `${y}-${m}-${d}`;
 
-      } catch (error) {
+}
 
-        console.error("Rejection error:", error);
+function isClosedLead(lead){
 
-        alert(
-          "Unable to reject property. Check Firestore Rules."
-        );
+return ["closed-won","closed-lost"].includes(
+String(lead.status||"").toLowerCase()
+);
 
-      }
+}
 
-    }
+function dueToday(lead){
 
-  });
+return !!lead.followUpDate&&
+lead.followUpDate<=localDateKey()&&
+!isClosedLead(lead)&&
+lead.followUpCompletedDate!==localDateKey();
 
+}
 
-/* OWNER LOGIN FORM */
+function leadInfoText(lead){
 
-document
-  .getElementById("loginForm")
-  .addEventListener("submit", async (event) => {
+return `Mobile: ${lead.phone||"Not provided"}
+Location: ${lead.propertyLocation||"Not provided"}
+Requirement: ${lead.message||"No message"}
+Status: ${lead.status||"new"}
+Follow-up date: ${lead.followUpDate||"Not set"}`;
 
-    event.preventDefault();
+}
 
-    loginButton.disabled = true;
-    loginButton.textContent = "Signing in...";
-    loginMessage.textContent = "";
+function activityPanel(lead){
 
-    const email =
-      document.getElementById("email").value.trim();
+const wrap=document.createElement("div");
+wrap.className="activity-wrap";
 
-    const password =
-      document.getElementById("password").value;
+const button=document.createElement("button");
+button.type="button";
+button.className="secondary activity-toggle";
+button.textContent="View Activity History";
 
-    try {
+const panel=document.createElement("div");
+panel.className="activity-panel hidden";
+panel.textContent="Activity history not loaded.";
 
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+let loaded=false;
 
-    } catch (error) {
+button.onclick=async()=>{
 
-      loginMessage.textContent =
-        "Login failed: " + error.message;
+panel.classList.toggle("hidden");
 
-    } finally {
+if(panel.classList.contains("hidden")||loaded)return;
 
-      loginButton.disabled = false;
-      loginButton.textContent = "Login Securely";
+panel.textContent="Loading activity history...";
 
-    }
+try{
 
-  });
+const q=query(
+collection(db,"leads",lead.id,"activities"),
+orderBy("createdAt","desc")
+);
 
+const snap=await getDocs(q);
 
-/* OWNER LOGOUT */
+panel.innerHTML="";
 
-document
-  .getElementById("logoutButton")
-  .addEventListener("click", async () => {
+if(snap.empty){
 
-    stopDashboardListeners();
-    await signOut(auth);
+panel.textContent="No activity recorded yet. New updates will appear here.";
+loaded=true;
+return;
 
-  });
+}
 
+snap.forEach(activityDoc=>{
 
-/* CHECK LOGIN SESSION AND OWNER ACCESS */
+const a=activityDoc.data();
 
-onAuthStateChanged(auth, async (user) => {
+const item=document.createElement("div");
+item.className="activity-entry";
 
-  stopDashboardListeners();
+const heading=document.createElement("strong");
 
-  if (!user) {
+heading.textContent=
+(a.eventType||"update").replaceAll("-"," ").toUpperCase()+
+" · "+
+(a.actorName||"CRM user");
 
-    showLogin();
-    return;
+const summary=document.createElement("p");
+summary.textContent=a.summary||"Activity recorded.";
 
-  }
+const meta=document.createElement("small");
+meta.textContent=formatDate(a.createdAt);
 
-  try {
+item.append(heading,summary,meta);
 
-    const isOwner = await verifyOwner(user);
+if(a.status){
 
-    if (!isOwner) {
+const st=document.createElement("p");
+st.textContent="Status: "+a.status;
+item.appendChild(st);
 
-      await signOut(auth);
+}
 
-      showLogin(
-        "This account does not have owner access."
-      );
+if(a.followUpDate){
 
-      return;
+const fd=document.createElement("p");
+fd.textContent="Next follow-up: "+a.followUpDate;
+item.appendChild(fd);
 
-    }
+}
 
-    showDashboard();
+if(a.remarks){
 
-    connectLeads();
-    connectPropertyListings();
-    connectProperties();
+const rm=document.createElement("p");
+rm.textContent="Remarks: "+a.remarks;
+item.appendChild(rm);
 
-  } catch (error) {
+}
 
-    console.error("Owner verification error:", error);
+panel.appendChild(item);
 
-    await signOut(auth);
+});
 
-    showLogin(
-      "Unable to verify owner access. Check Firestore Rules."
-    );
+loaded=true;
 
-  }
+}catch(e){
+
+panel.textContent="Could not load activity history: "+e.message;
+
+}
+
+};
+
+wrap.append(button,panel);
+
+return wrap;
+
+}
+
+function activityRecord({
+eventType,
+summary,
+status="",
+followUpDate="",
+remarks="",
+previousAssignedTo="",
+previousAssignedAgentName="",
+newAssignedTo="",
+newAssignedAgentName="",
+previousStatus=""
+}){
+
+return {
+eventType,
+actorUid:auth.currentUser.uid,
+actorName:auth.currentUser.displayName||auth.currentUser.email||"CRM user",
+summary,
+status,
+followUpDate,
+remarks,
+previousAssignedTo,
+previousAssignedAgentName,
+newAssignedTo,
+newAssignedAgentName,
+previousStatus,
+createdAt:serverTimestamp()
+};
+
+}
+
+/* History is always preserved. No delete-history option exists. */
+
+function askHistoryChoice(targetName){
+
+return Promise.resolve("preserve");
+
+}
+
+function makeTaskForm(lead,isOwner=false){
+
+const form=document.createElement("div");
+form.className="task-form";
+
+const status=document.createElement("select");
+
+[
+"new",
+"contacted",
+"follow-up",
+"site-visit",
+"negotiation",
+"closed-won",
+"closed-lost"
+].forEach(v=>{
+
+const o=document.createElement("option");
+o.value=v;
+o.textContent=v;
+o.selected=(lead.status||"new")===v;
+status.appendChild(o);
+
+});
+
+const date=document.createElement("input");
+date.type="date";
+date.value=lead.followUpDate||localDateKey();
+
+const remarks=document.createElement("textarea");
+remarks.placeholder="Add call remarks / next action...";
+remarks.value=lead.remarks||"";
+
+const save=document.createElement("button");
+save.textContent="Save Follow-up Update";
+
+save.onclick=async()=>{
+
+if(!date.value){
+alert("Please select the next follow-up date.");
+return;
+}
+
+save.disabled=true;
+save.textContent="Saving...";
+
+try{
+
+const leadRef=doc(db,"leads",lead.id);
+const activityRef=doc(collection(db,"leads",lead.id,"activities"));
+
+const summary=
+`Follow-up updated from ${lead.status||"new"} to ${status.value}.`;
+
+const batch=writeBatch(db);
+
+batch.update(leadRef,{
+
+status:status.value,
+followUpDate:date.value,
+remarks:remarks.value.trim(),
+followUpCompletedDate:localDateKey(),
+updatedAt:serverTimestamp(),
+lastFollowUpBy:auth.currentUser.uid
+
+});
+
+batch.set(activityRef,activityRecord({
+
+eventType:"follow-up",
+summary,
+status:status.value,
+followUpDate:date.value,
+remarks:remarks.value.trim()
+
+}));
+
+await batch.commit();
+
+alert("Follow-up update saved successfully.");
+
+if(isOwner){
+await loadLeads();
+}else{
+await loadMyAssignedLeads(auth.currentUser);
+}
+
+}catch(e){
+
+alert("Save failed: "+e.message);
+
+save.disabled=false;
+save.textContent="Save Follow-up Update";
+
+}
+
+};
+
+form.append(status,date,remarks,save);
+
+return form;
+
+}
+
+function renderConsultantToday(leads){
+
+const root=$("consultantTodayLeads");
+root.innerHTML="";
+
+const due=leads.filter(dueToday);
+
+$("consultantDueCount").textContent=due.length;
+
+if(!due.length){
+
+root.textContent="No pending follow-ups for today. Great work!";
+return;
+
+}
+
+due.forEach(lead=>{
+
+const box=document.createElement("div");
+box.className="followup-item";
+
+const h=document.createElement("h3");
+h.textContent=lead.customerName||"Customer";
+
+const p=document.createElement("p");
+p.textContent=leadInfoText(lead);
+
+box.append(h,p);
+root.appendChild(box);
+
+});
+
+}
+
+function renderOwnerToday(){
+
+const due=allLeads.filter(dueToday);
+
+$("ownerDueCount").textContent=due.length;
+
+const counts=$("ownerConsultantCounts");
+counts.innerHTML="";
+
+const grouped={};
+
+due.forEach(l=>{
+
+const key=l.assignedAgentName||"Unassigned";
+grouped[key]=(grouped[key]||0)+1;
+
+});
+
+Object.entries(grouped)
+.sort((a,b)=>a[0].localeCompare(b[0]))
+.forEach(([name,count])=>{
+
+const div=document.createElement("div");
+div.className="consultant-count";
+
+const n=document.createElement("strong");
+n.textContent=count;
+
+const label=document.createElement("span");
+label.textContent=name+" — pending";
+
+div.append(n,label);
+counts.appendChild(div);
+
+});
+
+const root=$("ownerTodayLeads");
+root.innerHTML="";
+
+if(!due.length){
+
+root.textContent="No pending follow-ups for today.";
+return;
+
+}
+
+due.forEach(lead=>{
+
+const box=document.createElement("div");
+box.className="followup-item";
+
+const h=document.createElement("h3");
+
+h.textContent=
+(lead.customerName||"Customer")+
+" · "+
+(lead.assignedAgentName||"Unassigned");
+
+const p=document.createElement("p");
+p.textContent=leadInfoText(lead);
+
+box.append(h,p,makeTaskForm(lead,true));
+
+const transfer=document.createElement("div");
+transfer.className="task-form";
+
+const select=document.createElement("select");
+
+const placeholder=document.createElement("option");
+placeholder.value="";
+placeholder.textContent="Transfer to consultant...";
+select.appendChild(placeholder);
+
+approvedAgents.forEach(agent=>{
+
+if(agent.id===lead.assignedTo)return;
+
+const o=document.createElement("option");
+o.value=agent.id;
+o.textContent=agent.name;
+select.appendChild(o);
+
+});
+
+const move=document.createElement("button");
+move.className="secondary";
+move.textContent="Transfer Lead";
+
+move.onclick=async()=>{
+
+const target=approvedAgents.find(a=>a.id===select.value);
+
+if(!target){
+alert("Choose a consultant first.");
+return;
+}
+
+if(!confirm(
+"Transfer this lead to "+target.name+"? Previous Activity History will be preserved."
+)){
+return;
+}
+
+move.disabled=true;
+move.textContent="Transferring...";
+
+try{
+
+const batch=writeBatch(db);
+
+const leadRef=doc(db,"leads",lead.id);
+const activitiesRef=collection(db,"leads",lead.id,"activities");
+const activityRef=doc(activitiesRef);
+
+batch.update(leadRef,{
+
+assignedTo:target.id,
+assignedAgentName:target.name,
+assignedAt:serverTimestamp(),
+assignedBy:OWNER_UID,
+status:"new",
+followUpDate:localDateKey(),
+followUpCompletedDate:null,
+updatedAt:serverTimestamp()
+
+});
+
+batch.set(activityRef,activityRecord({
+
+eventType:"transfer",
+
+summary:
+`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
+previousAssignedTo:lead.assignedTo||"",
+previousAssignedAgentName:lead.assignedAgentName||"Unassigned",
+newAssignedTo:target.id,
+newAssignedAgentName:target.name,
+previousStatus:lead.status||"new",
+status:"new",
+followUpDate:localDateKey(),
+remarks:lead.remarks||""
+
+}));
+
+await batch.commit();
+await loadLeads();
+
+alert("Lead transferred successfully. Previous Activity History preserved.");
+
+}catch(e){
+
+alert("Transfer failed: "+e.message);
+
+move.disabled=false;
+move.textContent="Transfer Lead";
+
+}
+
+};
+
+transfer.append(select,move);
+box.appendChild(transfer);
+root.appendChild(box);
+
+});
+
+}
+
+function renderLeads(){
+
+const list=$("leadsList");
+
+const searchText=$("leadSearch").value.trim().toLowerCase();
+
+const filtered=allLeads.filter(lead=>{
+
+const searchable=[
+lead.customerName,
+lead.phone,
+lead.email,
+lead.propertyLocation,
+lead.message,
+lead.enquiryType,
+lead.assignedAgentName
+].join(" ").toLowerCase();
+
+return searchable.includes(searchText);
+
+});
+
+$("leadCountText").textContent=
+"Showing "+filtered.length+" of "+allLeads.length+" leads";
+
+list.innerHTML="";
+
+if(filtered.length===0){
+
+list.textContent=allLeads.length===0
+?"No leads found in Firestore."
+:"No matching leads found.";
+
+return;
+
+}
+
+filtered.forEach(lead=>{
+
+const box=document.createElement("div");
+box.className="leadbox";
+
+const title=document.createElement("h3");
+title.textContent=lead.customerName||"Name not provided";
+
+const details=document.createElement("p");
+
+details.textContent=
+"Mobile: "+(lead.phone||"Not provided")+
+"\nEmail: "+(lead.email||"Not provided")+
+"\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
+"\nLocation: "+(lead.propertyLocation||"Not provided")+
+"\nStatus: "+(lead.status||"new")+
+"\nAssigned To: "+
+(lead.assignedAgentName||
+(lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"
+?lead.assignedTo
+:"Unassigned"));
+
+const requirement=document.createElement("p");
+requirement.textContent="Requirement: "+(lead.message||"No message provided");
+
+const date=document.createElement("p");
+date.className="lead-meta";
+date.textContent="Received: "+formatDate(lead.createdAt);
+
+box.append(title,details,requirement,date,activityPanel(lead));
+
+const assignmentRow=document.createElement("div");
+assignmentRow.className="assignment-row";
+
+const select=document.createElement("select");
+select.setAttribute("aria-label","Select consultant for lead");
+
+const placeholder=document.createElement("option");
+placeholder.value="";
+placeholder.textContent="Choose consultant...";
+select.appendChild(placeholder);
+
+approvedAgents.forEach(agent=>{
+
+const option=document.createElement("option");
+option.value=agent.id;
+option.textContent=agent.name;
+
+if(lead.assignedTo===agent.id){
+option.selected=true;
+}
+
+select.appendChild(option);
+
+});
+
+const assignButton=document.createElement("button");
+
+const alreadyAssigned=!!lead.assignedTo&&
+lead.assignedTo!=="pending"&&
+lead.assignedTo!=="unassigned";
+
+assignButton.textContent=alreadyAssigned
+?"Reassign Lead"
+:"Assign Lead";
+
+assignButton.onclick=async()=>{
+
+const selectedAgentId=select.value;
+
+if(!selectedAgentId){
+alert("Please choose a consultant first.");
+return;
+}
+
+const selectedAgent=approvedAgents.find(
+agent=>agent.id===selectedAgentId
+);
+
+if(!selectedAgent){
+alert("Selected consultant is not available. Please refresh leads.");
+return;
+}
+
+if(lead.assignedTo===selectedAgentId){
+alert("This lead is already assigned to this consultant.");
+return;
+}
+
+const isReassignment=alreadyAssigned;
+
+const previousName=lead.assignedAgentName||
+(lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"
+?lead.assignedTo
+:"Unassigned");
+
+if(!confirm(
+(isReassignment?"Reassign":"Assign")+
+" this lead to "+selectedAgent.name+
+"? Previous Activity History will be preserved."
+)){
+return;
+}
+
+assignButton.disabled=true;
+
+assignButton.textContent=isReassignment
+?"Reassigning..."
+:"Assigning...";
+
+try{
+
+const leadRef=doc(db,"leads",lead.id);
+const activitiesRef=collection(db,"leads",lead.id,"activities");
+const activityRef=doc(activitiesRef);
+
+const batch=writeBatch(db);
+
+batch.update(leadRef,{
+
+assignedTo:selectedAgentId,
+assignedAgentName:selectedAgent.name,
+assignedAt:serverTimestamp(),
+assignedBy:OWNER_UID,
+updatedAt:serverTimestamp()
+
+});
+
+const summary=isReassignment
+?`Lead reassigned from ${previousName} to ${selectedAgent.name}. Previous Activity History preserved.`
+:`Lead assigned to ${selectedAgent.name}. Previous Activity History preserved.`;
+
+batch.set(activityRef,activityRecord({
+
+eventType:isReassignment?"reassignment":"assignment",
+summary,
+previousAssignedTo:lead.assignedTo||"",
+previousAssignedAgentName:previousName,
+newAssignedTo:selectedAgentId,
+newAssignedAgentName:selectedAgent.name,
+previousStatus:lead.status||"new",
+status:lead.status||"new",
+followUpDate:lead.followUpDate||"",
+remarks:lead.remarks||""
+
+}));
+
+await batch.commit();
+await loadLeads();
+
+alert(
+isReassignment
+?"Lead reassigned successfully. Previous Activity History preserved."
+:"Lead assigned successfully."
+);
+
+}catch(error){
+
+alert("Could not assign/reassign lead: "+error.message);
+
+assignButton.disabled=false;
+
+assignButton.textContent=isReassignment
+?"Reassign Lead"
+:"Assign Lead";
+
+}
+
+};
+
+assignmentRow.append(select,assignButton);
+box.appendChild(assignmentRow);
+list.appendChild(box);
+
+});
+
+}
+
+async function loadLeads(){
+
+const list=$("leadsList");
+
+list.textContent="Loading leads...";
+$("leadCountText").textContent="Please wait...";
+
+try{
+
+const snapshot=await getDocs(collection(db,"leads"));
+
+allLeads=[];
+
+snapshot.forEach(leadDoc=>{
+
+allLeads.push({
+id:leadDoc.id,
+...leadDoc.data()
+});
+
+});
+
+allLeads.sort((a,b)=>{
+
+const aTime=a.createdAt&&a.createdAt.toMillis
+?a.createdAt.toMillis():0;
+
+const bTime=b.createdAt&&b.createdAt.toMillis
+?b.createdAt.toMillis():0;
+
+return bTime-aTime;
+
+});
+
+const buyers=allLeads.filter(
+lead=>String(lead.enquiryType||"").toLowerCase()==="buyer"
+).length;
+
+const sellers=allLeads.filter(
+lead=>String(lead.enquiryType||"").toLowerCase()==="seller"
+).length;
+
+$("totalLeads").textContent=allLeads.length;
+$("buyerLeads").textContent=buyers;
+$("sellerLeads").textContent=sellers;
+
+renderLeads();
+renderOwnerToday();
+loadPerformanceReports();
+
+}catch(error){
+
+allLeads=[];
+
+$("totalLeads").textContent="—";
+$("buyerLeads").textContent="—";
+$("sellerLeads").textContent="—";
+
+$("leadCountText").textContent="Could not load leads.";
+list.textContent=error.message;
+
+}
+
+}
+
+
+async function loadPerformanceHistorySetting(){
+const checkbox=$("preserveTransferHistory");
+const status=$("historySettingStatus");
+if(!checkbox)return;
+checkbox.disabled=true;
+try{
+const settingSnap=await getDoc(doc(db,"settings","performanceReports"));
+if(settingSnap.exists()){
+preserveTransferHistory=settingSnap.data().preserveTransferredHistory!==false;
+}else{
+preserveTransferHistory=true;
+}
+checkbox.checked=preserveTransferHistory;
+historySettingLoaded=true;
+status.textContent=preserveTransferHistory
+?"ON — historical performance remains with the consultant who handled the lead. (Default)"
+:"OFF — pipeline performance follows the current assigned consultant.";
+}catch(error){
+// Keep the safe default ON if the setting cannot be read.
+preserveTransferHistory=true;
+checkbox.checked=true;
+status.textContent="Could not load saved setting. Default ON is being used. Check Firestore rules.";
+console.error("Performance setting load failed:",error);
+}finally{checkbox.disabled=false;}
+}
+
+async function savePerformanceHistorySetting(){
+const checkbox=$("preserveTransferHistory");
+const status=$("historySettingStatus");
+if(!checkbox||!auth.currentUser||auth.currentUser.uid!==OWNER_UID)return;
+const nextValue=checkbox.checked;
+checkbox.disabled=true;
+status.textContent="Saving setting...";
+try{
+await setDoc(doc(db,"settings","performanceReports"),{
+preserveTransferredHistory:nextValue,
+updatedAt:serverTimestamp(),
+updatedBy:auth.currentUser.uid
+},{merge:true});
+preserveTransferHistory=nextValue;
+historySettingLoaded=true;
+status.textContent=nextValue
+?"ON — historical performance remains with the consultant who handled the lead."
+:"OFF — pipeline performance follows the current assigned consultant.";
+await loadPerformanceReports();
+}catch(error){
+checkbox.checked=preserveTransferHistory;
+status.textContent="Could not save. Check Firestore rules: "+error.message;
+alert("Could not save performance history setting: "+error.message);
+}finally{checkbox.disabled=false;}
+}
+
+function reportPeriodStart(period){
+const now=new Date();
+if(period==="today"){
+return new Date(now.getFullYear(),now.getMonth(),now.getDate());
+}
+if(period==="week"){
+const start=new Date(now);
+start.setDate(start.getDate()-6);
+start.setHours(0,0,0,0);
+return start;
+}
+if(period==="month"){
+return new Date(now.getFullYear(),now.getMonth(),1);
+}
+return null;
+}
+
+async function loadPerformanceReports(){
+const root=$("performanceReportContent");
+if(!root)return;
+root.textContent="Preparing performance report...";
+try{
+const period=$("reportPeriod").value||"month";
+const start=reportPeriodStart(period);
+const rows=new Map();
+approvedAgents.forEach(agent=>{
+rows.set(agent.id,{id:agent.id,name:agent.name,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0});
+});
+let totalAssigned=0,totalWon=0;
+allLeads.forEach(lead=>{
+const row=rows.get(lead.assignedTo);
+if(row){row.assigned++;totalAssigned++;}
+});
+
+// Read each lead's activity history once. The Owner setting decides how pipeline stages are attributed.
+const activityJobs=allLeads.map(async lead=>{
+const snap=await getDocs(collection(db,"leads",lead.id,"activities"));
+const leadStageCredits=new Map();
+let hasFollowupActivity=false;
+snap.forEach(activityDoc=>{
+const activity=activityDoc.data();
+const type=String(activity.eventType||"").toLowerCase();
+const actorId=activity.actorUid;
+let eventDate=null;
+if(activity.createdAt&&typeof activity.createdAt.toDate==="function")eventDate=activity.createdAt.toDate();
+const inPeriod=!start||(eventDate&&eventDate>=start);
+if(type==="follow-up"){
+if(inPeriod){
+const actorRow=rows.get(actorId);
+if(actorRow)actorRow.followups++;
+}
+hasFollowupActivity=true;
+if(preserveTransferHistory&&actorId){
+const stage=String(activity.status||"").toLowerCase();
+if(["site-visit","negotiation","closed-won","closed-lost"].includes(stage)){
+if(!leadStageCredits.has(stage))leadStageCredits.set(stage,new Set());
+leadStageCredits.get(stage).add(actorId);
+}
+}
+}
+if(preserveTransferHistory&&["transfer","reassignment"].includes(type)){
+const previousId=activity.previousAssignedTo;
+const previousStage=String(activity.previousStatus||"").toLowerCase();
+if(previousId&&["site-visit","negotiation","closed-won","closed-lost"].includes(previousStage)){
+if(!leadStageCredits.has(previousStage))leadStageCredits.set(previousStage,new Set());
+leadStageCredits.get(previousStage).add(previousId);
+}
+}
+});
+
+const currentStage=String(lead.status||"new").toLowerCase();
+if(preserveTransferHistory){
+// Attribute each recorded stage to every consultant who handled it, without double-counting.
+if(lead.assignedTo&&["site-visit","negotiation","closed-won","closed-lost"].includes(currentStage)){
+if(!leadStageCredits.has(currentStage))leadStageCredits.set(currentStage,new Set());
+leadStageCredits.get(currentStage).add(lead.assignedTo);
+}
+for(const [stage,consultantIds] of leadStageCredits.entries()){
+consultantIds.forEach(id=>{
+const row=rows.get(id);
+if(!row)return;
+if(stage==="site-visit")row.siteVisits++;
+if(stage==="negotiation")row.negotiations++;
+if(stage==="closed-won")row.won++;
+if(stage==="closed-lost")row.lost++;
+});
+}
+}else{
+// OFF: attribute the current pipeline stage only to the currently assigned consultant.
+const currentRow=rows.get(lead.assignedTo);
+if(currentRow){
+if(currentStage==="site-visit")currentRow.siteVisits++;
+if(currentStage==="negotiation")currentRow.negotiations++;
+if(currentStage==="closed-won")currentRow.won++;
+if(currentStage==="closed-lost")currentRow.lost++;
+}
+}
+});
+await Promise.all(activityJobs);
+totalWon=Array.from(rows.values()).reduce((sum,row)=>sum+row.won,0);
+$("reportAssigned").textContent=totalAssigned;
+$("reportWon").textContent=totalWon;
+$("reportConversion").textContent=totalAssigned?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
+const activeRows=Array.from(rows.values()).sort((a,b)=>a.name.localeCompare(b.name));
+if(!activeRows.length){root.className="report-empty";root.textContent="No approved consultants found.";return;}
+const wrap=document.createElement("div");wrap.className="performance-table-wrap";
+const table=document.createElement("table");table.className="performance-table";
+const thead=document.createElement("thead");const header=document.createElement("tr");
+["Consultant","Currently Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{const th=document.createElement("th");th.textContent=label;header.appendChild(th);});
+thead.appendChild(header);const tbody=document.createElement("tbody");
+activeRows.forEach(row=>{
+const tr=document.createElement("tr");
+const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
+[row.name,row.assigned,row.followups,row.siteVisits,row.negotiations,row.won,row.lost,conversion].forEach((value,index)=>{const td=document.createElement("td");td.textContent=String(value);if(index>0)td.className="num";tr.appendChild(td);});
+tbody.appendChild(tr);
+});
+table.append(thead,tbody);wrap.appendChild(table);root.className="";root.innerHTML="";root.appendChild(wrap);
+}catch(error){root.className="report-empty";root.textContent="Could not load performance reports: "+error.message;}
+}
+
+$("refreshUsers").onclick=loadPendingUsers;
+$("refreshLeads").onclick=loadLeads;
+$("refreshReports").onclick=loadPerformanceReports;
+$("reportPeriod").onchange=loadPerformanceReports;
+$("preserveTransferHistory").onchange=savePerformanceHistorySetting;
+
+$("leadSearch").addEventListener("input",renderLeads);
+
+async function loadMyAssignedLeads(user){
+
+const list=$("myLeadsList");
+const status=$("myLeadStatus");
+
+list.innerHTML="Loading your assigned leads...";
+status.textContent="Please wait...";
+
+try{
+
+const assignedQuery=query(
+collection(db,"leads"),
+where("assignedTo","==",user.uid)
+);
+
+const snapshot=await getDocs(assignedQuery);
+
+const myLeads=[];
+
+snapshot.forEach(leadDoc=>{
+
+myLeads.push({
+id:leadDoc.id,
+...leadDoc.data()
+});
+
+});
+
+myLeads.sort((a,b)=>{
+
+const aTime=a.createdAt&&a.createdAt.toMillis
+?a.createdAt.toMillis():0;
+
+const bTime=b.createdAt&&b.createdAt.toMillis
+?b.createdAt.toMillis():0;
+
+return bTime-aTime;
+
+});
+
+$("myLeadCount").textContent=myLeads.length;
+
+status.textContent=
+"Showing "+myLeads.length+" assigned lead(s).";
+
+list.innerHTML="";
+
+if(myLeads.length===0){
+
+list.textContent="No leads have been assigned to you yet.";
+
+renderConsultantToday(myLeads);
+
+return;
+
+}
+
+myLeads.forEach(lead=>{
+
+const box=document.createElement("div");
+box.className="leadbox";
+
+const title=document.createElement("h3");
+title.textContent=lead.customerName||"Name not provided";
+
+const details=document.createElement("p");
+
+details.textContent=
+"Mobile: "+(lead.phone||"Not provided")+
+"\nEmail: "+(lead.email||"Not provided")+
+"\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
+"\nLocation: "+(lead.propertyLocation||"Not provided")+
+"\nStatus: "+(lead.status||"new")+
+"\nNext Follow-up: "+(lead.followUpDate||"Not set");
+
+const requirement=document.createElement("p");
+
+requirement.textContent=
+"Requirement: "+(lead.message||"No message provided");
+
+const received=document.createElement("p");
+received.className="lead-meta";
+received.textContent="Received: "+formatDate(lead.createdAt);
+
+box.append(
+title,
+details,
+requirement,
+received,
+activityPanel(lead),
+makeTaskForm(lead)
+);
+
+list.appendChild(box);
+
+});
+
+renderConsultantToday(myLeads);
+
+}catch(error){
+
+$("myLeadCount").textContent="—";
+status.textContent="Could not load assigned leads: "+error.message;
+list.innerHTML="";
+
+}
+
+}
+
+$("refreshMyLeads").onclick=()=>{
+
+if(auth.currentUser){
+loadMyAssignedLeads(auth.currentUser);
+}
+
+};
+
+async function logout(){
+
+try{
+await signOut(auth);
+}catch(error){
+alert(error.message);
+}
+
+}
+
+$("logoutPending").onclick=logout;
+$("ownerLogout").onclick=logout;
+$("approvedLogout").onclick=logout;
+
+/* FIX 2: Auth listener waits for registration profile creation */
+
+onAuthStateChanged(auth,async user=>{
+
+if(registrationInProgress)return;
+
+hideAll();
+
+if(!user){
+
+$("authCard").classList.remove("hidden");
+return;
+
+}
+
+if(user.uid===OWNER_UID){
+
+$("ownerCard").classList.remove("hidden");
+
+try{
+
+await loadPendingUsers();
+await loadApprovedAgents();
+await loadPerformanceHistorySetting();
+await loadLeads();
+
+}catch(error){
+
+$("leadCountText").textContent="Dashboard could not fully load.";
+$("leadsList").textContent=error.message;
+
+}
+
+return;
+
+}
+
+try{
+
+const userRef=doc(db,"users",user.uid);
+const userSnap=await getDoc(userRef);
+
+if(!userSnap.exists()){
+
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"Your CRM profile is not available. Please contact Owner.";
+
+return;
+
+}
+
+const data=userSnap.data();
+
+if(data.role!=="crm"){
+
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"This account is not registered as a JameenGhar CRM consultant. Please contact Owner.";
+
+return;
+
+}
+
+if(data.status==="approved"){
+
+$("approvedCard").classList.remove("hidden");
+
+await loadMyAssignedLeads(user);
+
+}else if(data.status==="rejected"){
+
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"Your registration has been rejected. Please contact Owner.";
+
+}else{
+
+$("pendingCard").classList.remove("hidden");
+
+$("pendingStatus").textContent=
+"Your account is pending Owner approval. Please wait.";
+
+}
+
+}catch(error){
+
+$("authCard").classList.remove("hidden");
+message(error.message);
+
+}
 
 });
 
