@@ -349,7 +349,7 @@ margin-top:12px
 .assignment-row button{margin:0}
 
 .performance-table-wrap{width:100%;overflow-x:auto;margin-top:12px}
-.performance-table{width:100%;border-collapse:collapse;min-width:760px;font-size:13px}
+.performance-table{width:100%;border-collapse:collapse;min-width:860px;font-size:13px}
 .performance-table th,.performance-table td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 .performance-table th{background:#f6f8f5;color:var(--green);font-weight:700}
 .performance-table td.num{text-align:center;font-variant-numeric:tabular-nums}
@@ -473,7 +473,7 @@ header{justify-content:center;text-align:center}
 
 <section class="card" id="performanceReports">
 <h2>Performance Reports</h2>
-<p class="card-description">Consultant-wise lead pipeline and follow-up activity.</p>
+<p class="card-description">Consultant-wise current pipeline, historical stage credits and follow-up activity.</p>
 
 <div class="report-toolbar">
 <select id="reportPeriod" aria-label="Follow-up activity period">
@@ -494,7 +494,7 @@ header{justify-content:center;text-align:center}
 <div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
 
 <p class="report-note">
-Selected date period filters follow-up counts only. Pipeline stage credits reflect saved consultant performance history and transfer choices. Overall Closed Won and conversion are calculated from unique leads currently assigned to approved consultants. Activity History is never deleted.
+Selected date period filters follow-up counts only. Current Won and Current Conversion use leads currently assigned to each consultant. Won Credit and Lost Credit show historical stage credit after transfer choices. CLEAR removes only the previous consultant's stage credit for that lead; follow-up counts and all Activity History records remain preserved.
 </p>
 </section>
 
@@ -1129,13 +1129,30 @@ remarks.value=lead.remarks||"";
 const save=document.createElement("button");
 save.textContent="Save Follow-up Update";
 
+let savingFollowUp=false;
+
 save.onclick=async()=>{
+
+if(savingFollowUp||save.disabled)return;
 
 if(!date.value){
 alert("Please select the next follow-up date.");
 return;
 }
 
+const nextStatus=status.value;
+const nextFollowUpDate=date.value;
+const nextRemarks=remarks.value.trim();
+
+if(lead.followUpCompletedDate===localDateKey() &&
+nextStatus===(lead.status||"new") &&
+nextFollowUpDate===(lead.followUpDate||"") &&
+nextRemarks===(lead.remarks||"")){
+alert("This exact follow-up update has already been saved today. Change the status, date or remarks to record a new update.");
+return;
+}
+
+savingFollowUp=true;
 save.disabled=true;
 save.textContent="Saving...";
 
@@ -1150,9 +1167,9 @@ const summary=
 const batch=writeBatch(db);
 
 batch.update(leadRef,{
-status:status.value,
-followUpDate:date.value,
-remarks:remarks.value.trim(),
+status:nextStatus,
+followUpDate:nextFollowUpDate,
+remarks:nextRemarks,
 followUpCompletedDate:localDateKey(),
 updatedAt:serverTimestamp(),
 lastFollowUpBy:auth.currentUser.uid
@@ -1161,9 +1178,9 @@ lastFollowUpBy:auth.currentUser.uid
 batch.set(activityRef,activityRecord({
 eventType:"follow-up",
 summary,
-status:status.value,
-followUpDate:date.value,
-remarks:remarks.value.trim()
+status:nextStatus,
+followUpDate:nextFollowUpDate,
+remarks:nextRemarks
 }));
 
 await batch.commit();
@@ -1176,8 +1193,9 @@ await loadLeads();
 await loadMyAssignedLeads(auth.currentUser);
 }
 
-}catch(e){
+ }catch(e){
 
+savingFollowUp=false;
 alert("Save failed: "+e.message);
 save.disabled=false;
 save.textContent="Save Follow-up Update";
@@ -1726,6 +1744,7 @@ rows.set(agent.id,{
 id:agent.id,
 name:agent.name,
 assigned:0,
+currentWon:0,
 followups:0,
 siteVisits:0,
 negotiations:0,
@@ -1746,6 +1765,9 @@ const row=rows.get(lead.assignedTo);
 if(row){
 row.assigned++;
 totalAssigned++;
+if(String(lead.status||"").toLowerCase()==="closed-won"){
+row.currentWon++;
+}
 }
 
 });
@@ -1925,9 +1947,10 @@ const head=document.createElement("tr");
 "Follow-ups",
 "Site Visits",
 "Negotiations",
+"Current Won",
+"Current Conversion",
 "Won Credit",
-"Lost Credit",
-"Conversion"
+"Lost Credit"
 ].forEach(label=>{
 
 const th=document.createElement("th");
@@ -1947,8 +1970,8 @@ const tr=document.createElement("tr");
 /* Consultant historical performance credit is shown separately.
    Overall conversion above is based on current unique assignments. */
 
-const conversion=row.assigned
-?Math.round(row.won/row.assigned*100)+"%"
+const currentConversion=row.assigned
+?Math.round(row.currentWon/row.assigned*100)+"%"
 :"0%";
 
 [
@@ -1957,9 +1980,10 @@ row.assigned,
 row.followups,
 row.siteVisits,
 row.negotiations,
+row.currentWon,
+currentConversion,
 row.won,
-row.lost,
-conversion
+row.lost
 ].forEach((value,i)=>{
 
 const td=document.createElement("td");
