@@ -424,6 +424,8 @@ header{justify-content:center;text-align:center}
 <div class="card hidden" id="pendingCard">
 <h2>Account Status</h2>
 <div class="status" id="pendingStatus"></div>
+<button id="resendVerificationBtn" class="hidden">Resend Verification Email</button>
+<button id="refreshVerificationBtn" class="secondary hidden">I've Verified My Email - Refresh Status</button>
 <button id="logoutPending" class="secondary">Logout</button>
 </div>
 
@@ -632,6 +634,7 @@ return;
 
 registrationInProgress=true;
 $("registerBtn").disabled=true;
+$("registerBtn").textContent="Creating account...";
 
 try{
 
@@ -644,17 +647,23 @@ phone:phone,
 email:email,
 role:"crm",
 status:"pending",
+emailVerificationRequired:true,
 createdAt:serverTimestamp()
 });
 
+await sendEmailVerification(result.user);
+await signOut(auth);
+
 registrationInProgress=false;
 $("registerBtn").disabled=false;
+$("registerBtn").textContent="Register Account";
 
 hideAll();
 $("pendingCard").classList.remove("hidden");
-
+$("resendVerificationBtn").classList.add("hidden");
+$("refreshVerificationBtn").classList.add("hidden");
 $("pendingStatus").textContent=
-"Your account is pending Owner approval. Please wait.";
+"Verification email sent. Please check your inbox and spam folder, click the verification link, then log in to continue. Owner approval is also required.";
 
 message("");
 
@@ -662,6 +671,7 @@ message("");
 
 registrationInProgress=false;
 $("registerBtn").disabled=false;
+$("registerBtn").textContent="Register Account";
 
 if(auth.currentUser&&auth.currentUser.uid!==OWNER_UID){
 try{
@@ -671,10 +681,44 @@ console.error("Registration cleanup error:",signOutError);
 }
 }
 
-message(error.message);
+message("Registration could not be completed: "+error.message);
 
 }
 
+};
+
+$("resendVerificationBtn").onclick=async()=>{
+try{
+const user=auth.currentUser;
+if(!user){
+$("pendingStatus").textContent="Please log in again to resend your verification email.";
+return;
+}
+await sendEmailVerification(user);
+$("pendingStatus").textContent="A new verification email has been sent to "+(user.email||"your registered email")+". Please check your inbox and spam folder.";
+}catch(error){
+$("pendingStatus").textContent="Could not resend verification email: "+error.message;
+}
+};
+
+$("refreshVerificationBtn").onclick=async()=>{
+try{
+const user=auth.currentUser;
+if(!user){
+$("pendingStatus").textContent="Please log in again after verifying your email.";
+return;
+}
+await user.reload();
+if(auth.currentUser.emailVerified){
+$("resendVerificationBtn").classList.add("hidden");
+$("refreshVerificationBtn").classList.add("hidden");
+$("pendingStatus").textContent="Email verified successfully. Your account is now waiting for Owner approval.";
+}else{
+$("pendingStatus").textContent="Email is not verified yet. Open the verification email, click the link, then try again.";
+}
+}catch(error){
+$("pendingStatus").textContent="Could not refresh verification status: "+error.message;
+}
 };
 
 $("loginBtn").onclick=async()=>{
@@ -1971,6 +2015,20 @@ $("pendingStatus").textContent=
 return;
 
 }
+
+// Require verification only for accounts created with the new flag.
+// Existing CRM users and the Owner account keep their current access flow.
+if(data.emailVerificationRequired===true&&!user.emailVerified){
+$("pendingCard").classList.remove("hidden");
+$("pendingStatus").textContent=
+"Please verify your email address before accessing JameenGhar CRM. Open the verification email, click the link, then select Refresh Status.";
+$("resendVerificationBtn").classList.remove("hidden");
+$("refreshVerificationBtn").classList.remove("hidden");
+return;
+}
+
+$("resendVerificationBtn").classList.add("hidden");
+$("refreshVerificationBtn").classList.add("hidden");
 
 if(data.status==="approved"){
 
