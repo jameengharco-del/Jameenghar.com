@@ -547,6 +547,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-
 import {
 getAuth,
 createUserWithEmailAndPassword,
+sendEmailVerification,
 signInWithEmailAndPassword,
 signOut,
 onAuthStateChanged
@@ -619,11 +620,16 @@ $("registerBtn").onclick=async()=>{
 
 const name=$("regName").value.trim();
 const phone=$("regPhone").value.trim();
-const email=$("regEmail").value.trim();
+const email=$("regEmail").value.trim().toLowerCase();
 const password=$("regPassword").value;
 
 if(!name||!phone||!email||!password){
 message("Please fill all fields.");
+return;
+}
+
+if(!/^[0-9]{10}$/.test(phone)){
+message("Please enter a valid 10-digit mobile number.");
 return;
 }
 
@@ -638,10 +644,40 @@ $("registerBtn").textContent="Creating account...";
 
 try{
 
-const result=await createUserWithEmailAndPassword(auth,email,password);
+let userCredential;
 
-await setDoc(doc(db,"users",result.user.uid),{
-uid:result.user.uid,
+try{
+userCredential=await createUserWithEmailAndPassword(auth,email,password);
+}catch(createError){
+
+// Recover an Auth account created during an earlier attempt where the
+// Firestore profile could not be saved because the Rules were not updated.
+if(createError.code!=="auth/email-already-in-use"){
+throw createError;
+}
+
+try{
+userCredential=await signInWithEmailAndPassword(auth,email,password);
+}catch(loginError){
+throw new Error("This email already has a Firebase account. Please use its correct password, or return to Login. "+loginError.message);
+}
+
+const existingProfile=await getDoc(doc(db,"users",userCredential.user.uid));
+
+if(existingProfile.exists()){
+await signOut(auth);
+registrationInProgress=false;
+$("registerBtn").disabled=false;
+$("registerBtn").textContent="Register Account";
+message("This email already has a CRM account. Please go Back to Login and sign in.");
+return;
+}
+}
+
+const currentUser=userCredential.user;
+
+await setDoc(doc(db,"users",currentUser.uid),{
+uid:currentUser.uid,
 name:name,
 phone:phone,
 email:email,
@@ -651,7 +687,10 @@ emailVerificationRequired:true,
 createdAt:serverTimestamp()
 });
 
-await sendEmailVerification(result.user);
+if(!currentUser.emailVerified){
+await sendEmailVerification(currentUser);
+}
+
 await signOut(auth);
 
 registrationInProgress=false;
@@ -663,7 +702,9 @@ $("pendingCard").classList.remove("hidden");
 $("resendVerificationBtn").classList.add("hidden");
 $("refreshVerificationBtn").classList.add("hidden");
 $("pendingStatus").textContent=
-"Verification email sent. Please check your inbox and spam folder, click the verification link, then log in to continue. Owner approval is also required.";
+currentUser.emailVerified
+?"Your CRM profile has been created. Your account is waiting for Owner approval."
+:"Verification email sent. Please check your inbox and spam folder, click the verification link, then log in to continue. Owner approval is also required.";
 
 message("");
 
