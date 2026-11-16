@@ -1,0 +1,9 @@
+name = "jameenghar-r2-guard"
+main = "src/index.js"
+compatibility_date = "2026-11-16"
+
+# Intentionally no R2 bucket binding yet.
+# Add the private bucket binding only after the security and quota tests pass.
+#
+# Configure OWNER_UID and FIREBASE_PROJECT_ID as Cloudflare Worker variables
+# or secrets at deployment time. Do not commit personal identifiers or secrets.
