@@ -365,6 +365,12 @@ margin-top:12px
 .queue-panel{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;margin:16px 0}
 .queue-panel h2{margin:0 0 6px}
 .queue-subtitle{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.new-lead-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.new-lead-form input,.new-lead-form select,.new-lead-form textarea{width:100%;margin:0;min-width:0}
+.new-lead-form textarea{grid-column:1/-1;min-height:90px;padding:12px;border:1px solid #ccd8ce;border-radius:8px;font:inherit;resize:vertical}
+.new-lead-form button,.new-lead-form #createLeadMessage{grid-column:1/-1}
+.new-lead-form button{margin:0}
+@media(max-width:600px){.new-lead-form{grid-template-columns:1fr}.new-lead-form textarea,.new-lead-form button,.new-lead-form #createLeadMessage{grid-column:1}}
 .queue-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:20px;background:#e8f4eb;color:var(--green);font-weight:800;margin-left:6px}
 .queue-lead{border:1px solid var(--line);border-radius:11px;padding:14px;margin:10px 0;background:#fbfdfb}
 .queue-lead h3{margin:0 0 6px;font-size:16px}
@@ -528,7 +534,28 @@ header{justify-content:center;text-align:center}
 
 <div class="card hidden" id="approvedCard">
 <h2>My Work Queue</h2>
-<p class="card-description">Your assigned leads are separated by work stage. Complete a New Lead update to move it into Open Follow-ups.</p>
+<p class="card-description">Your own leads and leads assigned by the Owner appear here, separated by work stage.</p>
+
+<section class="queue-panel" id="consultantCreateLeadPanel">
+<h2>Create New Lead</h2>
+<p class="queue-subtitle">Add a customer enquiry to your personal CRM. The Owner can review and assign it later.</p>
+<div class="new-lead-form">
+<input id="newLeadName" type="text" maxlength="100" placeholder="Customer Name *" autocomplete="name">
+<input id="newLeadPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit Mobile Number *" autocomplete="tel">
+<input id="newLeadEmail" type="email" maxlength="120" placeholder="Email (optional)" autocomplete="email">
+<select id="newLeadType">
+<option value="buyer">Buyer</option>
+<option value="seller">Seller</option>
+<option value="landlord">Landlord</option>
+<option value="home-loan">Home Loan</option>
+</select>
+<input id="newLeadLocation" type="text" maxlength="160" placeholder="Property Location *">
+<input id="newLeadBudget" type="text" maxlength="80" placeholder="Budget (optional)">
+<textarea id="newLeadMessage" maxlength="2000" placeholder="Customer Requirement *"></textarea>
+<button id="createLeadBtn" type="button">Save New Lead</button>
+<p id="createLeadMessage" class="small" role="status" aria-live="polite"></p>
+</div>
+</section>
 
 <section class="queue-panel" id="consultantNewLeadsPanel">
 <h2>New Leads <span class="queue-count" id="myNewLeadCount">0</span></h2>
@@ -1775,10 +1802,17 @@ newRoot.textContent="Loading your assigned leads...";
 $("myOpenFollowupsList").textContent="Loading open follow-ups...";
 status.textContent="Please wait...";
 try{
-const assignedQuery=query(collection(db,"leads"),where("assignedTo","==",user.uid));
-const snapshot=await getDocs(assignedQuery);
-const myLeads=[];
-snapshot.forEach(leadDoc=>myLeads.push({id:leadDoc.id,...leadDoc.data()}));
+// A consultant can see leads assigned by the Owner AND leads created by them.
+// Merge the two query results so a lead matching both conditions appears once.
+const leadsRef=collection(db,"leads");
+const [assignedSnapshot,createdSnapshot]=await Promise.all([
+getDocs(query(leadsRef,where("assignedTo","==",user.uid))),
+getDocs(query(leadsRef,where("createdBy","==",user.uid)))
+]);
+const leadMap=new Map();
+assignedSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
+createdSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
+const myLeads=Array.from(leadMap.values());
 myLeads.sort((a,b)=>{
 const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
 const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
@@ -1811,6 +1845,71 @@ status.textContent="Could not load assigned leads: "+error.message;
 newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
 }
 }
+
+// Consultant-created leads remain private to their creator until the Owner assigns them.
+$("createLeadBtn").onclick=async()=>{
+const button=$("createLeadBtn");
+const output=$("createLeadMessage");
+const user=auth.currentUser;
+const customerName=$("newLeadName").value.trim();
+const phone=$("newLeadPhone").value.replace(/\D/g,"");
+const email=$("newLeadEmail").value.trim().toLowerCase();
+const enquiryType=$("newLeadType").value;
+const propertyLocation=$("newLeadLocation").value.trim();
+const budget=$("newLeadBudget").value.trim();
+const requirement=$("newLeadMessage").value.trim();
+
+if(!user){output.textContent="Please log in again to create a lead.";return;}
+if(!customerName||!propertyLocation||!requirement){output.textContent="Please fill Customer Name, Property Location and Customer Requirement.";return;}
+if(!/^[0-9]{10}$/.test(phone)){output.textContent="Please enter a valid 10-digit mobile number.";return;}
+if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){output.textContent="Please enter a valid email address.";return;}
+if(!["buyer","seller","landlord","home-loan"].includes(enquiryType)){output.textContent="Please select a valid enquiry type.";return;}
+
+button.disabled=true;
+button.textContent="Saving...";
+output.textContent="";
+try{
+const profileSnap=await getDoc(doc(db,"users",user.uid));
+if(!profileSnap.exists()||profileSnap.data().role!=="crm"||profileSnap.data().status!=="approved"){
+throw new Error("Only an approved CRM consultant can create leads.");
+}
+const profile=profileSnap.data();
+const leadRef=doc(collection(db,"leads"));
+await setDoc(leadRef,{
+customerName,
+phone,
+email,
+enquiryType,
+propertyLocation,
+budget,
+message:requirement,
+source:"crm",
+status:"new",
+assignedTo:"unassigned",
+assignedAgentName:"Unassigned",
+followUpDate:"",
+remarks:"",
+createdBy:user.uid,
+createdByName:profile.name||user.displayName||user.email||"CRM consultant",
+createdAt:serverTimestamp(),
+updatedAt:serverTimestamp()
+});
+$("newLeadName").value="";
+$("newLeadPhone").value="";
+$("newLeadEmail").value="";
+$("newLeadType").value="buyer";
+$("newLeadLocation").value="";
+$("newLeadBudget").value="";
+$("newLeadMessage").value="";
+output.textContent="New lead saved successfully. It is visible in your New Leads queue and the Owner Dashboard.";
+await loadMyAssignedLeads(user);
+}catch(error){
+output.textContent="Could not save lead: "+error.message;
+}finally{
+button.disabled=false;
+button.textContent="Save New Lead";
+}
+};
 
 $("refreshMyLeads").onclick=()=>{
 
