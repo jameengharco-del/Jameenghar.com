@@ -360,6 +360,26 @@ margin-top:12px
 .report-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
 .report-empty{padding:14px;background:#f6f8f5;border-radius:9px;color:var(--muted);font-size:14px}
 
+
+/* Simplified lead workflow and report drill-down */
+.queue-panel{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;margin:16px 0}
+.queue-panel h2{margin:0 0 6px}
+.queue-subtitle{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.queue-count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:20px;background:#e8f4eb;color:var(--green);font-weight:800;margin-left:6px}
+.queue-lead{border:1px solid var(--line);border-radius:11px;padding:14px;margin:10px 0;background:#fbfdfb}
+.queue-lead h3{margin:0 0 6px;font-size:16px}
+.queue-lead p{font-size:13px;line-height:1.55;margin:4px 0;white-space:pre-line}
+.queue-lead button{margin:8px 0 0}
+.queue-navigation{display:flex;gap:8px;align-items:center;margin:10px 0}
+.queue-navigation button{width:auto;flex:1;margin:0}
+.queue-navigation span{font-size:13px;color:var(--muted);white-space:nowrap}
+.report-drilldown{margin-top:14px;padding:16px;border:1px solid #cfe0d2;background:#fbfdfb;border-radius:12px}
+.report-drilldown h3{margin:0 0 10px}
+.report-number{border:0;background:transparent;color:var(--green);font-weight:800;text-decoration:underline;text-underline-offset:3px;padding:4px 7px;margin:0;width:auto;min-width:28px}
+.report-number:hover{background:#e8f4eb;color:var(--green2)}
+.performance-table td.num{text-align:center}
+@media(max-width:600px){.queue-panel{padding:14px}.queue-navigation{flex-wrap:wrap}}
+
 @media(max-width:600px){
 header{justify-content:center;text-align:center}
 .header-text{text-align:center}
@@ -440,18 +460,18 @@ header{justify-content:center;text-align:center}
 <hr style="border:0;border-top:1px solid #e4eae5;margin:25px 0;">
 
 <h2>Lead Management</h2>
-<p class="card-description">View and monitor buyer and seller enquiries received by JameenGhar.</p>
+<p class="card-description">Work through new enquiries and active follow-ups in separate sections.</p>
 
 <section class="followup-panel" id="ownerFollowupPanel">
 <div class="followup-heading">
 <div>
-<span class="followup-kicker">DAILY ACTION</span>
-<h2>Due Follow-ups</h2>
-<p>Monitor today's and overdue follow-ups across all consultants.</p>
+<span class="followup-kicker">LEAD WORKFLOW</span>
+<h2>Open Follow-ups</h2>
+<p>Review active leads that have moved beyond the New Leads stage.</p>
 </div>
 <div class="followup-total">
 <strong id="ownerDueCount">0</strong>
-<span>Pending due</span>
+<span>Open leads</span>
 </div>
 </div>
 <div id="ownerConsultantCounts" class="consultant-counts"></div>
@@ -490,12 +510,15 @@ header{justify-content:center;text-align:center}
 <div class="stat-box"><strong id="reportConversion">0%</strong><span>Overall Conversion</span></div>
 </div>
 <div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
-<p class="report-note">Follow-ups are counted from saved Activity History. When history preservation is ON, stage outcomes are credited to consultants recorded in follow-up and transfer history; older transfers made before this feature may not contain complete attribution. Currently Assigned is always based on today's assignment. Conversion = credited Closed Won ÷ currently assigned leads.</p>
+<div id="reportDrilldown" class="report-drilldown hidden"></div>
+<p class="report-note">Follow-ups are counted from saved Activity History. When history preservation is ON, stage outcomes are credited to consultants recorded in follow-up and transfer history; older transfers made before this feature may not contain complete attribution. Currently Assigned is always based on today's assignment. Click any consultant count to open the matching lead records. Conversion = credited Closed Won ÷ currently assigned leads.</p>
 </section>
 
+<h3 style="margin-top:24px">New Leads</h3>
+<p class="card-description">Only enquiries still in the New stage are shown here.</p>
 <div class="lead-toolbar">
 <input id="leadSearch" type="search" placeholder="Search name, mobile, email or location...">
-<button id="refreshLeads" class="secondary">Refresh Leads</button>
+<button id="refreshLeads" class="secondary">Refresh New Leads</button>
 </div>
 
 <p class="small" id="leadCountText">Loading leads...</p>
@@ -504,35 +527,23 @@ header{justify-content:center;text-align:center}
 </div>
 
 <div class="card hidden" id="approvedCard">
-<h2>My Assigned Leads</h2>
-<p class="card-description">Buyer and seller enquiries assigned to your CRM account by the Owner.</p>
+<h2>My Work Queue</h2>
+<p class="card-description">Your assigned leads are separated by work stage. Complete a New Lead update to move it into Open Follow-ups.</p>
 
-<section class="followup-panel" id="consultantFollowupPanel">
-<div class="followup-heading">
-<div>
-<span class="followup-kicker">DAILY ACTION</span>
-<h2>Due Follow-ups</h2>
-<p>Work on today's and overdue leads one by one. Save your update to complete today's task.</p>
-</div>
-<div class="followup-total">
-<strong id="consultantDueCount">0</strong>
-<span>Due / overdue</span>
-</div>
-</div>
-<div id="consultantTodayLeads"></div>
+<section class="queue-panel" id="consultantNewLeadsPanel">
+<h2>New Leads <span class="queue-count" id="myNewLeadCount">0</span></h2>
+<p class="queue-subtitle">New enquiries assigned to you and not yet contacted.</p>
+<div id="myNewLeadsList"></div>
 </section>
 
-<div class="stats-grid">
-<div class="stat-box">
-<strong id="myLeadCount">0</strong>
-<span>Assigned Leads</span>
-</div>
-</div>
+<section class="queue-panel" id="consultantOpenFollowupsPanel">
+<h2>Open Follow-ups <span class="queue-count" id="myOpenFollowupCount">0</span></h2>
+<p class="queue-subtitle">Open one lead at a time, save your progress, then move to the next lead.</p>
+<div id="myOpenFollowupsList"></div>
+</section>
 
-<p class="small" id="myLeadStatus">Loading your leads...</p>
-<div id="myLeadsList"></div>
-
-<button id="refreshMyLeads" class="secondary">Refresh My Leads</button>
+<p class="small" id="myLeadStatus">Loading your work queue...</p>
+<button id="refreshMyLeads" class="secondary">Refresh My Work Queue</button>
 <button id="approvedLogout" class="secondary">Logout</button>
 </div>
 
@@ -1231,172 +1242,57 @@ root.appendChild(box);
 
 }
 
-function renderOwnerToday(){
+let ownerOpenQueue=[];
+let ownerOpenQueueIndex=0;
 
-const due=allLeads.filter(dueToday);
-
-$("ownerDueCount").textContent=due.length;
-
-const counts=$("ownerConsultantCounts");
-counts.innerHTML="";
-
-const grouped={};
-
-due.forEach(l=>{
-
-const key=l.assignedAgentName||"Unassigned";
-grouped[key]=(grouped[key]||0)+1;
-
-});
-
-Object.entries(grouped)
-.sort((a,b)=>a[0].localeCompare(b[0]))
-.forEach(([name,count])=>{
-
-const div=document.createElement("div");
-div.className="consultant-count";
-
-const n=document.createElement("strong");
-n.textContent=count;
-
-const label=document.createElement("span");
-label.textContent=name+" — pending";
-
-div.append(n,label);
-counts.appendChild(div);
-
-});
-
+function renderOwnerOpenQueue(){
 const root=$("ownerTodayLeads");
 root.innerHTML="";
-
-if(!due.length){
-
-root.textContent="No pending follow-ups for today.";
-return;
-
-}
-
-due.forEach(lead=>{
-
-const box=document.createElement("div");
-box.className="followup-item";
-
-const h=document.createElement("h3");
-
-h.textContent=
-(lead.customerName||"Customer")+
-" · "+
-(lead.assignedAgentName||"Unassigned");
-
-const p=document.createElement("p");
-p.textContent=leadInfoText(lead);
-
-box.append(h,p,makeTaskForm(lead,true));
-
-const transfer=document.createElement("div");
-transfer.className="task-form";
-
+if(!ownerOpenQueue.length){root.textContent="No open follow-ups. New enquiries will appear in New Leads.";return;}
+if(ownerOpenQueueIndex>=ownerOpenQueue.length)ownerOpenQueueIndex=ownerOpenQueue.length-1;
+if(ownerOpenQueueIndex<0)ownerOpenQueueIndex=0;
+const lead=ownerOpenQueue[ownerOpenQueueIndex];
+const box=document.createElement("div");box.className="followup-item";
+const h=document.createElement("h3");h.textContent=(lead.customerName||"Customer")+" · "+(lead.assignedAgentName||"Unassigned");
+const p=document.createElement("p");p.textContent=leadInfoText(lead);
+box.append(h,p,activityPanel(lead),makeTaskForm(lead,true));
+const transfer=document.createElement("div");transfer.className="task-form";
 const select=document.createElement("select");
-
-const placeholder=document.createElement("option");
-placeholder.value="";
-placeholder.textContent="Transfer to consultant...";
-select.appendChild(placeholder);
-
-approvedAgents.forEach(agent=>{
-
-if(agent.id===lead.assignedTo)return;
-
-const o=document.createElement("option");
-o.value=agent.id;
-o.textContent=agent.name;
-select.appendChild(o);
-
-});
-
-const move=document.createElement("button");
-move.className="secondary";
-move.textContent="Transfer Lead";
-
+const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Transfer to consultant...";select.appendChild(placeholder);
+approvedAgents.forEach(agent=>{if(agent.id===lead.assignedTo)return;const option=document.createElement("option");option.value=agent.id;option.textContent=agent.name;select.appendChild(option);});
+const move=document.createElement("button");move.className="secondary";move.textContent="Transfer Lead";
 move.onclick=async()=>{
-
-const target=approvedAgents.find(a=>a.id===select.value);
-
-if(!target){
-alert("Choose a consultant first.");
-return;
-}
-
-if(!confirm(
-"Transfer this lead to "+target.name+"? Previous Activity History will be preserved."
-)){
-return;
-}
-
-move.disabled=true;
-move.textContent="Transferring...";
-
+const target=approvedAgents.find(agent=>agent.id===select.value);
+if(!target){alert("Choose a consultant first.");return;}
+if(!confirm("Transfer this lead to "+target.name+"? Previous Activity History will be preserved."))return;
+move.disabled=true;move.textContent="Transferring...";
 try{
-
-const batch=writeBatch(db);
-
-const leadRef=doc(db,"leads",lead.id);
-const activitiesRef=collection(db,"leads",lead.id,"activities");
-const activityRef=doc(activitiesRef);
-
-batch.update(leadRef,{
-
-assignedTo:target.id,
-assignedAgentName:target.name,
-assignedAt:serverTimestamp(),
-assignedBy:OWNER_UID,
-status:"new",
-followUpDate:localDateKey(),
-followUpCompletedDate:null,
-updatedAt:serverTimestamp()
-
-});
-
-batch.set(activityRef,activityRecord({
-
-eventType:"transfer",
-
-summary:
-`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,
-previousAssignedTo:lead.assignedTo||"",
-previousAssignedAgentName:lead.assignedAgentName||"Unassigned",
-newAssignedTo:target.id,
-newAssignedAgentName:target.name,
-previousStatus:lead.status||"new",
-status:"new",
-followUpDate:localDateKey(),
-remarks:lead.remarks||""
-
-}));
-
-await batch.commit();
-await loadLeads();
-
-alert("Lead transferred successfully. Previous Activity History preserved.");
-
-}catch(e){
-
-alert("Transfer failed: "+e.message);
-
-move.disabled=false;
-move.textContent="Transfer Lead";
-
+const batch=writeBatch(db);const leadRef=doc(db,"leads",lead.id);const activityRef=doc(collection(db,"leads",lead.id,"activities"));
+batch.update(leadRef,{assignedTo:target.id,assignedAgentName:target.name,assignedAt:serverTimestamp(),assignedBy:OWNER_UID,status:"new",followUpDate:localDateKey(),followUpCompletedDate:null,updatedAt:serverTimestamp()});
+batch.set(activityRef,activityRecord({eventType:"transfer",summary:`Lead transferred from ${lead.assignedAgentName||"Unassigned"} to ${target.name}. Previous Activity History preserved.`,previousAssignedTo:lead.assignedTo||"",previousAssignedAgentName:lead.assignedAgentName||"Unassigned",newAssignedTo:target.id,newAssignedAgentName:target.name,previousStatus:lead.status||"new",status:"new",followUpDate:localDateKey(),remarks:lead.remarks||""}));
+await batch.commit();await loadLeads();alert("Lead transferred successfully. Previous Activity History preserved.");
+}catch(error){alert("Transfer failed: "+error.message);move.disabled=false;move.textContent="Transfer Lead";}
+};
+transfer.append(select,move);box.appendChild(transfer);
+const nav=document.createElement("div");nav.className="queue-navigation";
+const prev=document.createElement("button");prev.className="secondary";prev.textContent="Previous";prev.disabled=ownerOpenQueueIndex===0;prev.onclick=()=>{ownerOpenQueueIndex--;renderOwnerOpenQueue();};
+const counter=document.createElement("span");counter.textContent=(ownerOpenQueueIndex+1)+" of "+ownerOpenQueue.length;
+const next=document.createElement("button");next.className="secondary";next.textContent="Next Lead";next.disabled=ownerOpenQueueIndex>=ownerOpenQueue.length-1;next.onclick=()=>{ownerOpenQueueIndex++;renderOwnerOpenQueue();};
+nav.append(prev,counter,next);root.append(box,nav);
 }
 
-};
-
-transfer.append(select,move);
-box.appendChild(transfer);
-root.appendChild(box);
-
+function renderOwnerToday(){
+ownerOpenQueue=allLeads.filter(lead=>{
+const stage=String(lead.status||"new").toLowerCase();
+return !["new","closed-won","closed-lost"].includes(stage);
 });
-
+ownerOpenQueue.sort((a,b)=>String(a.followUpDate||"9999-99-99").localeCompare(String(b.followUpDate||"9999-99-99")));
+ownerOpenQueueIndex=0;
+$("ownerDueCount").textContent=ownerOpenQueue.length;
+const counts=$("ownerConsultantCounts");counts.innerHTML="";const grouped={};
+ownerOpenQueue.forEach(lead=>{const name=lead.assignedAgentName||"Unassigned";grouped[name]=(grouped[name]||0)+1;});
+Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([name,count])=>{const div=document.createElement("div");div.className="consultant-count";const n=document.createElement("strong");n.textContent=count;const label=document.createElement("span");label.textContent=name+" — open";div.append(n,label);counts.appendChild(div);});
+renderOwnerOpenQueue();
 }
 
 function renderLeads(){
@@ -1405,7 +1301,7 @@ const list=$("leadsList");
 
 const searchText=$("leadSearch").value.trim().toLowerCase();
 
-const filtered=allLeads.filter(lead=>{
+const filtered=allLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new").filter(lead=>{
 
 const searchable=[
 lead.customerName,
@@ -1422,15 +1318,15 @@ return searchable.includes(searchText);
 });
 
 $("leadCountText").textContent=
-"Showing "+filtered.length+" of "+allLeads.length+" leads";
+"Showing "+filtered.length+" new lead(s)";
 
 list.innerHTML="";
 
 if(filtered.length===0){
 
-list.textContent=allLeads.length===0
-?"No leads found in Firestore."
-:"No matching leads found.";
+list.textContent=allLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new").length===0
+?"No new leads. New website enquiries will appear here."
+:"No matching new leads found.";
 
 return;
 
@@ -1465,7 +1361,13 @@ const date=document.createElement("p");
 date.className="lead-meta";
 date.textContent="Received: "+formatDate(lead.createdAt);
 
-box.append(title,details,requirement,date,activityPanel(lead));
+const detailWrap=document.createElement("details");
+const detailSummary=document.createElement("summary");
+detailSummary.textContent="Open lead details and actions";
+detailWrap.append(detailSummary,details,requirement,date,activityPanel(lead),makeTaskForm(lead,true));
+const shortInfo=document.createElement("p");
+shortInfo.textContent=(lead.phone||"No mobile")+" · "+(lead.propertyLocation||"Location not provided");
+box.append(title,shortInfo,detailWrap);
 
 const assignmentRow=document.createElement("div");
 assignmentRow.className="assignment-row";
@@ -1607,7 +1509,7 @@ assignButton.textContent=isReassignment
 };
 
 assignmentRow.append(select,assignButton);
-box.appendChild(assignmentRow);
+detailWrap.appendChild(assignmentRow);
 list.appendChild(box);
 
 });
@@ -1749,6 +1651,27 @@ return new Date(now.getFullYear(),now.getMonth(),1);
 return null;
 }
 
+function showReportDrilldown(title,leadIds){
+const panel=$("reportDrilldown");
+if(!panel)return;
+panel.innerHTML="";
+const heading=document.createElement("h3");heading.textContent=title+" ("+leadIds.length+")";
+const close=document.createElement("button");close.className="secondary";close.textContent="Close";close.style.width="auto";close.onclick=()=>panel.classList.add("hidden");
+panel.append(heading,close);
+const matches=leadIds.map(id=>allLeads.find(lead=>lead.id===id)).filter(Boolean);
+if(!matches.length){const empty=document.createElement("p");empty.textContent="No matching leads are currently available.";panel.appendChild(empty);}
+matches.forEach(lead=>{
+const box=document.createElement("div");box.className="queue-lead";
+const h=document.createElement("h3");h.textContent=lead.customerName||"Customer";
+const p=document.createElement("p");p.textContent=leadInfoText(lead)+"\nCurrent stage: "+(lead.status||"new")+"\nAssigned to: "+(lead.assignedAgentName||"Unassigned");
+const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
+box.append(h,p,req,activityPanel(lead),makeTaskForm(lead,true));
+panel.appendChild(box);
+});
+panel.classList.remove("hidden");
+panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 async function loadPerformanceReports(){
 const root=$("performanceReportContent");
 if(!root)return;
@@ -1757,84 +1680,44 @@ try{
 const period=$("reportPeriod").value||"month";
 const start=reportPeriodStart(period);
 const rows=new Map();
-approvedAgents.forEach(agent=>{
-rows.set(agent.id,{id:agent.id,name:agent.name,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0});
-});
-let totalAssigned=0,totalWon=0;
-allLeads.forEach(lead=>{
-const row=rows.get(lead.assignedTo);
-if(row){row.assigned++;totalAssigned++;}
-});
-
-// Read each lead's activity history once. The Owner setting decides how pipeline stages are attributed.
+approvedAgents.forEach(agent=>rows.set(agent.id,{id:agent.id,name:agent.name,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0,matches:{assigned:new Set(),followups:new Set(),siteVisits:new Set(),negotiations:new Set(),won:new Set(),lost:new Set()}}));
+let totalAssigned=0;
+allLeads.forEach(lead=>{const row=rows.get(lead.assignedTo);if(row){row.assigned++;totalAssigned++;row.matches.assigned.add(lead.id);}});
 const activityJobs=allLeads.map(async lead=>{
 const snap=await getDocs(collection(db,"leads",lead.id,"activities"));
 const leadStageCredits=new Map();
-let hasFollowupActivity=false;
 snap.forEach(activityDoc=>{
 const activity=activityDoc.data();
 const type=String(activity.eventType||"").toLowerCase();
 const actorId=activity.actorUid;
-let eventDate=null;
-if(activity.createdAt&&typeof activity.createdAt.toDate==="function")eventDate=activity.createdAt.toDate();
+let eventDate=null;if(activity.createdAt&&typeof activity.createdAt.toDate==="function")eventDate=activity.createdAt.toDate();
 const inPeriod=!start||(eventDate&&eventDate>=start);
 if(type==="follow-up"){
-if(inPeriod){
-const actorRow=rows.get(actorId);
-if(actorRow)actorRow.followups++;
-}
-hasFollowupActivity=true;
-if(preserveTransferHistory&&actorId){
-const stage=String(activity.status||"").toLowerCase();
-if(["site-visit","negotiation","closed-won","closed-lost"].includes(stage)){
-if(!leadStageCredits.has(stage))leadStageCredits.set(stage,new Set());
-leadStageCredits.get(stage).add(actorId);
-}
-}
+if(inPeriod){const actorRow=rows.get(actorId);if(actorRow){actorRow.followups++;actorRow.matches.followups.add(lead.id);}}
+if(preserveTransferHistory&&actorId){const stage=String(activity.status||"").toLowerCase();if(["site-visit","negotiation","closed-won","closed-lost"].includes(stage)){if(!leadStageCredits.has(stage))leadStageCredits.set(stage,new Set());leadStageCredits.get(stage).add(actorId);}}
 }
 if(preserveTransferHistory&&["transfer","reassignment"].includes(type)){
-const previousId=activity.previousAssignedTo;
-const previousStage=String(activity.previousStatus||"").toLowerCase();
-if(previousId&&["site-visit","negotiation","closed-won","closed-lost"].includes(previousStage)){
-if(!leadStageCredits.has(previousStage))leadStageCredits.set(previousStage,new Set());
-leadStageCredits.get(previousStage).add(previousId);
-}
+const previousId=activity.previousAssignedTo;const previousStage=String(activity.previousStatus||"").toLowerCase();
+if(previousId&&["site-visit","negotiation","closed-won","closed-lost"].includes(previousStage)){if(!leadStageCredits.has(previousStage))leadStageCredits.set(previousStage,new Set());leadStageCredits.get(previousStage).add(previousId);}
 }
 });
-
 const currentStage=String(lead.status||"new").toLowerCase();
 if(preserveTransferHistory){
-// Attribute each recorded stage to every consultant who handled it, without double-counting.
-if(lead.assignedTo&&["site-visit","negotiation","closed-won","closed-lost"].includes(currentStage)){
-if(!leadStageCredits.has(currentStage))leadStageCredits.set(currentStage,new Set());
-leadStageCredits.get(currentStage).add(lead.assignedTo);
-}
-for(const [stage,consultantIds] of leadStageCredits.entries()){
-consultantIds.forEach(id=>{
-const row=rows.get(id);
-if(!row)return;
-if(stage==="site-visit")row.siteVisits++;
-if(stage==="negotiation")row.negotiations++;
-if(stage==="closed-won")row.won++;
-if(stage==="closed-lost")row.lost++;
+if(lead.assignedTo&&["site-visit","negotiation","closed-won","closed-lost"].includes(currentStage)){if(!leadStageCredits.has(currentStage))leadStageCredits.set(currentStage,new Set());leadStageCredits.get(currentStage).add(lead.assignedTo);}
+for(const [stage,consultantIds] of leadStageCredits.entries())consultantIds.forEach(id=>{
+const row=rows.get(id);if(!row)return;
+if(stage==="site-visit"){row.siteVisits++;row.matches.siteVisits.add(lead.id);}
+if(stage==="negotiation"){row.negotiations++;row.matches.negotiations.add(lead.id);}
+if(stage==="closed-won"){row.won++;row.matches.won.add(lead.id);}
+if(stage==="closed-lost"){row.lost++;row.matches.lost.add(lead.id);}
 });
-}
 }else{
-// OFF: attribute the current pipeline stage only to the currently assigned consultant.
-const currentRow=rows.get(lead.assignedTo);
-if(currentRow){
-if(currentStage==="site-visit")currentRow.siteVisits++;
-if(currentStage==="negotiation")currentRow.negotiations++;
-if(currentStage==="closed-won")currentRow.won++;
-if(currentStage==="closed-lost")currentRow.lost++;
-}
+const row=rows.get(lead.assignedTo);if(row){if(currentStage==="site-visit"){row.siteVisits++;row.matches.siteVisits.add(lead.id);}if(currentStage==="negotiation"){row.negotiations++;row.matches.negotiations.add(lead.id);}if(currentStage==="closed-won"){row.won++;row.matches.won.add(lead.id);}if(currentStage==="closed-lost"){row.lost++;row.matches.lost.add(lead.id);}}
 }
 });
 await Promise.all(activityJobs);
-totalWon=Array.from(rows.values()).reduce((sum,row)=>sum+row.won,0);
-$("reportAssigned").textContent=totalAssigned;
-$("reportWon").textContent=totalWon;
-$("reportConversion").textContent=totalAssigned?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
+const totalWon=Array.from(rows.values()).reduce((sum,row)=>sum+row.won,0);
+$("reportAssigned").textContent=totalAssigned;$("reportWon").textContent=totalWon;$("reportConversion").textContent=totalAssigned?Math.round((totalWon/totalAssigned)*100)+"%":"0%";
 const activeRows=Array.from(rows.values()).sort((a,b)=>a.name.localeCompare(b.name));
 if(!activeRows.length){root.className="report-empty";root.textContent="No approved consultants found.";return;}
 const wrap=document.createElement("div");wrap.className="performance-table-wrap";
@@ -1843,10 +1726,11 @@ const thead=document.createElement("thead");const header=document.createElement(
 ["Consultant","Currently Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{const th=document.createElement("th");th.textContent=label;header.appendChild(th);});
 thead.appendChild(header);const tbody=document.createElement("tbody");
 activeRows.forEach(row=>{
-const tr=document.createElement("tr");
-const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
-[row.name,row.assigned,row.followups,row.siteVisits,row.negotiations,row.won,row.lost,conversion].forEach((value,index)=>{const td=document.createElement("td");td.textContent=String(value);if(index>0)td.className="num";tr.appendChild(td);});
-tbody.appendChild(tr);
+const tr=document.createElement("tr");const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
+const nameCell=document.createElement("td");nameCell.textContent=row.name;tr.appendChild(nameCell);
+const columns=[['assigned',row.assigned,'Currently Assigned'],['followups',row.followups,'Follow-ups'],['siteVisits',row.siteVisits,'Site Visits'],['negotiations',row.negotiations,'Negotiations'],['won',row.won,'Won'],['lost',row.lost,'Lost']];
+columns.forEach(([key,value,label])=>{const td=document.createElement("td");td.className="num";const btn=document.createElement("button");btn.type="button";btn.className="report-number";btn.textContent=String(value);btn.disabled=value===0;btn.title="Open "+label+" leads for "+row.name;btn.onclick=()=>showReportDrilldown(row.name+" — "+label,Array.from(row.matches[key]));td.appendChild(btn);tr.appendChild(td);});
+const conv=document.createElement("td");conv.className="num";conv.textContent=conversion;tr.appendChild(conv);tbody.appendChild(tr);
 });
 table.append(thead,tbody);wrap.appendChild(table);root.className="";root.innerHTML="";root.appendChild(wrap);
 }catch(error){root.className="report-empty";root.textContent="Could not load performance reports: "+error.message;}
@@ -1860,113 +1744,72 @@ $("preserveTransferHistory").onchange=savePerformanceHistorySetting;
 
 $("leadSearch").addEventListener("input",renderLeads);
 
+let consultantOpenQueue=[];
+let consultantOpenQueueIndex=0;
+
+function renderConsultantOpenQueue(){
+const root=$("myOpenFollowupsList");
+root.innerHTML="";
+if(!consultantOpenQueue.length){root.textContent="No open follow-ups right now. New Leads move here after their first update.";return;}
+if(consultantOpenQueueIndex>=consultantOpenQueue.length)consultantOpenQueueIndex=consultantOpenQueue.length-1;
+if(consultantOpenQueueIndex<0)consultantOpenQueueIndex=0;
+const lead=consultantOpenQueue[consultantOpenQueueIndex];
+const box=document.createElement("div");box.className="queue-lead";
+const title=document.createElement("h3");title.textContent=lead.customerName||"Customer";
+const info=document.createElement("p");info.textContent=leadInfoText(lead)+"\nNext follow-up: "+(lead.followUpDate||"Not set");
+const requirement=document.createElement("p");requirement.textContent="Requirement: "+(lead.message||"No message provided");
+box.append(title,info,requirement,activityPanel(lead),makeTaskForm(lead));
+const nav=document.createElement("div");nav.className="queue-navigation";
+const prev=document.createElement("button");prev.className="secondary";prev.textContent="Previous";prev.disabled=consultantOpenQueueIndex===0;
+prev.onclick=()=>{consultantOpenQueueIndex--;renderConsultantOpenQueue();};
+const counter=document.createElement("span");counter.textContent=(consultantOpenQueueIndex+1)+" of "+consultantOpenQueue.length;
+const next=document.createElement("button");next.className="secondary";next.textContent="Next Lead";next.disabled=consultantOpenQueueIndex>=consultantOpenQueue.length-1;
+next.onclick=()=>{consultantOpenQueueIndex++;renderConsultantOpenQueue();};
+nav.append(prev,counter,next);root.append(box,nav);
+}
+
 async function loadMyAssignedLeads(user){
-
-const list=$("myLeadsList");
+const newRoot=$("myNewLeadsList");
 const status=$("myLeadStatus");
-
-list.innerHTML="Loading your assigned leads...";
+newRoot.textContent="Loading your assigned leads...";
+$("myOpenFollowupsList").textContent="Loading open follow-ups...";
 status.textContent="Please wait...";
-
 try{
-
-const assignedQuery=query(
-collection(db,"leads"),
-where("assignedTo","==",user.uid)
-);
-
+const assignedQuery=query(collection(db,"leads"),where("assignedTo","==",user.uid));
 const snapshot=await getDocs(assignedQuery);
-
 const myLeads=[];
-
-snapshot.forEach(leadDoc=>{
-
-myLeads.push({
-id:leadDoc.id,
-...leadDoc.data()
-});
-
-});
-
+snapshot.forEach(leadDoc=>myLeads.push({id:leadDoc.id,...leadDoc.data()}));
 myLeads.sort((a,b)=>{
-
-const aTime=a.createdAt&&a.createdAt.toMillis
-?a.createdAt.toMillis():0;
-
-const bTime=b.createdAt&&b.createdAt.toMillis
-?b.createdAt.toMillis():0;
-
+const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
+const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
 return bTime-aTime;
-
 });
-
-$("myLeadCount").textContent=myLeads.length;
-
-status.textContent=
-"Showing "+myLeads.length+" assigned lead(s).";
-
-list.innerHTML="";
-
-if(myLeads.length===0){
-
-list.textContent="No leads have been assigned to you yet.";
-
-renderConsultantToday(myLeads);
-
-return;
-
-}
-
-myLeads.forEach(lead=>{
-
-const box=document.createElement("div");
-box.className="leadbox";
-
-const title=document.createElement("h3");
-title.textContent=lead.customerName||"Name not provided";
-
-const details=document.createElement("p");
-
-details.textContent=
-"Mobile: "+(lead.phone||"Not provided")+
-"\nEmail: "+(lead.email||"Not provided")+
-"\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
-"\nLocation: "+(lead.propertyLocation||"Not provided")+
-"\nStatus: "+(lead.status||"new")+
-"\nNext Follow-up: "+(lead.followUpDate||"Not set");
-
-const requirement=document.createElement("p");
-
-requirement.textContent=
-"Requirement: "+(lead.message||"No message provided");
-
-const received=document.createElement("p");
-received.className="lead-meta";
-received.textContent="Received: "+formatDate(lead.createdAt);
-
-box.append(
-title,
-details,
-requirement,
-received,
-activityPanel(lead),
-makeTaskForm(lead)
-);
-
-list.appendChild(box);
-
+const newLeads=myLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new");
+consultantOpenQueue=myLeads.filter(lead=>!["new","closed-won","closed-lost"].includes(String(lead.status||"new").toLowerCase()));
+consultantOpenQueue.sort((a,b)=>String(a.followUpDate||"9999-99-99").localeCompare(String(b.followUpDate||"9999-99-99")));
+consultantOpenQueueIndex=0;
+$("myNewLeadCount").textContent=newLeads.length;
+$("myOpenFollowupCount").textContent=consultantOpenQueue.length;
+newRoot.innerHTML="";
+if(!newLeads.length){newRoot.textContent="No new leads assigned to you.";}
+newLeads.forEach(lead=>{
+const box=document.createElement("div");box.className="queue-lead";
+const title=document.createElement("h3");title.textContent=lead.customerName||"Customer";
+const shortInfo=document.createElement("p");shortInfo.textContent=(lead.phone||"No mobile")+" · "+(lead.propertyLocation||"Location not provided");
+const details=document.createElement("details");
+const summary=document.createElement("summary");summary.textContent="Open lead and add first update";
+const info=document.createElement("p");info.textContent=leadInfoText(lead);
+const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
+details.append(summary,info,req,activityPanel(lead),makeTaskForm(lead));
+box.append(title,shortInfo,details);
+newRoot.appendChild(box);
 });
-
-renderConsultantToday(myLeads);
-
+renderConsultantOpenQueue();
+status.textContent="Showing "+myLeads.length+" assigned lead(s): "+newLeads.length+" new and "+consultantOpenQueue.length+" open follow-up(s). Closed leads are kept out of the active work queue.";
 }catch(error){
-
-$("myLeadCount").textContent="—";
 status.textContent="Could not load assigned leads: "+error.message;
-list.innerHTML="";
-
+newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
 }
-
 }
 
 $("refreshMyLeads").onclick=()=>{
