@@ -493,14 +493,7 @@ header{justify-content:center;text-align:center}
 <section class="card" id="performanceReports">
 <h2>Performance Reports</h2>
 <p class="card-description">Consultant-wise lead pipeline and follow-up activity. Pipeline figures show each consultant's currently assigned leads.</p>
-<div class="report-history-setting" style="margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fbfdfb">
-<strong style="display:block;color:var(--green);margin-bottom:6px">Lead Transfer Performance History</strong>
-<label for="preserveTransferHistory" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px">
-<input id="preserveTransferHistory" type="checkbox" checked style="width:18px;height:18px;margin:0;accent-color:var(--green)">
-<span><b>Preserve previous consultant performance after transfer</b><small style="display:block;color:var(--muted);margin-top:3px">ON: retain historical credit. OFF: show pipeline under the current assigned consultant.</small></span>
-</label>
-<p id="historySettingStatus" class="report-note" style="margin-top:8px">Default: ON. Only Owner can change this setting.</p>
-</div>
+<p class="report-note">Created Leads shows the original consultant who entered each CRM lead. Currently Assigned and active pipeline results belong to the consultant who has the lead now. Transfer history remains available to Owner.</p>
 <div class="report-toolbar">
 <select id="reportPeriod" aria-label="Follow-up activity period">
 <option value="all">All-time follow-ups</option>
@@ -517,7 +510,7 @@ header{justify-content:center;text-align:center}
 </div>
 <div id="performanceReportContent" class="report-empty">Loading performance reports...</div>
 <div id="reportDrilldown" class="report-drilldown hidden"></div>
-<p class="report-note">Follow-ups are counted from saved Activity History. When history preservation is ON, stage outcomes are credited to consultants recorded in follow-up and transfer history; older transfers made before this feature may not contain complete attribution. Currently Assigned is always based on today's assignment. Click any consultant count to open the matching lead records. Conversion = credited Closed Won ÷ currently assigned leads.</p>
+<p class="report-note">Created Leads is an all-time count credited to the consultant who originally created each CRM lead. Currently Assigned, Site Visits, Negotiations, Won and Lost follow the consultant who currently owns the lead. Transfer History remains visible to Owner. Follow-ups are counted from saved Activity History. Click any consultant count to open matching lead records.</p>
 </section>
 
 <h3 style="margin-top:24px">New Leads</h3>
@@ -555,6 +548,12 @@ header{justify-content:center;text-align:center}
 <button id="createLeadBtn" type="button">Save New Lead</button>
 <p id="createLeadMessage" class="small" role="status" aria-live="polite"></p>
 </div>
+</section>
+
+<section class="queue-panel" id="consultantCreatedLeadsPanel">
+<h2>Created Leads <span class="queue-count" id="myCreatedLeadCount">0</span></h2>
+<p class="queue-subtitle">Leads you created that are still unassigned. Once Owner assigns a lead, it moves out of this section.</p>
+<div id="myCreatedLeadsList"></div>
 </section>
 
 <section class="queue-panel" id="consultantNewLeadsPanel">
@@ -626,7 +625,6 @@ const $=id=>document.getElementById(id);
 
 let allLeads=[];
 let approvedAgents=[];
-let preserveTransferHistory=true;
 let historySettingLoaded=false;
 let registrationInProgress=false;
 
@@ -1029,19 +1027,23 @@ return;
 snap.forEach(activityDoc=>{
 
 const a=activityDoc.data();
+const isOwnerViewer=auth.currentUser&&auth.currentUser.uid===OWNER_UID;
+const eventType=String(a.eventType||"update").toLowerCase();
+const isTransferEvent=["transfer","reassignment"].includes(eventType);
+const isEarlierConsultantActivity=!isOwnerViewer&&a.actorUid&&a.actorUid!==auth.currentUser.uid&&a.actorUid!==OWNER_UID;
 
 const item=document.createElement("div");
 item.className="activity-entry";
 
 const heading=document.createElement("strong");
-
-heading.textContent=
-(a.eventType||"update").replaceAll("-"," ").toUpperCase()+
-" · "+
-(a.actorName||"CRM user");
+heading.textContent=isTransferEvent&&!isOwnerViewer
+?"LEAD ASSIGNED TO YOU · OWNER"
+:(isEarlierConsultantActivity?"EARLIER ACTIVITY":(eventType.replaceAll("-"," ").toUpperCase()+" · "+(a.actorName||"CRM user")));
 
 const summary=document.createElement("p");
-summary.textContent=a.summary||"Activity recorded.";
+summary.textContent=isTransferEvent&&!isOwnerViewer
+?"This lead was assigned to you by the Owner."
+:(isEarlierConsultantActivity?"Activity recorded before this lead was assigned to you.":(a.summary||"Activity recorded."));
 
 const meta=document.createElement("small");
 meta.textContent=formatDate(a.createdAt);
@@ -1337,7 +1339,9 @@ lead.email,
 lead.propertyLocation,
 lead.message,
 lead.enquiryType,
-lead.assignedAgentName
+lead.assignedAgentName,
+lead.createdByName,
+lead.source
 ].join(" ").toLowerCase();
 
 return searchable.includes(searchText);
@@ -1375,6 +1379,7 @@ details.textContent=
 "\nEnquiry Type: "+(lead.enquiryType||"Not specified")+
 "\nLocation: "+(lead.propertyLocation||"Not provided")+
 "\nStatus: "+(lead.status||"new")+
+"\nCreated By: "+(lead.createdByName|| (lead.source==="crm"?"CRM Consultant":"Website / Public Enquiry"))+
 "\nAssigned To: "+
 (lead.assignedAgentName||
 (lead.assignedTo&&lead.assignedTo!=="pending"&&lead.assignedTo!=="unassigned"
@@ -1609,58 +1614,6 @@ list.textContent=error.message;
 }
 
 
-async function loadPerformanceHistorySetting(){
-const checkbox=$("preserveTransferHistory");
-const status=$("historySettingStatus");
-if(!checkbox)return;
-checkbox.disabled=true;
-try{
-const settingSnap=await getDoc(doc(db,"settings","performanceReports"));
-if(settingSnap.exists()){
-preserveTransferHistory=settingSnap.data().preserveTransferredHistory!==false;
-}else{
-preserveTransferHistory=true;
-}
-checkbox.checked=preserveTransferHistory;
-historySettingLoaded=true;
-status.textContent=preserveTransferHistory
-?"ON — historical performance remains with the consultant who handled the lead. (Default)"
-:"OFF — pipeline performance follows the current assigned consultant.";
-}catch(error){
-// Keep the safe default ON if the setting cannot be read.
-preserveTransferHistory=true;
-checkbox.checked=true;
-status.textContent="Could not load saved setting. Default ON is being used. Check Firestore rules.";
-console.error("Performance setting load failed:",error);
-}finally{checkbox.disabled=false;}
-}
-
-async function savePerformanceHistorySetting(){
-const checkbox=$("preserveTransferHistory");
-const status=$("historySettingStatus");
-if(!checkbox||!auth.currentUser||auth.currentUser.uid!==OWNER_UID)return;
-const nextValue=checkbox.checked;
-checkbox.disabled=true;
-status.textContent="Saving setting...";
-try{
-await setDoc(doc(db,"settings","performanceReports"),{
-preserveTransferredHistory:nextValue,
-updatedAt:serverTimestamp(),
-updatedBy:auth.currentUser.uid
-},{merge:true});
-preserveTransferHistory=nextValue;
-historySettingLoaded=true;
-status.textContent=nextValue
-?"ON — historical performance remains with the consultant who handled the lead."
-:"OFF — pipeline performance follows the current assigned consultant.";
-await loadPerformanceReports();
-}catch(error){
-checkbox.checked=preserveTransferHistory;
-status.textContent="Could not save. Check Firestore rules: "+error.message;
-alert("Could not save performance history setting: "+error.message);
-}finally{checkbox.disabled=false;}
-}
-
 function reportPeriodStart(period){
 const now=new Date();
 if(period==="today"){
@@ -1691,8 +1644,10 @@ matches.forEach(lead=>{
 const box=document.createElement("div");box.className="queue-lead";
 const h=document.createElement("h3");h.textContent=lead.customerName||"Customer";
 const p=document.createElement("p");p.textContent=leadInfoText(lead)+"\nCurrent stage: "+(lead.status||"new")+"\nAssigned to: "+(lead.assignedAgentName||"Unassigned");
+const audit=document.createElement("p");
+audit.textContent="Original Created By: "+(lead.createdByName||(lead.source==="crm"?"CRM Consultant":"Website / Public Enquiry"))+"\nCreated At: "+formatDate(lead.createdAt);
 const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
-box.append(h,p,req,activityPanel(lead),makeTaskForm(lead,true));
+box.append(h,p,audit,req,activityPanel(lead),makeTaskForm(lead,true));
 panel.appendChild(box);
 });
 panel.classList.remove("hidden");
@@ -1707,9 +1662,15 @@ try{
 const period=$("reportPeriod").value||"month";
 const start=reportPeriodStart(period);
 const rows=new Map();
-approvedAgents.forEach(agent=>rows.set(agent.id,{id:agent.id,name:agent.name,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0,matches:{assigned:new Set(),followups:new Set(),siteVisits:new Set(),negotiations:new Set(),won:new Set(),lost:new Set()}}));
+approvedAgents.forEach(agent=>rows.set(agent.id,{id:agent.id,name:agent.name,created:0,assigned:0,followups:0,siteVisits:0,negotiations:0,won:0,lost:0,matches:{created:new Set(),assigned:new Set(),followups:new Set(),siteVisits:new Set(),negotiations:new Set(),won:new Set(),lost:new Set()}}));
 let totalAssigned=0;
-allLeads.forEach(lead=>{const row=rows.get(lead.assignedTo);if(row){row.assigned++;totalAssigned++;row.matches.assigned.add(lead.id);}});
+allLeads.forEach(lead=>{
+const creatorRow=rows.get(lead.createdBy);
+// Created Leads is an all-time ownership/audit count, independent of the follow-up period filter.
+if(lead.source==="crm"&&creatorRow){creatorRow.created++;creatorRow.matches.created.add(lead.id);}
+const assignedRow=rows.get(lead.assignedTo);
+if(assignedRow){assignedRow.assigned++;totalAssigned++;assignedRow.matches.assigned.add(lead.id);}
+});
 const activityJobs=allLeads.map(async lead=>{
 const snap=await getDocs(collection(db,"leads",lead.id,"activities"));
 const leadStageCredits=new Map();
@@ -1721,25 +1682,19 @@ let eventDate=null;if(activity.createdAt&&typeof activity.createdAt.toDate==="fu
 const inPeriod=!start||(eventDate&&eventDate>=start);
 if(type==="follow-up"){
 if(inPeriod){const actorRow=rows.get(actorId);if(actorRow){actorRow.followups++;actorRow.matches.followups.add(lead.id);}}
-if(preserveTransferHistory&&actorId){const stage=String(activity.status||"").toLowerCase();if(["site-visit","negotiation","closed-won","closed-lost"].includes(stage)){if(!leadStageCredits.has(stage))leadStageCredits.set(stage,new Set());leadStageCredits.get(stage).add(actorId);}}
+// Follow-up activity is recorded for audit; pipeline outcomes below belong to current assignee.
 }
-if(preserveTransferHistory&&["transfer","reassignment"].includes(type)){
-const previousId=activity.previousAssignedTo;const previousStage=String(activity.previousStatus||"").toLowerCase();
-if(previousId&&["site-visit","negotiation","closed-won","closed-lost"].includes(previousStage)){if(!leadStageCredits.has(previousStage))leadStageCredits.set(previousStage,new Set());leadStageCredits.get(previousStage).add(previousId);}
-}
+// Transfers are retained in Activity History, but do not credit pipeline outcomes to previous consultants.
 });
 const currentStage=String(lead.status||"new").toLowerCase();
-if(preserveTransferHistory){
-if(lead.assignedTo&&["site-visit","negotiation","closed-won","closed-lost"].includes(currentStage)){if(!leadStageCredits.has(currentStage))leadStageCredits.set(currentStage,new Set());leadStageCredits.get(currentStage).add(lead.assignedTo);}
-for(const [stage,consultantIds] of leadStageCredits.entries())consultantIds.forEach(id=>{
-const row=rows.get(id);if(!row)return;
-if(stage==="site-visit"){row.siteVisits++;row.matches.siteVisits.add(lead.id);}
-if(stage==="negotiation"){row.negotiations++;row.matches.negotiations.add(lead.id);}
-if(stage==="closed-won"){row.won++;row.matches.won.add(lead.id);}
-if(stage==="closed-lost"){row.lost++;row.matches.lost.add(lead.id);}
-});
-}else{
-const row=rows.get(lead.assignedTo);if(row){if(currentStage==="site-visit"){row.siteVisits++;row.matches.siteVisits.add(lead.id);}if(currentStage==="negotiation"){row.negotiations++;row.matches.negotiations.add(lead.id);}if(currentStage==="closed-won"){row.won++;row.matches.won.add(lead.id);}if(currentStage==="closed-lost"){row.lost++;row.matches.lost.add(lead.id);}}
+{
+const row=rows.get(lead.assignedTo);
+if(row){
+if(currentStage==="site-visit"){row.siteVisits++;row.matches.siteVisits.add(lead.id);}
+if(currentStage==="negotiation"){row.negotiations++;row.matches.negotiations.add(lead.id);}
+if(currentStage==="closed-won"){row.won++;row.matches.won.add(lead.id);}
+if(currentStage==="closed-lost"){row.lost++;row.matches.lost.add(lead.id);}
+}
 }
 });
 await Promise.all(activityJobs);
@@ -1750,12 +1705,12 @@ if(!activeRows.length){root.className="report-empty";root.textContent="No approv
 const wrap=document.createElement("div");wrap.className="performance-table-wrap";
 const table=document.createElement("table");table.className="performance-table";
 const thead=document.createElement("thead");const header=document.createElement("tr");
-["Consultant","Currently Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{const th=document.createElement("th");th.textContent=label;header.appendChild(th);});
+["Consultant","Created Leads","Currently Assigned","Follow-ups","Site Visits","Negotiations","Won","Lost","Conversion"].forEach(label=>{const th=document.createElement("th");th.textContent=label;header.appendChild(th);});
 thead.appendChild(header);const tbody=document.createElement("tbody");
 activeRows.forEach(row=>{
 const tr=document.createElement("tr");const conversion=row.assigned?Math.round(row.won/row.assigned*100)+"%":"0%";
 const nameCell=document.createElement("td");nameCell.textContent=row.name;tr.appendChild(nameCell);
-const columns=[['assigned',row.assigned,'Currently Assigned'],['followups',row.followups,'Follow-ups'],['siteVisits',row.siteVisits,'Site Visits'],['negotiations',row.negotiations,'Negotiations'],['won',row.won,'Won'],['lost',row.lost,'Lost']];
+const columns=[['created',row.created,'Created Leads'],['assigned',row.assigned,'Currently Assigned'],['followups',row.followups,'Follow-ups'],['siteVisits',row.siteVisits,'Site Visits'],['negotiations',row.negotiations,'Negotiations'],['won',row.won,'Won'],['lost',row.lost,'Lost']];
 columns.forEach(([key,value,label])=>{const td=document.createElement("td");td.className="num";const btn=document.createElement("button");btn.type="button";btn.className="report-number";btn.textContent=String(value);btn.disabled=value===0;btn.title="Open "+label+" leads for "+row.name;btn.onclick=()=>showReportDrilldown(row.name+" — "+label,Array.from(row.matches[key]));td.appendChild(btn);tr.appendChild(td);});
 const conv=document.createElement("td");conv.className="num";conv.textContent=conversion;tr.appendChild(conv);tbody.appendChild(tr);
 });
@@ -1767,7 +1722,6 @@ $("refreshUsers").onclick=loadPendingUsers;
 $("refreshLeads").onclick=loadLeads;
 $("refreshReports").onclick=loadPerformanceReports;
 $("reportPeriod").onchange=loadPerformanceReports;
-$("preserveTransferHistory").onchange=savePerformanceHistorySetting;
 
 $("leadSearch").addEventListener("input",renderLeads);
 
@@ -1796,39 +1750,55 @@ nav.append(prev,counter,next);root.append(box,nav);
 }
 
 async function loadMyAssignedLeads(user){
+const createdRoot=$("myCreatedLeadsList");
 const newRoot=$("myNewLeadsList");
 const status=$("myLeadStatus");
-newRoot.textContent="Loading your assigned leads...";
+createdRoot.textContent="Loading your created leads...";
+newRoot.textContent="Loading new leads assigned to you...";
 $("myOpenFollowupsList").textContent="Loading open follow-ups...";
 status.textContent="Please wait...";
 try{
-// A consultant sees leads assigned to them, plus their own leads ONLY
-// while those leads remain unassigned. Once Owner assigns/transfers a lead,
-// it disappears from the creator's queue and appears for the new assignee.
+// Created Leads are visible to their creator only while still unassigned.
+// Once Owner assigns/transfers a lead, it leaves the creator's Created Leads
+// and appears as a normal New Lead for the current assignee.
 const leadsRef=collection(db,"leads");
 const [assignedSnapshot,createdUnassignedSnapshot]=await Promise.all([
 getDocs(query(leadsRef,where("assignedTo","==",user.uid))),
-getDocs(query(
-  leadsRef,
-  where("createdBy","==",user.uid),
-  where("assignedTo","==","unassigned")
-))
+getDocs(query(leadsRef,where("createdBy","==",user.uid),where("assignedTo","==","unassigned")))
 ]);
-const leadMap=new Map();
-assignedSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
-createdUnassignedSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
-const myLeads=Array.from(leadMap.values());
-myLeads.sort((a,b)=>{
+const assignedLeads=[];
+const createdLeads=[];
+assignedSnapshot.forEach(leadDoc=>assignedLeads.push({id:leadDoc.id,...leadDoc.data()}));
+createdUnassignedSnapshot.forEach(leadDoc=>createdLeads.push({id:leadDoc.id,...leadDoc.data()}));
+const sortRecent=(a,b)=>{
 const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
 const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
 return bTime-aTime;
-});
-const newLeads=myLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new");
-consultantOpenQueue=myLeads.filter(lead=>!["new","closed-won","closed-lost"].includes(String(lead.status||"new").toLowerCase()));
+};
+assignedLeads.sort(sortRecent);createdLeads.sort(sortRecent);
+const newLeads=assignedLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new");
+const visibleWork=[...assignedLeads,...createdLeads];
+const workMap=new Map(visibleWork.map(lead=>[lead.id,lead]));
+consultantOpenQueue=Array.from(workMap.values()).filter(lead=>!["new","closed-won","closed-lost"].includes(String(lead.status||"new").toLowerCase()));
 consultantOpenQueue.sort((a,b)=>String(a.followUpDate||"9999-99-99").localeCompare(String(b.followUpDate||"9999-99-99")));
 consultantOpenQueueIndex=0;
+$("myCreatedLeadCount").textContent=createdLeads.length;
 $("myNewLeadCount").textContent=newLeads.length;
 $("myOpenFollowupCount").textContent=consultantOpenQueue.length;
+createdRoot.innerHTML="";
+if(!createdLeads.length){createdRoot.textContent="You have not created any unassigned leads.";}
+createdLeads.forEach(lead=>{
+const box=document.createElement("div");box.className="queue-lead";
+const title=document.createElement("h3");title.textContent=lead.customerName||"Customer";
+const shortInfo=document.createElement("p");shortInfo.textContent=(lead.phone||"No mobile")+" · "+(lead.propertyLocation||"Location not provided");
+const details=document.createElement("details");
+const summary=document.createElement("summary");summary.textContent="Open your created lead";
+const info=document.createElement("p");info.textContent=leadInfoText(lead);
+const created=document.createElement("p");created.textContent="Created by you · "+formatDate(lead.createdAt);
+const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
+details.append(summary,info,created,req,activityPanel(lead),makeTaskForm(lead));
+box.append(title,shortInfo,details);createdRoot.appendChild(box);
+});
 newRoot.innerHTML="";
 if(!newLeads.length){newRoot.textContent="No new leads assigned to you.";}
 newLeads.forEach(lead=>{
@@ -1839,15 +1809,15 @@ const details=document.createElement("details");
 const summary=document.createElement("summary");summary.textContent="Open lead and add first update";
 const info=document.createElement("p");info.textContent=leadInfoText(lead);
 const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
+// Do not expose the previous creator's name to the receiving consultant.
 details.append(summary,info,req,activityPanel(lead),makeTaskForm(lead));
-box.append(title,shortInfo,details);
-newRoot.appendChild(box);
+box.append(title,shortInfo,details);newRoot.appendChild(box);
 });
 renderConsultantOpenQueue();
-status.textContent="Showing "+myLeads.length+" lead(s) available to you: "+newLeads.length+" new and "+consultantOpenQueue.length+" open follow-up(s). Leads assigned to another consultant are not shown here.";
+status.textContent="Created Leads: "+createdLeads.length+" (still unassigned) · New Leads assigned to you: "+newLeads.length+" · Open follow-ups: "+consultantOpenQueue.length+". Leads assigned to another consultant are not shown here.";
 }catch(error){
-status.textContent="Could not load assigned leads: "+error.message;
-newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
+status.textContent="Could not load your leads: "+error.message;
+createdRoot.innerHTML="";newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
 }
 }
 
@@ -1961,7 +1931,6 @@ try{
 
 await loadPendingUsers();
 await loadApprovedAgents();
-await loadPerformanceHistorySetting();
 await loadLeads();
 
 }catch(error){
