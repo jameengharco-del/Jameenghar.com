@@ -1802,16 +1802,21 @@ newRoot.textContent="Loading your assigned leads...";
 $("myOpenFollowupsList").textContent="Loading open follow-ups...";
 status.textContent="Please wait...";
 try{
-// A consultant can see leads assigned by the Owner AND leads created by them.
-// Merge the two query results so a lead matching both conditions appears once.
+// A consultant sees leads assigned to them, plus their own leads ONLY
+// while those leads remain unassigned. Once Owner assigns/transfers a lead,
+// it disappears from the creator's queue and appears for the new assignee.
 const leadsRef=collection(db,"leads");
-const [assignedSnapshot,createdSnapshot]=await Promise.all([
+const [assignedSnapshot,createdUnassignedSnapshot]=await Promise.all([
 getDocs(query(leadsRef,where("assignedTo","==",user.uid))),
-getDocs(query(leadsRef,where("createdBy","==",user.uid)))
+getDocs(query(
+  leadsRef,
+  where("createdBy","==",user.uid),
+  where("assignedTo","==","unassigned")
+))
 ]);
 const leadMap=new Map();
 assignedSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
-createdSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
+createdUnassignedSnapshot.forEach(leadDoc=>leadMap.set(leadDoc.id,{id:leadDoc.id,...leadDoc.data()}));
 const myLeads=Array.from(leadMap.values());
 myLeads.sort((a,b)=>{
 const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
@@ -1839,7 +1844,7 @@ box.append(title,shortInfo,details);
 newRoot.appendChild(box);
 });
 renderConsultantOpenQueue();
-status.textContent="Showing "+myLeads.length+" assigned lead(s): "+newLeads.length+" new and "+consultantOpenQueue.length+" open follow-up(s). Closed leads are kept out of the active work queue.";
+status.textContent="Showing "+myLeads.length+" lead(s) available to you: "+newLeads.length+" new and "+consultantOpenQueue.length+" open follow-up(s). Leads assigned to another consultant are not shown here.";
 }catch(error){
 status.textContent="Could not load assigned leads: "+error.message;
 newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
