@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#064d2b">
+<title>Property Owner Portal | JameenGhar</title>
+<style>
+:root{--green:#064d2b;--green2:#0b6840;--orange:#ff5a0a;--ink:#17251d;--muted:#64736a;--cream:#f6f8f5;--line:#e4eae5;--white:#fff;--danger:#b42318}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif;min-height:100vh}
+header{background:var(--white);border-bottom:1px solid var(--line)}
+.nav{max-width:1100px;margin:auto;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--green);font-weight:800;font-size:19px}
+.brand img{width:52px;height:52px;object-fit:contain}
+.nav a.back{color:var(--green);font-weight:700;text-decoration:none;font-size:14px}
+main{max-width:1100px;margin:42px auto;padding:0 22px 50px;display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:start}
+.intro{padding:28px 8px}
+.eyebrow{display:inline-block;color:var(--green);background:#e8f1eb;border-radius:30px;padding:8px 13px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+h1{font-size:clamp(30px,4vw,46px);line-height:1.12;margin:18px 0 14px;color:var(--green)}
+.intro p{color:var(--muted);font-size:16px;line-height:1.7;max-width:520px}
+.points{list-style:none;padding:0;margin:28px 0;display:grid;gap:14px}
+.points li{display:flex;gap:11px;align-items:flex-start;color:#34443a;line-height:1.5}
+.tick{width:24px;height:24px;flex:0 0 24px;border-radius:50%;background:#e7f2e9;color:var(--green);display:grid;place-items:center;font-weight:800}
+.notice{max-width:520px;border-left:4px solid var(--orange);background:#fff7f1;padding:13px 15px;border-radius:0 9px 9px 0;color:#68402b;font-size:13px;line-height:1.55}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 12px 35px rgba(18,55,32,.07)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f0f4f0;padding:5px;border-radius:12px;margin-bottom:22px}
+.tab{border:0;border-radius:9px;padding:12px;background:transparent;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer}
+.tab.active{background:var(--white);color:var(--green);box-shadow:0 2px 8px rgba(0,0,0,.07)}
+h2{margin:0 0 7px;font-size:23px;color:var(--green)}
+.sub{margin:0 0 21px;color:var(--muted);font-size:13px;line-height:1.5}
+.field{margin:0 0 14px}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:#34443a}
+input{width:100%;border:1px solid #d7e0d8;border-radius:9px;padding:13px 12px;font-size:15px;outline:none;background:#fff;color:var(--ink)}
+input:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(11,104,64,.1)}
+button.primary{width:100%;border:0;border-radius:9px;padding:14px 16px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer;margin-top:5px}
+button.primary:hover{background:var(--green2)}
+button.secondary{border:1px solid var(--line);background:#fff;color:var(--green);border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.message{display:none;margin:14px 0 0;padding:12px 13px;border-radius:9px;font-size:13px;line-height:1.5}
+.message.show{display:block}
+.message.info{background:#eef5ff;color:#234d7c}
+.message.success{background:#edf8ef;color:#205b2c}
+.message.error{background:#fff0ef;color:var(--danger)}
+.small{font-size:12px;color:var(--muted);line-height:1.5;margin:14px 0 0}
+.hidden{display:none!important}
+.account{border:1px solid var(--line);border-radius:12px;padding:18px;background:#fbfdfb;margin-top:14px}
+.account h3{margin:0 0 8px;color:var(--green)}
+.account p{color:var(--muted);font-size:14px;line-height:1.55}
+.account-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:800px){main{grid-template-columns:1fr;margin:22px auto;gap:12px}.intro{padding:10px 3px}.intro p{font-size:15px}.panel{padding:21px}.brand img{width:44px;height:44px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <a class="brand" href="index.html" aria-label="JameenGhar home">
+      <img src="jameenghar-logo.png" alt="JameenGhar logo">
+      <span>JameenGhar</span>
+    </a>
+    <a class="back" href="index.html">← Back to website</a>
+  </div>
+</header>
+
+<main>
+  <section class="intro">
+    <span class="eyebrow">Property Owner Portal</span>
+    <h1>Your property journey starts here.</h1>
+    <p>Sign in to manage your property submissions. New property-owner registration and listing submission will be enabled after the account security rules are reviewed.</p>
+    <ul class="points">
+      <li><span class="tick">✓</span><span>Submit and track your own property listings once the portal is activated.</span></li>
+      <li><span class="tick">✓</span><span>Property documents and private address details are intended to remain protected.</span></li>
+      <li><span class="tick">✓</span><span>Your listing will be reviewed by JameenGhar before it is published.</span></li>
+    </ul>
+    <div class="notice"><strong>Important:</strong> Email verification and property approval are separate. Verifying your email does not automatically publish a property.</div>
+  </section>
+
+  <section class="panel" aria-label="Property owner account">
+    <div class="tabs" role="tablist" aria-label="Account options">
+      <button class="tab active" id="loginTab" type="button" role="tab" aria-selected="true">Login</button>
+      <button class="tab" id="registerTab" type="button" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <section id="loginView">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in with your registered email and password.</p>
+      <form id="loginForm">
+        <div class="field"><label for="loginEmail">Email address</label><input id="loginEmail" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+        <button class="primary" id="loginButton" type="submit">Login to Property Portal</button>
+      </form>
+      <div id="loginMessage" class="message" role="status" aria-live="polite"></div>
+      <p class="small">Already registered for JameenGhar CRM? Please continue using the <a href="crm.html">CRM portal</a>.</p>
+    </section>
+
+    <section id="registerView" class="hidden">
+      <h2>Create your account</h2>
+      <p class="sub">Register as a property owner to manage your own listings.</p>
+      <form id="registerForm">
+        <div class="field"><label for="regName">Full name</label><input id="regName" type="text" autocomplete="name" required></div>
+        <div class="field"><label for="regPhone">10-digit mobile number</label><input id="regPhone" type="tel" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}" maxlength="10" placeholder="e.g. 9876543210" required></div>
+        <div class="field"><label for="regEmail">Email address</label><input id="regEmail" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="regPassword">Create password</label><input id="regPassword" type="password" minlength="6" autocomplete="new-password" required></div>
+        <button class="primary" type="button" id="registerButton" disabled>Registration coming soon</button>
+      </form>
+      <div class="message info show">Registration is temporarily disabled. We are preparing the required Firestore security rules first, so no incomplete account will be created.</div>
+      <p class="small">If you already have an account, use the Login tab. CRM accounts cannot be converted automatically to Property Owner accounts.</p>
+    </section>
+
+    <section id="accountView" class="hidden">
+      <h2>Account status</h2>
+      <p class="sub">Your signed-in account details and access status.</p>
+      <div class="account">
+        <h3 id="accountName">Property Owner</h3>
+        <p id="accountEmail"></p>
+        <p id="accountStatus"></p>
+        <div class="account-actions">
+          <button class="secondary" id="resendVerification" type="button">Resend verification email</button>
+          <button class="secondary" id="refreshAccount" type="button">I have verified — refresh</button>
+          <button class="secondary" id="logoutButton" type="button">Logout</button>
+        </div>
+      </div>
+      <div id="accountMessage" class="message" role="status" aria-live="polite"></div>
+      <p class="small">Property submission and listing management will appear here after the security rules and upload workflow are implemented.</p>
+    </section>
+  </section>
+</main>
+<footer>© <span id="year"></span> JameenGhar.com · Property Owner Portal</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification, reload } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
+  authDomain: "jameenghar-ffdfd.firebaseapp.com",
+  projectId: "jameenghar-ffdfd",
+  storageBucket: "jameenghar-ffdfd.firebasestorage.app",
+  messagingSenderId: "554797022939",
+  appId: "1:554797022939:web:5abc3fd7e68ea6aeca56fe",
+  measurementId: "G-RQJWG3PBY9"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = (id) => document.getElementById(id);
+
+$("year").textContent = new Date().getFullYear();
+
+function showMessage(id, text, type = "info") {
+  const el = $(id);
+  el.textContent = text;
+  el.className = "message show " + type;
+}
+function clearMessage(id) {
+  const el = $(id);
+  el.textContent = "";
+  el.className = "message";
+}
+function showTab(tab) {
+  const login = tab === "login";
+  $("loginView").classList.toggle("hidden", !login);
+  $("registerView").classList.toggle("hidden", login);
+  $("loginTab").classList.toggle("active", login);
+  $("registerTab").classList.toggle("active", !login);
+  $("loginTab").setAttribute("aria-selected", String(login));
+  $("registerTab").setAttribute("aria-selected", String(!login));
+  $("accountView").classList.add("hidden");
+}
+$("loginTab").addEventListener("click", () => showTab("login"));
+$("registerTab").addEventListener("click", () => showTab("register"));
+
+function firebaseError(error) {
+  const messages = {
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/user-not-found": "No account was found with this email.",
+    "auth/wrong-password": "Email or password is incorrect.",
+    "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/network-request-failed": "Network error. Please check your internet connection.",
+    "auth/user-disabled": "This account has been disabled. Please contact JameenGhar support."
+  };
+  return messages[error.code] || "Unable to complete this action right now. Please try again.";
+}
+
+$("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearMessage("loginMessage");
+  const button = $("loginButton");
+  button.disabled = true;
+  button.textContent = "Signing in...";
+  try {
+    await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+  } catch (error) {
+    showMessage("loginMessage", firebaseError(error), "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Login to Property Portal";
+  }
+});
+
+async function renderAccount(user) {
+  $("loginView").classList.add("hidden");
+  $("registerView").classList.add("hidden");
+  $("accountView").classList.remove("hidden");
+  $("accountName").textContent = user.displayName || "JameenGhar account";
+  $("accountEmail").textContent = user.email || "";
+  $("accountStatus").textContent = "Checking account role...";
+  $("resendVerification").classList.toggle("hidden", user.emailVerified);
+  clearMessage("accountMessage");
+
+  try {
+    const profileSnap = await getDoc(doc(db, "users", user.uid));
+    if (!profileSnap.exists()) {
+      $("accountStatus").textContent = "No JameenGhar profile was found for this account.";
+      showMessage("accountMessage", "This account does not have a Property Owner profile yet. Registration is not enabled at this stage.", "info");
+      return;
+    }
+    const profile = profileSnap.data();
+    $("accountName").textContent = profile.name || user.displayName || "Property Owner";
+    if (profile.role === "crm") {
+      $("accountStatus").textContent = "This email is registered for the CRM portal.";
+      showMessage("accountMessage", "Please use the JameenGhar CRM portal to continue.", "info");
+      const link = document.createElement("a");
+      link.href = "crm.html";
+      link.textContent = "Open CRM portal";
+      link.style.cssText = "display:inline-block;margin-top:10px;color:#064d2b;font-weight:700";
+      $("accountMessage").appendChild(document.createElement("br"));
+      $("accountMessage").appendChild(link);
+      return;
+    }
+    if (profile.role !== "property_owner") {
+      $("accountStatus").textContent = "This account does not have the Property Owner role.";
+      showMessage("accountMessage", "For account safety, this portal only accepts Property Owner accounts.", "error");
+      return;
+    }
+    if (!user.emailVerified) {
+      $("accountStatus").textContent = "Email verification pending.";
+      showMessage("accountMessage", "Please verify your email using the link sent to your inbox, then return here and refresh your status.", "info");
+      return;
+    }
+    $("accountStatus").textContent = "Email verified · Property Owner profile found.";
+    showMessage("accountMessage", "Your email is verified. Property submission is not active yet; it will be enabled after the security and document-upload workflow is ready.", "success");
+  } catch (error) {
+    $("accountStatus").textContent = "Could not check your profile.";
+    showMessage("accountMessage", "Unable to read your profile. Please try again later.", "error");
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    $("accountView").classList.add("hidden");
+    $("loginView").classList.remove("hidden");
+    $("registerView").classList.add("hidden");
+    return;
+  }
+  await renderAccount(user);
+});
+
+$("resendVerification").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    await sendEmailVerification(user);
+    showMessage("accountMessage", "Verification email sent. Please check your inbox and spam folder.", "success");
+  } catch (error) {
+    showMessage("accountMessage", firebaseError(error), "error");
+  }
+});
+
+$("refreshAccount").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    await reload(user);
+    await renderAccount(auth.currentUser);
+  } catch (error) {
+    showMessage("accountMessage", firebaseError(error), "error");
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    showTab("login");
+  } catch (error) {
+    showMessage("accountMessage", firebaseError(error), "error");
+  }
+});
+</script>
+</body>
+</html>
