@@ -47,3 +47,47 @@ export function isCapturedPayment({ providerStatus, orderStatus, expectedAmountP
     actualCurrency === expectedCurrency &&
     expectedCurrency === "INR";
 }
+
+
+/** Validate a server-calculated Daybnb quote before asking the gateway for an order. */
+export function validateDaybnbQuote({ bookingId, quoteVersion, amountPaise, currency = "INR" }) {
+  if (typeof bookingId !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(bookingId)) {
+    throw new Error("Invalid booking reference");
+  }
+  if (!Number.isSafeInteger(quoteVersion) || quoteVersion < 1) {
+    throw new Error("Invalid quote version");
+  }
+  if (!Number.isSafeInteger(amountPaise) || amountPaise < 100) {
+    throw new Error("Payment amount must be at least ₹1 and use integer paise");
+  }
+  if (currency !== "INR") throw new Error("Only INR payments are enabled");
+  return { bookingId, quoteVersion, amountPaise, currency };
+}
+
+/** Create an order using server-side credentials only. This is not wired to a route. */
+export async function createRazorpayOrder({
+  keyId, keySecret, bookingId, quoteVersion, amountPaise, currency = "INR", fetchImpl = fetch
+}) {
+  const quote = validateDaybnbQuote({ bookingId, quoteVersion, amountPaise, currency });
+  if (!keyId || !keySecret) throw new Error("Razorpay server credentials are not configured");
+  const receipt = `daybnb_${bookingId}_q${quoteVersion}`.slice(0, 40);
+  const response = await fetchImpl("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      "authorization": "Basic " + btoa(`${keyId}:${keySecret}`),
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      amount: quote.amountPaise,
+      currency: quote.currency,
+      receipt,
+      notes: { booking_id: quote.bookingId, quote_version: String(quote.quoteVersion), product: "Daybnb" }
+    })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Razorpay order creation failed");
+  if (!body.id || body.amount !== quote.amountPaise || body.currency !== quote.currency) {
+    throw new Error("Razorpay returned an order that does not match the confirmed quote");
+  }
+  return { id: body.id, amount: body.amount, currency: body.currency, receipt: body.receipt || receipt };
+}
