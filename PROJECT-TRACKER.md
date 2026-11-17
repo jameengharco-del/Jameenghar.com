@@ -26,6 +26,10 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Zoho API OAuth and send-mail tests were added. Required Zoho OAuth scope: `ZohoMail.messages.CREATE` (or `ZohoMail.messages.ALL`). Account ID, client ID, client secret and refresh token still need to be added as Worker secrets. Worker is not deployed and the CRM Worker URL remains blank, so email delivery is not yet live.
 - API implementation follows Zoho's official India data-centre API docs: `https://mail.zoho.in/api/accounts/{accountId}/messages`.
 
+### Latest CRM consultant queue correction (2026-11-17)
+- Corrected the consultant active follow-up queue to include only leads currently assigned to that consultant. Leads they originally created but the Owner later transferred away remain visible in their read-only Created Leads record, but no longer appear as active work/follow-ups.
+- The receiving consultant continues to see the transferred lead in their normal assigned/New Leads view, without the previous creator's identity; Owner retains transfer history and original attribution.
+
 ## Track B — Daybnb
 
 ### Safe-branch code present
