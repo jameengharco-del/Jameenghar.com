@@ -72,7 +72,9 @@ export async function getFirestoreDocument(projectId, token, path) {
   return doc.fields || {};
 }
 
-export async function authorizeOwnerAndProperty({ projectId, token, claims, propertyId, ownerAdminUid }) {
+export async function authorizeOwnerAndProperty({ projectId, token, claims, propertyId, propertyCollection = "properties", ownerAdminUid }) {
+  const allowedCollections = new Set(["properties", "daybnbProperties"]);
+  if (!allowedCollections.has(propertyCollection)) throw new Error("Unsupported listing collection");
   const profile = await getFirestoreDocument(projectId, token, `users/${claims.sub}`);
   const role = firestoreString(profile?.role);
   const isAdmin = claims.sub === ownerAdminUid && role === "admin";
@@ -80,7 +82,7 @@ export async function authorizeOwnerAndProperty({ projectId, token, claims, prop
     throw new Error("A verified JameenGhar property-owner account is required");
   }
 
-  const property = await getFirestoreDocument(projectId, token, `properties/${propertyId}`);
+  const property = await getFirestoreDocument(projectId, token, `${propertyCollection}/${propertyId}`);
   if (!property) throw new Error("Property record not found");
   const propertyOwner = firestoreString(property.ownerUid);
   const status = firestoreString(property.status);
