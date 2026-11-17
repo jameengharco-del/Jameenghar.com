@@ -49,6 +49,10 @@ the live website, Firebase rules, production data, or the working CRM.
   not itself update the Firestore listing status or notify the Owner.
 - No file malware scanning or deep image/PDF content validation is included.
 - Daybnb payment architecture is documented in `DAYBNB-PAYMENT-ARCHITECTURE.md`.
+- Added server-side Firestore service-account REST access (`firestore-admin.js`) with short-lived signed OAuth assertions; private key is read only from Worker secrets and is not committed.
+- Added POST `/payments/create-order`, `/payments/verify` and `/payments/webhook` handlers. They are gated by `PAYMENTS_ENABLED=true` and required secrets/bindings; they are not deployed or enabled.
+- Payment orders use the D1 idempotency ledger (unique booking + quote version) to prevent duplicate order creation on retries. Webhook event IDs are recorded to reject replay.
+- Guest booking submissions now receive a random private access token; only its SHA-256 hash is stored on the booking. `daybnb-payment.html` is a guest checkout page scaffold; the Worker URL is intentionally blank until safe deployment.
 - Booking records now carry explicit payment lifecycle placeholders; server-side
   payment helpers verify Razorpay checkout/webhook HMACs and exact captured INR
   amounts. These helpers are unit-tested but are not wired to a live gateway.
