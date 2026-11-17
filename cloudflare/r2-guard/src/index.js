@@ -102,14 +102,16 @@ async function notifyCrmLeadCreated(request, env) {
     return json({ error: "You can notify only for a CRM lead you created." }, 403);
   }
   if (data.ownerNotificationSent === true) return json({ success: true, alreadySent: true });
+  const rows = [
+    ["Lead ID", leadId], ["Customer", data.customerName], ["Phone", data.phone],
+    ["Email", data.email], ["Enquiry Type", data.enquiryType], ["Location", data.propertyLocation],
+    ["Budget", data.budget], ["Created By", data.createdByName], ["Requirement", data.message]
+  ].map(([label, value]) => "<tr><th align='left'>" + escapeHtml(label) + "</th><td>" + escapeHtml(value || "—") + "</td></tr>").join("");
   const html = [
     "<h2>New CRM Lead Created — JameenGhar</h2>",
     "<p>A consultant has created a new lead in JameenGhar CRM.</p>",
     "<table cellpadding='6' cellspacing='0' border='1' style='border-collapse:collapse'>",
-    ["Lead ID",leadId],["Customer",data.customerName],["Phone",data.phone],
-    ["Email",data.email],["Enquiry Type",data.enquiryType],["Location",data.propertyLocation],
-    ["Budget",data.budget],["Created By",data.createdByName],["Requirement",data.message]
-      .map(([label,value])=>"<tr><th align='left'>"+label+"</th><td>"+escapeHtml(value||"—")+"</td></tr>").join(""),
+    rows,
     "</table><p>Open the Owner Dashboard to assign and manage this lead.</p>"
   ].join("");
   const sent = await sendZohoOwnerNotification({
