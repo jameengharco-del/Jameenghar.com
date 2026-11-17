@@ -399,16 +399,15 @@ service cloud.firestore {
         || validPublicLead()
         || validConsultantLead();
 
-      // Consultant sees assigned leads OR their own unassigned leads.
+      // Consultant can read currently assigned leads and all leads they
+      // originally created. Original creators retain a read-only Created Leads
+      // record after transfer; only current assignee can perform follow-ups.
       allow read: if isAdmin()
         || (
           isApprovedCRM()
           && (
             resource.data.assignedTo == request.auth.uid
-            || (
-              resource.data.assignedTo == "unassigned"
-              && resource.data.createdBy == request.auth.uid
-            )
+            || resource.data.createdBy == request.auth.uid
           )
         );
 
@@ -455,10 +454,7 @@ service cloud.firestore {
               isApprovedCRM()
               && (
                 leadData.assignedTo == request.auth.uid
-                || (
-                  leadData.assignedTo == "unassigned"
-                  && leadData.createdBy == request.auth.uid
-                )
+                || leadData.createdBy == request.auth.uid
               )
             );
         }
