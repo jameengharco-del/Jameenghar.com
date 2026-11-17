@@ -322,11 +322,13 @@ async function upload(request, url, env) {
     return json({ error: "File content does not match its declared type or size." }, 415);
   }
 
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const contentSha256 = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   const ownerUid = claims.sub;
   const reservationId = crypto.randomUUID();
   const objectKey = `owners/${ownerUid}/${propertyCollection}/${propertyId}/${kind}/${crypto.randomUUID()}`;
   const reserved = await reserveUpload(env.QUOTA_DB, {
-    reservationId, objectKey, ownerUid, propertyId: `${propertyCollection}/${propertyId}`, objectKind: kind, byteSize: bytes.byteLength
+    reservationId, objectKey, ownerUid, propertyId: `${propertyCollection}/${propertyId}`, objectKind: kind, byteSize: bytes.byteLength, contentSha256
   });
   if (!reserved) {
     const quota = await readQuota(env.QUOTA_DB);
@@ -341,7 +343,7 @@ async function upload(request, url, env) {
   try {
     await env.STORAGE.put(objectKey, bytes, {
       httpMetadata: { contentType, cacheControl: "private, no-store" },
-      customMetadata: { ownerUid, propertyId, kind }
+      customMetadata: { ownerUid, propertyId, kind, contentSha256 }
     });
   } catch {
     // The R2 result may be ambiguous. Keep the reservation and block this
