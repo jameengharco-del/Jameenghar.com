@@ -51,6 +51,7 @@ jobs:
       - name: Run local Firebase Firestore Rules Emulator security tests
         working-directory: firestore/emulator
         run: |
+          cp ../firestore.rules.proposed rules.firestore
           npm install --no-audit --no-fund
           npm test
       - name: Syntax-check browser JavaScript modules
