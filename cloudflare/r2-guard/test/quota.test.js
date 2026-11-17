@@ -32,17 +32,18 @@ function fakeD1({ stored = [], reserved = [] } = {}) {
           if (sql.includes("INSERT INTO upload_reservations")) {
             const used = state.stored.reduce((n,x)=>n+x.byte_size,0) +
               state.reserved.reduce((n,x)=>n+x.byte_size,0);
-            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, extra, limit, countProperty1, countKind1, countProperty2, countKind2, maxCount] = args;
+            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, content_sha256, extra, limit, countProperty1, countKind1, countProperty2, countKind2, maxCount, hashKind, hashProperty1, hash1, hashProperty2, hash2] = args;
             const existingCount = [...state.stored, ...state.reserved].filter(x =>
               x.property_id === property_id && x.object_kind === object_kind
             ).length;
-            if (used + extra >= limit || existingCount >= maxCount ||
+            const duplicatePhoto = object_kind === "photo" && [...state.stored, ...state.reserved].some(x => x.property_id === property_id && x.object_kind === "photo" && x.content_sha256 === content_sha256);
+            if (used + extra >= limit || existingCount >= maxCount || duplicatePhoto ||
                 countProperty1 !== property_id || countProperty2 !== property_id ||
-                countKind1 !== object_kind || countKind2 !== object_kind ||
+                countKind1 !== object_kind || countKind2 !== object_kind || hashKind !== object_kind || hashProperty1 !== property_id || hashProperty2 !== property_id || hash1 !== content_sha256 || hash2 !== content_sha256 ||
                 state.reserved.some(x=>x.reservation_id===reservation_id)) {
               return { meta: { changes: 0 } };
             }
-            state.reserved.push({ reservation_id, object_key, owner_uid, property_id, object_kind, byte_size });
+            state.reserved.push({ reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, content_sha256 });
             return { meta: { changes: 1 } };
           }
           return { meta: { changes: 0 } };
@@ -81,7 +82,7 @@ function attachBatchMetadata(db) {
       originalBind(...args);
       if(sql.includes("INSERT INTO storage_objects")) {
         s._kind="insert-object";
-        s._row={object_key:args[0],owner_uid:args[1],property_id:args[2],object_kind:args[3],byte_size:args[4]};
+        s._row={object_key:args[0],owner_uid:args[1],property_id:args[2],object_kind:args[3],byte_size:args[4],content_sha256:args[5]};
       }
       if(sql.includes("DELETE FROM upload_reservations")) s._reservationId=args[0];
       return s;
@@ -114,7 +115,7 @@ test("reservation is accepted below 9 GB and included in usage", async () => {
 test("parallel reservations cannot collectively cross the quota", async () => {
   const db=fakeD1({stored:[{byte_size:HARD_STOP_BYTES-15_000_000}]});
   const requests=Array.from({length:10},(_,i)=>reserveUpload(db,{
-    reservationId:"r"+i,objectKey:"k"+i,ownerUid:"u1",propertyId:"p"+i,objectKind:"photo",byteSize:2_000_000
+    reservationId:"r"+i,objectKey:"k"+i,ownerUid:"u1",propertyId:"p"+i,objectKind:"photo",byteSize:2_000_000,contentSha256:"a".repeat(64)
   }));
   const results=await Promise.all(requests);
   assert.equal(results.filter(Boolean).length,7);
@@ -124,7 +125,7 @@ test("parallel reservations cannot collectively cross the quota", async () => {
 
 test("ambiguous reservations remain counted until reconciled", async () => {
   const db=fakeD1();
-  assert.equal(await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"document",byteSize:1024}),true);
+  assert.equal(await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"document",byteSize:1024,contentSha256:"a".repeat(64)}),true);
   assert.equal((await readQuota(db)).reservedBytes,1024);
 });
 
@@ -132,17 +133,24 @@ test("ambiguous reservations remain counted until reconciled", async () => {
 test("each property allows four to ten photos and exactly one private document", async () => {
   const db=fakeD1();
   for(let i=0;i<10;i++) {
-    assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),true);
+    assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),true);
   }
-  assert.equal(await reserveUpload(db,{reservationId:"photo11",objectKey:"photo-key-11",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),false);
-  assert.equal(await reserveUpload(db,{reservationId:"doc1",objectKey:"doc-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),true);
-  assert.equal(await reserveUpload(db,{reservationId:"doc2",objectKey:"doc-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),false);
-  assert.equal(await reserveUpload(db,{reservationId:"other-photo",objectKey:"other-photo-key",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100}),true);
+  assert.equal(await reserveUpload(db,{reservationId:"photo11",objectKey:"photo-key-11",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"doc1",objectKey:"doc-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100,contentSha256:"a".repeat(64)}),true);
+  assert.equal(await reserveUpload(db,{reservationId:"doc2",objectKey:"doc-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100,contentSha256:"a".repeat(64)}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"other-photo",objectKey:"other-photo-key",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),true);
+});
+
+test("duplicate photo bytes are rejected for the same property", async () => {
+  const db=fakeD1();
+  assert.equal(await reserveUpload(db,{reservationId:"dup1",objectKey:"dup-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"b".repeat(64)}),true);
+  assert.equal(await reserveUpload(db,{reservationId:"dup2",objectKey:"dup-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"b".repeat(64)}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"dup3",objectKey:"dup-key-3",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100,contentSha256:"b".repeat(64)}),true);
 });
 
 test("commit transfers bytes from reservation to stored object", async () => {
   const db=attachBatchMetadata(fakeD1());
-  await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:1234});
+  await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:1234,contentSha256:"a".repeat(64),contentSha256:"a".repeat(64)});
   await commitUpload(db,{reservationId:"r1",objectKey:"k1"});
   const quota=await readQuota(db);
   assert.equal(quota.storedBytes,1234);
