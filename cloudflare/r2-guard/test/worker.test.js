@@ -152,3 +152,19 @@ test("storage quota status fails closed until the private D1 ledger and Owner id
   assert.equal(response.status,503);
   assert.match((await response.json()).error,/not configured/i);
 });
+
+
+test("Owner private listing-file index is disabled until storage bindings are configured", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/admin/listing-files?collection=properties&propertyId=listing123",{
+    headers:{authorization:"Bearer invalid"}
+  }),{});
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not configured/i);
+});
+
+test("Owner private listing-file index rejects requests without Owner credentials", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/admin/listing-files?collection=properties&propertyId=listing123",{
+    headers:{authorization:"Bearer invalid"}
+  }),{QUOTA_DB:{},FIREBASE_PROJECT_ID:"test-project",OWNER_ADMIN_UID:"owner-uid"});
+  assert.equal(response.status,503);
+});
