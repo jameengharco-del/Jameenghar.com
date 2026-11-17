@@ -114,7 +114,7 @@ test("reservation is accepted below 9 GB and included in usage", async () => {
 test("parallel reservations cannot collectively cross the quota", async () => {
   const db=fakeD1({stored:[{byte_size:HARD_STOP_BYTES-15_000_000}]});
   const requests=Array.from({length:10},(_,i)=>reserveUpload(db,{
-    reservationId:"r"+i,objectKey:"k"+i,ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:2_000_000
+    reservationId:"r"+i,objectKey:"k"+i,ownerUid:"u1",propertyId:"p"+i,objectKind:"photo",byteSize:2_000_000
   }));
   const results=await Promise.all(requests);
   assert.equal(results.filter(Boolean).length,7);
