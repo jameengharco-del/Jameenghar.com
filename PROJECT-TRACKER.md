@@ -70,7 +70,8 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Submission creates paired pending/unpublished public/private listing documents, then uploads sequentially to the staged Worker using the verified Firebase ID token. It calls `/finalize` with the selected photo keys only after the cover, three extra photos and private PDF upload.
 - Worker finalization verifies the selected four photo objects and a private PDF against the quota ledger, then writes R2 object keys to the Daybnb listing via server-side Firestore credentials. Listing remains pending and unpublished.
 - Added `GET /public-photo`, which serves only image objects belonging to Firestore listings with `status=approved` and `isPublished=true`. Private PDF documents are never served by this route. Daybnb gallery resolves stored object keys through this endpoint.
-- Added tests for public photo route default-off behavior and unsafe object-key rejection.
+- Added tests for public photo route default-off behavior, unsafe object-key rejection and quota endpoint fail-closed behavior.
+- Added Owner-only `/storage/quota` endpoint to show ledger usage, 8 GB warning and 9 GB stop thresholds; response explicitly warns that D1 ledger must be reconciled against actual R2 bucket inventory before activation.
 - **Not live:** upload Worker URL constants remain blank, R2/D1 bindings and secrets are absent, `ENABLE_UPLOADS` remains off. The Daybnb upload form intentionally refuses to create a listing until the verified Worker endpoint is configured. No live storage upload has been made.
 - Main JameenGhar property-owner submission form still needs this secure upload integration. Daybnb actual Firebase/Cloudflare integration tests and admin private-document retrieval remain outstanding.
 
