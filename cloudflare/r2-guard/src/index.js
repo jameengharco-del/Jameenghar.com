@@ -50,6 +50,31 @@ async function authenticate(request, env) {
   return { token, claims };
 }
 
+async function readLimitedBody(request, maxBytes) {
+  if (!request.body) throw new Error("File body is missing");
+  const reader = request.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel("File exceeds maximum size");
+        throw new Error("File exceeds the 20 MB upload limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes.buffer;
+}
+
 async function upload(request, url, env) {
   if (!env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
     return json({ error: "Secure storage is not configured; uploads remain closed." }, 503);
@@ -58,6 +83,8 @@ async function upload(request, url, env) {
   const { token, claims } = await authenticate(request, env);
   const propertyId = url.searchParams.get("propertyId") || "";
   const kind = url.searchParams.get("kind") || "";
+  const propertyCollection = url.searchParams.get("collection") || "properties";
+  if (!["properties", "daybnbProperties"].includes(propertyCollection)) return json({ error: "Invalid listing collection." }, 400);
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(propertyId)) return json({ error: "Invalid property ID." }, 400);
   if (!["photo", "document"].includes(kind)) return json({ error: "Invalid file category." }, 400);
 
@@ -83,9 +110,9 @@ async function upload(request, url, env) {
 
   const ownerUid = claims.sub;
   const reservationId = crypto.randomUUID();
-  const objectKey = `owners/${ownerUid}/properties/${propertyId}/${kind}/${crypto.randomUUID()}`;
+  const objectKey = `owners/${ownerUid}/${propertyCollection}/${propertyId}/${kind}/${crypto.randomUUID()}`;
   const reserved = await reserveUpload(env.QUOTA_DB, {
-    reservationId, objectKey, ownerUid, propertyId, objectKind: kind, byteSize: bytes.byteLength
+    reservationId, objectKey, ownerUid, propertyId: `${propertyCollection}/${propertyId}`, objectKind: kind, byteSize: bytes.byteLength
   });
   if (!reserved) {
     const quota = await readQuota(env.QUOTA_DB);
