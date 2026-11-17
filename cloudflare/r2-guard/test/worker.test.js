@@ -110,3 +110,22 @@ test("Worker CORS allows only the official JameenGhar website origin", async () 
   assert.equal(preflight.status,204);
   assert.equal(preflight.headers.get("access-control-allow-origin"),"https://jameenghar.com");
 });
+
+
+test("private Daybnb payment status stays closed while payments are disabled", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/payments/status",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({bookingId:"booking123",accessToken:"a".repeat(64)})
+  }),{});
+  assert.equal(response.status,503);
+  assert.equal((await response.json()).code,"PAYMENTS_DISABLED");
+});
+
+test("private Daybnb payment status requires configured server-side Firebase credentials", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/payments/status",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({bookingId:"booking123",accessToken:"a".repeat(64)})
+  }),{PAYMENTS_ENABLED:"true"});
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not fully configured/i);
+});
