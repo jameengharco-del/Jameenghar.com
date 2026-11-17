@@ -107,6 +107,13 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Updated the proposed Firestore rules to permit original creator read-only access to the lead and its activity history after transfer; consultant follow-up writes remain limited to current assigned owner/unassigned creator rules. Rules are proposed only and NOT published.
 - Added `.github/workflows/combined-regression.yml` to run Worker/payment unit tests and syntax-check CRM, Owner Dashboard, Daybnb and guest checkout browser scripts on safe-branch changes. Latest combined regression run #44124883657 completed successfully (unit tests + browser-script syntax checks).
 
+### Owner private-document access (2026-11-17)
+- Added Worker endpoint `GET /admin/listing-files`. It verifies a Firebase ID token, exact configured Owner UID and Firestore admin role, validates the collection/property ID, then returns only the file index for that listing.
+- Existing authenticated `GET /download` is used for the file bytes; it permits only the exact Owner Admin or the verified owner of that property. PDFs are private/no-store and are never served through the public photo route.
+- Added Owner Dashboard "Secure Property Documents & Storage" panel to load the private file index and open files using the authenticated Worker download endpoint.
+- Added fail-closed tests for the private file index. Worker URL remains blank; no real Worker or R2 resources are configured. This feature is staged only.
+- Main public `index.html` property submission still records an enquiry lead, not a verified property listing. The separate `property-owner.html` portal still has registration disabled; verified owner registration, phone OTP and the complete JameenGhar property listing/upload flow remain to be implemented and emulator-tested. Do not represent the public enquiry form as a completed secure listing submission.
+
 ## Work order — keep both tracks active
 1. Protect and test the core website enquiry + CRM assignment/transfer flow.
 2. Finish Daybnb auth/security and trusted upload.
