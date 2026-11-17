@@ -78,8 +78,12 @@ export async function authorizeOwnerAndProperty({ projectId, token, claims, prop
   const profile = await getFirestoreDocument(projectId, token, `users/${claims.sub}`);
   const role = firestoreString(profile?.role);
   const isAdmin = claims.sub === ownerAdminUid && role === "admin";
-  if (!isAdmin && (role !== "property_owner" || claims.email_verified !== true)) {
-    throw new Error("A verified JameenGhar property-owner account is required");
+  const registeredPhone = firestoreString(profile?.phone);
+  const phoneVerified = typeof registeredPhone === "string"
+    && /^[0-9]{10}$/.test(registeredPhone)
+    && claims.phone_number === `+91${registeredPhone}`;
+  if (!isAdmin && (role !== "property_owner" || claims.email_verified !== true || !phoneVerified)) {
+    throw new Error("A property-owner account with verified email and registered mobile is required");
   }
 
   const property = await getFirestoreDocument(projectId, token, `${propertyCollection}/${propertyId}`);
