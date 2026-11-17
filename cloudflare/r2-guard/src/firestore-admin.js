@@ -5,11 +5,11 @@ function base64url(bytes) {
   const data = typeof bytes === "string" ? encoder.encode(bytes) : new Uint8Array(bytes);
   let binary = "";
   for (const byte of data) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).split("=").join("").split("+").join("-").split("/").join("_");
 }
 
 function pemToBytes(pem) {
-  const body = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\s/g, "");
+  const body = pem.replaceAll("-----BEGIN PRIVATE KEY-----", "").replaceAll("-----END PRIVATE KEY-----", "").split(" ").join("").split("\n").join("").split("\r").join("").split("\t").join("");
   const binary = atob(body);
   return Uint8Array.from(binary, ch => ch.charCodeAt(0));
 }
@@ -30,7 +30,7 @@ async function serviceAccessToken(env, fetchImpl = fetch) {
   }));
   const unsigned = header + "." + claim;
   const key = await crypto.subtle.importKey(
-    "pkcs8", pemToBytes(env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")),
+    "pkcs8", pemToBytes(env.FIREBASE_PRIVATE_KEY.split("\\n").join("\n")),
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]
   );
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, encoder.encode(unsigned));
