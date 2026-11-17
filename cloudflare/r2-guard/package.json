@@ -1,0 +1,8 @@
+{
+  "name": "jameenghar-r2-guard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
