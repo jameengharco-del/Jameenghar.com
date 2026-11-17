@@ -55,7 +55,7 @@ export async function reserveUpload(db, {
   `).bind(
     reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize,
     byteSize, HARD_STOP_BYTES,
-    propertyId, objectKind, propertyLimit(objectKind),
+    propertyId, objectKind,
     propertyId, objectKind, propertyLimit(objectKind)
   ).run();
 
