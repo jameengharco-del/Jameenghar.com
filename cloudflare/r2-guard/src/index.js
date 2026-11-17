@@ -75,31 +75,6 @@ async function readLimitedBody(request, maxBytes) {
   return bytes.buffer;
 }
 
-async function readLimitedBody(request, maxBytes) {
-  if (!request.body) throw new Error("File body is missing");
-  const reader = request.body.getReader();
-  const chunks = [];
-  let total = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel("File exceeds maximum size");
-        throw new Error("File exceeds the 20 MB upload limit");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return bytes.buffer;
-}
-
 async function upload(request, url, env) {
   if (!env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
     return json({ error: "Secure storage is not configured; uploads remain closed." }, 503);
