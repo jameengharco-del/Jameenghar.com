@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS storage_objects (
   property_id TEXT NOT NULL,
   object_kind TEXT NOT NULL CHECK (object_kind IN ('photo','document')),
   byte_size INTEGER NOT NULL CHECK (byte_size > 0),
+  content_sha256 TEXT NOT NULL CHECK (length(content_sha256) = 64),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
