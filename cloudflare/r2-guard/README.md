@@ -22,15 +22,17 @@ the live website, Firebase rules, production data, or the working CRM.
   If R2 returns an ambiguous failure, the reservation is retained (not released)
   until reconciliation proves whether the object exists. D1 finalization failure
   also retains the reservation fail-closed.
-- Added Owner-only GET `/storage/quota` to report the D1 ledger's 8 GB warning and 9 GB stop thresholds. It explicitly labels the report as ledger-only until reconciled with actual R2 inventory.\n- Added Owner-only POST `/admin/storage/reconcile`: read-only paginated R2 inventory vs D1 object-key/byte-size comparison, including pending reservations. Any missing, extra, size-mismatched or reserved object makes the result fail closed; it never deletes or repairs files.
+- Added Owner-only GET `/storage/quota` to report the D1 ledger's 8 GB warning and 9 GB stop thresholds. It explicitly labels the report as ledger-only until reconciled with actual R2 inventory.
+- Added Owner-only POST `/admin/storage/reconcile`: read-only paginated R2 inventory vs D1 object-key/byte-size comparison, including pending reservations. Any missing, extra, size-mismatched or reserved object makes the result fail closed; it never deletes or repairs files.
 - Added POST `/finalize` to count four to ten distinct photo objects and exactly one
   private PDF for the exact owner/listing. It only reports readiness; Owner review
   and publication remain separate manual approval steps.
 - **Explicit activation switch:** upload, download and finalize return HTTP 503 unless
   `ENABLE_UPLOADS` is exactly `true`. It is not set in `wrangler.toml`.
-- Added Worker tests for public health and default-off upload/download/admin paths. Latest combined regression run includes 56 passing Worker/unit tests, 8 passing Firebase Emulator security tests and browser syntax checks.
+- Added Worker tests for public health and default-off upload/download/admin paths. Latest combined regression run includes 57 passing Worker/unit tests, 8 passing Firebase Emulator security tests and browser syntax checks.
 - Added quota tests for exact 9 GB boundary, below-limit reservation, parallel
   reservation pressure, ambiguous reservations, and reservation-to-object commit.
+- Added a local Miniflare runtime integration test using actual local D1 and R2 bindings: applies the D1 migration, reserves quota, writes and reads an R2 object, commits the ledger, rejects duplicate photo bytes, and verifies the 9 GB stop. This does not create or use Cloudflare account resources.
 - Added fail-closed Firebase token parsing tests and generated-RSA-key JWT tests
   for valid signatures and expired claims.
 - Added mocked-Firestore authorization tests for owner isolation, email verification,
@@ -57,7 +59,8 @@ the live website, Firebase rules, production data, or the working CRM.
 - Guest booking submissions now receive a random private access token; only its SHA-256 hash is stored on the booking. `daybnb-payment.html` is a guest checkout page scaffold; the Worker URL is intentionally blank until safe deployment.
 - Booking records now carry explicit payment lifecycle placeholders; server-side
   payment helpers verify Razorpay checkout/webhook HMACs and exact captured INR
-  amounts. A mocked Worker end-to-end test covers order creation, idempotency,\n  captured-payment lookup and booking confirmation; no live gateway is connected.
+  amounts. A mocked Worker end-to-end test covers order creation, idempotency,
+  captured-payment lookup and booking confirmation; no live gateway is connected.
 - Payment routes are default-off and require the exact `PAYMENTS_ENABLED=true` switch,
   the server secrets and D1 binding. No gateway credentials, merchant account,
   D1 binding, Worker deployment or checkout activation is configured.
