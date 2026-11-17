@@ -244,7 +244,8 @@ service cloud.firestore {
         && request.resource.data.coverImage is string
         && request.resource.data.coverImage.size() <= 2000
         && request.resource.data.imageUrls is list
-        && request.resource.data.imageUrls.size() <= 5
+        && request.resource.data.imageUrls.size() >= 3
+        && request.resource.data.imageUrls.size() <= 4
         && request.resource.data.amenities is list
         && request.resource.data.amenities.size() <= 15
         && request.resource.data.description is string
