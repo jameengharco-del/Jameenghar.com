@@ -171,11 +171,13 @@ test("Owner private listing-file index rejects requests without Owner credential
 
 import { webcrypto } from "node:crypto";
 
+let reconciliationKeyMaterial;
 async function makeAdminToken() {
-  const pair = await webcrypto.subtle.generateKey(
+  if (!reconciliationKeyMaterial) reconciliationKeyMaterial = await webcrypto.subtle.generateKey(
     { name:"RSASSA-PKCS1-v1_5", modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:"SHA-256" },
     true, ["sign","verify"]
   );
+  const pair = reconciliationKeyMaterial;
   const jwk = await webcrypto.subtle.exportKey("jwk", pair.publicKey);
   jwk.kid = "reconcile-test-key";
   jwk.alg = "RS256";
