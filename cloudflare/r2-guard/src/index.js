@@ -122,6 +122,37 @@ async function notifyCrmLeadCreated(request, env) {
   return json({ success: true, notified: true });
 }
 
+async function paymentStatus(request, env) {
+  if (env.PAYMENTS_ENABLED !== "true") return json({ error: "Daybnb payments are disabled pending merchant and cost approval.", code: "PAYMENTS_DISABLED" }, 503);
+  if (!env.FIREBASE_PROJECT_ID || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY) {
+    return json({ error: "Secure payment service is not fully configured." }, 503);
+  }
+  const body = await request.json().catch(() => ({}));
+  const bookingId = String(body.bookingId || "");
+  const accessToken = String(body.accessToken || "");
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(bookingId) || !/^[a-f0-9]{64}$/.test(accessToken)) {
+    return json({ error: "Invalid booking reference or payment access token." }, 400);
+  }
+  const booking = await getAdminDocument(env, "daybnbBookings", bookingId);
+  if (!booking || await sha256Hex(accessToken) !== booking.fields.paymentAccessTokenHash) {
+    return json({ error: "Invalid booking access token." }, 403);
+  }
+  const data = booking.fields;
+  const ready = data.bookingStage === "awaiting_payment" && data.paymentStatus === "ready_for_checkout";
+  const paid = data.paymentStatus === "paid" && data.bookingStage === "confirmed";
+  return json({
+    success: true,
+    bookingId,
+    bookingStage: data.bookingStage || "awaiting_owner_confirmation",
+    paymentStatus: data.paymentStatus || "not_started",
+    quoteReady: ready,
+    paymentConfirmed: paid,
+    amountPaise: ready || paid ? Number(data.totalAmountPaise || 0) : null,
+    currency: data.currency || "INR",
+    quoteExpiresAt: ready && data.quoteExpiresAt ? data.quoteExpiresAt : null
+  });
+}
+
 async function paymentCreateOrder(request, env) {
   if (env.PAYMENTS_ENABLED !== "true") return json({ error: "Daybnb payments are disabled pending merchant and cost approval.", code: "PAYMENTS_DISABLED" }, 503);
   if (!env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
@@ -418,6 +449,10 @@ async function handleRequest(request, env) {
     if (url.pathname === "/notifications/crm-lead-created" && request.method === "POST") {
       try { return await notifyCrmLeadCreated(request, env); }
       catch (error) { return json({ error: error?.message || "Owner notification failed." }, 503); }
+    }
+    if (url.pathname === "/payments/status" && request.method === "POST") {
+      try { return await paymentStatus(request, env); }
+      catch (error) { return json({ error: error?.message || "Could not check booking payment status." }, 503); }
     }
     if (url.pathname === "/payments/create-order" && request.method === "POST") {
       try { return await paymentCreateOrder(request, env); }
