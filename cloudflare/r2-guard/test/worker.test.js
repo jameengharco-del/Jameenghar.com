@@ -89,3 +89,24 @@ test("payment verification and webhook stay disabled by default", async () => {
     assert.equal((await response.json()).code,"PAYMENTS_DISABLED");
   }
 });
+
+
+test("CRM Owner notification fails closed when server credentials are absent", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/notifications/crm-lead-created",{
+    method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({leadId:"lead_123"})
+  }),{});
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not configured/i);
+});
+
+test("Worker CORS allows only the official JameenGhar website origin", async () => {
+  const allowed=await worker.fetch(new Request("https://guard.example/health",{headers:{origin:"https://jameenghar.com"}}),{});
+  assert.equal(allowed.headers.get("access-control-allow-origin"),"https://jameenghar.com");
+  const denied=await worker.fetch(new Request("https://guard.example/health",{headers:{origin:"https://attacker.example"}}),{});
+  assert.equal(denied.headers.get("access-control-allow-origin"),null);
+  const preflight=await worker.fetch(new Request("https://guard.example/notifications/crm-lead-created",{
+    method:"OPTIONS",headers:{origin:"https://jameenghar.com"}
+  }),{});
+  assert.equal(preflight.status,204);
+  assert.equal(preflight.headers.get("access-control-allow-origin"),"https://jameenghar.com");
+});
