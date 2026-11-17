@@ -1788,9 +1788,9 @@ return bTime-aTime;
 };
 assignedLeads.sort(sortRecent);createdLeads.sort(sortRecent);
 const newLeads=assignedLeads.filter(lead=>String(lead.status||"new").toLowerCase()==="new");
-const visibleWork=[...assignedLeads,...createdLeads];
-const workMap=new Map(visibleWork.map(lead=>[lead.id,lead]));
-consultantOpenQueue=Array.from(workMap.values()).filter(lead=>!["new","closed-won","closed-lost"].includes(String(lead.status||"new").toLowerCase()));
+// Only leads currently assigned to this consultant belong in their active follow-up queue.
+ // Transferred-away records remain read-only in Created Leads and must not appear as assigned work.
+consultantOpenQueue=assignedLeads.filter(lead=>!["new","closed-won","closed-lost"].includes(String(lead.status||"new").toLowerCase()));
 consultantOpenQueue.sort((a,b)=>String(a.followUpDate||"9999-99-99").localeCompare(String(b.followUpDate||"9999-99-99")));
 consultantOpenQueueIndex=0;
 $("myCreatedLeadCount").textContent=createdLeads.length;
