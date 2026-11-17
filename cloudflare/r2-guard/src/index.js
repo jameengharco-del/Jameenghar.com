@@ -8,6 +8,7 @@ import {
   isCapturedPayment, createRazorpayOrder, sha256Hex, fetchRazorpayPayment
 } from "./payments.js";
 import { getAdminDocument, patchAdminDocument } from "./firestore-admin.js";
+import { sendZohoOwnerNotification } from "./zoho-mail.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -78,6 +79,47 @@ async function readLimitedBody(request, maxBytes) {
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes.buffer;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[char]);
+}
+
+async function notifyCrmLeadCreated(request, env) {
+  if (!env.FIREBASE_PROJECT_ID || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY) {
+    return json({ error: "Notification service is not configured." }, 503);
+  }
+  const { claims } = await authenticate(request, env);
+  const body = await request.json().catch(() => ({}));
+  const leadId = String(body.leadId || "");
+  if (!/^[A-Za-z0-9_-]{1,120}$/.test(leadId)) return json({ error: "Invalid lead reference." }, 400);
+  const lead = await getAdminDocument(env, "leads", leadId);
+  if (!lead) return json({ error: "Lead not found." }, 404);
+  const data = lead.fields;
+  if (data.source !== "crm" || data.createdBy !== claims.sub) {
+    return json({ error: "You can notify only for a CRM lead you created." }, 403);
+  }
+  if (data.ownerNotificationSent === true) return json({ success: true, alreadySent: true });
+  const html = [
+    "<h2>New CRM Lead Created — JameenGhar</h2>",
+    "<p>A consultant has created a new lead in JameenGhar CRM.</p>",
+    "<table cellpadding='6' cellspacing='0' border='1' style='border-collapse:collapse'>",
+    ["Lead ID",leadId],["Customer",data.customerName],["Phone",data.phone],
+    ["Email",data.email],["Enquiry Type",data.enquiryType],["Location",data.propertyLocation],
+    ["Budget",data.budget],["Created By",data.createdByName],["Requirement",data.message]
+      .map(([label,value])=>"<tr><th align='left'>"+label+"</th><td>"+escapeHtml(value||"—")+"</td></tr>").join(""),
+    "</table><p>Open the Owner Dashboard to assign and manage this lead.</p>"
+  ].join("");
+  const sent = await sendZohoOwnerNotification({
+    env, subject: "New CRM Lead: " + String(data.customerName || leadId).slice(0,100), html
+  });
+  await patchAdminDocument(env, "leads", leadId, {
+    ownerNotificationSent: true, ownerNotificationSentAt: new Date(),
+    ownerNotificationMessageId: sent.messageId || ""
+  });
+  return json({ success: true, notified: true });
 }
 
 async function paymentCreateOrder(request, env) {
