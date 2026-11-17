@@ -2,8 +2,6 @@
 -- Apply only to a NEW, dedicated D1 database on the safe rollout.
 -- Never point this at an existing production database.
 
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS storage_objects (
   object_key TEXT PRIMARY KEY,
   owner_uid TEXT NOT NULL,
