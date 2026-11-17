@@ -3,6 +3,11 @@ import {
   readQuota, reserveUpload, commitUpload,
   MAX_OBJECT_BYTES
 } from "./quota.js";
+import {
+  verifyRazorpayCheckoutSignature, verifyRazorpayWebhookSignature,
+  isCapturedPayment, createRazorpayOrder, sha256Hex, fetchRazorpayPayment
+} from "./payments.js";
+import { getAdminDocument, patchAdminDocument } from "./firestore-admin.js";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -73,6 +78,117 @@ async function readLimitedBody(request, maxBytes) {
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes.buffer;
+}
+
+async function paymentCreateOrder(request, env) {
+  if (env.PAYMENTS_ENABLED !== "true") return json({ error: "Daybnb payments are disabled pending merchant and cost approval.", code: "PAYMENTS_DISABLED" }, 503);
+  if (!env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY || !env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+    return json({ error: "Secure payment service is not fully configured." }, 503);
+  }
+  const body = await request.json().catch(() => ({}));
+  const bookingId = String(body.bookingId || "");
+  const accessToken = String(body.accessToken || "");
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(bookingId) || !/^[a-f0-9]{64}$/.test(accessToken)) {
+    return json({ error: "Invalid booking reference or payment access token." }, 400);
+  }
+  const booking = await getAdminDocument(env, "daybnbBookings", bookingId);
+  if (!booking) return json({ error: "Booking not found." }, 404);
+  const data = booking.fields;
+  if (await sha256Hex(accessToken) !== data.paymentAccessTokenHash) return json({ error: "Invalid booking access token." }, 403);
+  if (data.bookingStage !== "awaiting_payment" || data.paymentStatus !== "ready_for_checkout") {
+    return json({ error: "Owner approval and final price are required before payment." }, 409);
+  }
+  if (!data.quoteExpiresAt || Date.parse(data.quoteExpiresAt) <= Date.now()) {
+    return json({ error: "This approved quote has expired. Please ask the property team for a new quote." }, 409);
+  }
+  const quoteVersion = Number(data.quoteVersion);
+  const amountPaise = Number(data.totalAmountPaise);
+  const currency = data.currency || "INR";
+  const key = `${bookingId}:q${quoteVersion}`;
+  const existing = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE idempotency_key = ?").bind(key).first();
+  if (existing?.state === "created" && existing.provider_order_id) {
+    return json({ orderId: existing.provider_order_id, amount: existing.amount_paise, currency: existing.currency, keyId: env.RAZORPAY_KEY_ID, bookingId, quoteVersion });
+  }
+  if (existing?.state === "creating") return json({ error: "A payment order is already being prepared. Please wait and refresh." }, 409);
+  if (!existing) {
+    const insert = await env.QUOTA_DB.prepare(
+      "INSERT OR IGNORE INTO payment_orders (idempotency_key, booking_id, quote_version, amount_paise, currency, guest_token_hash, state) VALUES (?, ?, ?, ?, ?, ?, 'creating')"
+    ).bind(key, bookingId, quoteVersion, amountPaise, currency, data.paymentAccessTokenHash).run();
+    if (!insert.meta?.changes) return json({ error: "A payment order request is already in progress. Please retry shortly." }, 409);
+  } else {
+    await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='creating', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='failed'").bind(key).run();
+  }
+  try {
+    const order = await createRazorpayOrder({
+      keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET,
+      bookingId, quoteVersion, amountPaise, currency
+    });
+    await env.QUOTA_DB.prepare("UPDATE payment_orders SET provider_order_id=?, state='created', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?").bind(order.id, key).run();
+    await patchAdminDocument(env, "daybnbBookings", bookingId, {
+      paymentStatus: "created", paymentProvider: "razorpay", gatewayOrderId: order.id,
+      paymentAmountPaise: amountPaise, updatedAt: new Date()
+    });
+    return json({ orderId: order.id, amount: amountPaise, currency, keyId: env.RAZORPAY_KEY_ID, bookingId, quoteVersion });
+  } catch (error) {
+    await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='failed', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='creating'").bind(key).run();
+    throw error;
+  }
+}
+
+async function paymentVerify(request, env) {
+  if (env.PAYMENTS_ENABLED !== "true") return json({ error: "Daybnb payments are disabled.", code: "PAYMENTS_DISABLED" }, 503);
+  const body = await request.json().catch(() => ({}));
+  const bookingId = String(body.bookingId || ""), accessToken = String(body.accessToken || "");
+  const orderId = String(body.razorpay_order_id || ""), paymentId = String(body.razorpay_payment_id || ""), signature = String(body.razorpay_signature || "");
+  if (!bookingId || !/^[a-f0-9]{64}$/.test(accessToken)) return json({ error: "Invalid booking access." }, 400);
+  const booking = await getAdminDocument(env, "daybnbBookings", bookingId);
+  if (!booking || await sha256Hex(accessToken) !== booking.fields.paymentAccessTokenHash) return json({ error: "Invalid booking access." }, 403);
+  const row = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE booking_id=? AND provider_order_id=?").bind(bookingId, orderId).first();
+  if (!row || row.state !== "created") return json({ error: "Payment order not found." }, 404);
+  if (!await verifyRazorpayCheckoutSignature({ orderId, paymentId, signature, keySecret: env.RAZORPAY_KEY_SECRET })) {
+    return json({ error: "Payment signature verification failed." }, 400);
+  }
+  const payment = await fetchRazorpayPayment({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET, paymentId });
+  if (payment.order_id !== orderId || !isCapturedPayment({
+    providerStatus: payment.status, expectedAmountPaise: row.amount_paise, actualAmountPaise: payment.amount,
+    expectedCurrency: row.currency, actualCurrency: payment.currency
+  })) return json({ error: "Gateway has not confirmed the exact captured amount." }, 409);
+  await patchAdminDocument(env, "daybnbBookings", bookingId, {
+    paymentStatus: "paid", bookingStage: "confirmed", status: "confirmed",
+    gatewayOrderId: orderId, gatewayPaymentId: paymentId, paidAt: new Date(), updatedAt: new Date()
+  });
+  await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='paid', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?").bind(row.idempotency_key).run();
+  return json({ success: true, paymentStatus: "paid", bookingStage: "confirmed", bookingId });
+}
+
+async function paymentWebhook(request, env) {
+  if (env.PAYMENTS_ENABLED !== "true") return json({ error: "Daybnb payments are disabled.", code: "PAYMENTS_DISABLED" }, 503);
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-razorpay-signature") || "";
+  if (!await verifyRazorpayWebhookSignature({ rawBody, signature, webhookSecret: env.RAZORPAY_WEBHOOK_SECRET })) {
+    return json({ error: "Invalid webhook signature." }, 401);
+  }
+  const eventId = request.headers.get("x-razorpay-event-id") || "";
+  if (!eventId || eventId.length > 200) return json({ error: "Missing webhook event ID." }, 400);
+  const event = JSON.parse(rawBody);
+  if (event.event !== "payment.captured") return json({ received: true, ignored: true });
+  const payment = event.payload?.payment?.entity;
+  if (!payment?.order_id || !payment?.id) return json({ error: "Malformed captured payment event." }, 400);
+  const row = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE provider_order_id=?").bind(payment.order_id).first();
+  if (!row) return json({ error: "Unknown payment order." }, 404);
+  if (!isCapturedPayment({
+    providerStatus: payment.status, expectedAmountPaise: row.amount_paise,
+    actualAmountPaise: payment.amount, expectedCurrency: row.currency, actualCurrency: payment.currency
+  })) return json({ error: "Captured payment does not match expected booking amount." }, 409);
+  const booking = await getAdminDocument(env, "daybnbBookings", row.booking_id);
+  if (!booking || booking.fields.gatewayOrderId !== payment.order_id) return json({ error: "Booking/order mismatch." }, 409);
+  await patchAdminDocument(env, "daybnbBookings", row.booking_id, {
+    paymentStatus: "paid", bookingStage: "confirmed", status: "confirmed",
+    gatewayPaymentId: payment.id, paidAt: new Date(), updatedAt: new Date()
+  });
+  await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='paid', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?").bind(row.idempotency_key).run();
+  await env.QUOTA_DB.prepare("INSERT OR IGNORE INTO payment_webhook_events (provider_event_id) VALUES (?)").bind(eventId).run();
+  return json({ received: true, paymentStatus: "paid", bookingId: row.booking_id });
 }
 
 async function upload(request, url, env) {
@@ -235,11 +351,20 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false, paymentsEnabled: false });
     }
+    if (url.pathname === "/payments/create-order" && request.method === "POST") {
+      try { return await paymentCreateOrder(request, env); }
+      catch (error) { return json({ error: error?.message || "Could not prepare payment." }, 503); }
+    }
+    if (url.pathname === "/payments/verify" && request.method === "POST") {
+      try { return await paymentVerify(request, env); }
+      catch (error) { return json({ error: error?.message || "Could not verify payment." }, 503); }
+    }
+    if (url.pathname === "/payments/webhook" && request.method === "POST") {
+      try { return await paymentWebhook(request, env); }
+      catch (error) { return json({ error: error?.message || "Webhook processing failed." }, 503); }
+    }
     if (url.pathname.startsWith("/payments/")) {
-      return json({
-        error: "Daybnb payment checkout is not enabled. Provider setup, server-side order creation, webhook processing and end-to-end tests must be completed first.",
-        code: "PAYMENTS_DISABLED"
-      }, 503);
+      return json({ error: "Method not allowed." }, 405);
     }
     if (["/upload", "/download", "/finalize"].includes(url.pathname) && env.ENABLE_UPLOADS !== "true") {
       return json({ error: "Uploads are disabled until the Owner completes the zero-cost and security activation checklist.", code: "UPLOADS_DISABLED" }, 503);
