@@ -395,7 +395,7 @@ async function finalizeListing(request, url, env) {
   const selectedKeysValid = /^[A-Za-z0-9_\/-]{1,500}$/.test(requestedCover) &&
     requestedPhotos.length === 3 && uniqueRequested.size === 4 &&
     [...uniqueRequested].every(key => ownedPhotos.has(key));
-  const ready = counts.photo >= 4 && counts.document >= 1 && selectedKeysValid;
+  const ready = counts.photo === 4 && counts.document === 1 && selectedKeysValid;
   if (ready) {
     await patchAdminDocument(env, propertyCollection, propertyId, {
       coverImage: requestedCover,
