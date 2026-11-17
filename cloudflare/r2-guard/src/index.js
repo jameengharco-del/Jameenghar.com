@@ -164,6 +164,9 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false });
     }
+    if ((url.pathname === "/upload" || url.pathname === "/download") && env.ENABLE_UPLOADS !== "true") {
+      return json({ error: "Uploads are disabled until the Owner completes the zero-cost and security activation checklist.", code: "UPLOADS_DISABLED" }, 503);
+    }
     if (url.pathname === "/upload" && request.method === "POST") {
       try { return await upload(request, url, env); }
       catch (error) { return json({ error: error?.message || "Upload rejected." }, 403); }
