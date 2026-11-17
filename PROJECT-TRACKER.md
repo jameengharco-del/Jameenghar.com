@@ -42,8 +42,12 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added D1 quota-ledger schema for stored objects and pending upload reservations.
 - Added quota helper with 8 GB warning, 9 GB hard application stop, and 20 MB per-object maximum.
 - Added basic threshold tests.
+- Added staged Firebase ID-token verification and owner/property authorization module.
+- Added private upload/download route code with 20 MB cap, MIME/signature checks, server-generated keys, and D1 reservation flow.
+- Added an explicit `ENABLE_UPLOADS=true` gate; absent by default, so endpoints stay HTTP 503 even if bindings are later added accidentally.
+- Added Worker endpoint tests and a GitHub Actions test workflow; no Actions run has appeared yet, so CI results are still unverified.
 - Added `ACTIVATION-CHECKLIST.md` documenting free-plan, account-wide usage, spending-limit scope, private bucket and fail-closed requirements.
-- Worker endpoints remain disabled (HTTP 503); no R2 bucket or D1 database is bound.
+- Worker endpoints remain disabled (HTTP 503) unless the explicit gate is set; no R2 bucket or D1 database is bound and no Worker is deployed.
 
 ### Must complete before any activation
 1. Complete executable tests for quota boundary, concurrent reservations, D1 transaction failures, R2 write failures, idempotency and reconciliation.
