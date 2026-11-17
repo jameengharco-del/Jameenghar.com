@@ -116,7 +116,8 @@ async function paymentCreateOrder(request, env) {
     ).bind(key, bookingId, quoteVersion, amountPaise, currency, data.paymentAccessTokenHash).run();
     if (!insert.meta?.changes) return json({ error: "A payment order request is already in progress. Please retry shortly." }, 409);
   } else {
-    await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='creating', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='failed'").bind(key).run();
+    const retry = await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='creating', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='failed'").bind(key).run();
+    if (!retry.meta?.changes) return json({ error: "This payment order is already being retried. Please wait and refresh." }, 409);
   }
   try {
     const order = await createRazorpayOrder({
