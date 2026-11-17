@@ -45,7 +45,9 @@ jobs:
           node-version: 22
       - name: Run secure Worker, payment and email unit tests
         working-directory: cloudflare/r2-guard
-        run: npm test
+        run: |
+          npm install --no-audit --no-fund
+          npm test
       - name: Exercise D1 migration with local SQLite compatibility checks
         run: python cloudflare/r2-guard/test/migration.test.py
       - name: Run local Firebase Firestore Rules Emulator security tests
