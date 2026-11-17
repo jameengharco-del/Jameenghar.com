@@ -66,6 +66,9 @@ the live website, Firebase rules, production data, or the working CRM.
 - Public photo delivery is staged and scoped to approved/published listings only;
   no public bucket URL or private document route is exposed.
 - A scheduled inventory reconciliation/repair workflow is not yet implemented.
+  Before enabling uploads, implement an Owner-triggered, fail-closed inventory audit
+  that compares every R2 object with the D1 ledger, includes incomplete reservations,
+  and keeps uploads disabled on any mismatch. Never auto-delete unknown objects.
 - Admin deletion/reconciliation routes remain disabled.
 
 ## Cost guardrails
