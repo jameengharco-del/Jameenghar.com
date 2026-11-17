@@ -9,7 +9,7 @@ let testEnv;
 const adminUid = "P46WrdzpVWVHVC4t6vqIOYcZfxC3";
 
 before(async () => {
-  const rules = await readFile(new URL("../firestore.rules.proposed", import.meta.url), "utf8");
+  const rules = await readFile(new URL("../../firestore.rules.proposed", import.meta.url), "utf8");
   testEnv = await initializeTestEnvironment({
     projectId,
     firestore: { host: "127.0.0.1", port: 8080, rules }
