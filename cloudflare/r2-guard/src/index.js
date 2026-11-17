@@ -393,14 +393,14 @@ async function finalizeListing(request, url, env) {
   const counts = { photo: ownedPhotos.size, document: (rows.results || []).filter(row => row.object_kind === "document").length };
   const uniqueRequested = new Set([requestedCover, ...requestedPhotos]);
   const selectedKeysValid = /^[A-Za-z0-9_\/-]{1,500}$/.test(requestedCover) &&
-    requestedPhotos.length === 3 && uniqueRequested.size === 4 &&
+    requestedPhotos.length >= 3 && requestedPhotos.length <= 9 && uniqueRequested.size >= 4 && uniqueRequested.size <= 10 &&
     [...uniqueRequested].every(key => ownedPhotos.has(key));
-  const ready = counts.photo === 4 && counts.document === 1 && selectedKeysValid;
+  const ready = counts.photo >= 4 && counts.photo <= 10 && counts.document === 1 && selectedKeysValid;
   if (ready) {
     await patchAdminDocument(env, propertyCollection, propertyId, {
       coverImage: requestedCover,
       imageUrls: requestedPhotos,
-      imageCount: 4,
+      imageCount: counts.photo,
       documentUploaded: true,
       documentsVerified: false,
       verificationStatus: "pending",
@@ -413,11 +413,11 @@ async function finalizeListing(request, url, env) {
   return json({
     success: true,
     readyForOwnerReview: ready,
-    required: { distinctPhotos: 4, privateOfficialPdf: 1 },
+    required: { minDistinctPhotos: 4, maxDistinctPhotos: 10, privateOfficialPdf: 1 },
     uploaded: counts,
     message: ready
       ? "Required files are securely stored. The listing remains private and pending Owner review."
-      : "Four distinct selected photos and at least one private PDF are required before Owner review."
+      : "At least four and no more than ten distinct photos, plus exactly one private PDF, are required before Owner review."
   }, ready ? 200 : 409);
 }
 
