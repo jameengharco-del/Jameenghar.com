@@ -145,3 +145,10 @@ test("public photo route rejects missing or malformed object keys", async () => 
   });
   assert.equal(response.status,400);
 });
+
+
+test("storage quota status fails closed until the private D1 ledger and Owner identity are configured", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/storage/quota"),{});
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not configured/i);
+});
