@@ -31,9 +31,26 @@ Production branch: `main` (protected; do not change without explicit approval)
 ### Remaining Daybnb launch work
 1. Configure Firebase Phone provider, authorized domain, reCAPTCHA and test OTP on the actual domain.
 2. Run Firestore Emulator tests for signed-out, unverified, wrong-owner, verified-owner and Owner Admin access.
-3. Implement trusted upload for required property images and official documents. Current form has no file-upload control/backend; URL fields alone do not verify files.\n   - Progress: Daybnb now requires one cover photo plus at least three distinct additional photo URLs (four total) in the form and proposed Firestore validation. This is URL validation only, not secure upload or document verification.
+3. Implement trusted upload for required property images and official documents. Current form has no file-upload control/backend; URL fields alone do not verify files.
+   - Progress: Daybnb now requires one cover photo plus at least three distinct additional photo URLs (four total) in the form and proposed Firestore validation. This is URL validation only, not secure upload or document verification.
 4. Enforce minimum four images and required official document before submission/approval.
 5. Test owner isolation, atomic paired writes, approval/rejection, publish/unpublish and guest bookings.
+
+## Track C — Secure storage / zero-cost gate
+
+### Implemented on safe branch (not deployed)
+- Added D1 quota-ledger schema for stored objects and pending upload reservations.
+- Added quota helper with 8 GB warning, 9 GB hard application stop, and 20 MB per-object maximum.
+- Added basic threshold tests.
+- Worker endpoints remain disabled (HTTP 503); no R2 bucket or D1 database is bound.
+
+### Must complete before any activation
+1. Complete executable tests for quota boundary, concurrent reservations, D1 transaction failures, R2 write failures, idempotency and reconciliation.
+2. Implement Firebase token verification, verified-owner/Owner-Admin authorization and exact property ownership checks.
+3. Integrate private R2 + D1 bindings only after confirming the account remains on free plans.
+4. Review account-wide R2 usage, operation limits and any other Cloudflare resources; 9 GB app quota is not a provider billing hard cap.
+5. Confirm no paid add-ons, no automatic upgrades, and available account spending controls/alerts (including whether they cover R2).
+6. Keep uploads fail-closed on any quota/database/account uncertainty. Do not deploy until reviewed.
 
 ## Work order — keep both tracks active
 1. Protect and test the core website enquiry + CRM assignment/transfer flow.
