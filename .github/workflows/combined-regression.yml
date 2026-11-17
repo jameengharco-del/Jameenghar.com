@@ -6,6 +6,7 @@ on:
     branches:
       - cloudflare-r2-safety
     paths:
+      - "PROJECT-TRACKER.md"
       - "crm.html"
       - "admin.html"
       - "daybnb.html"
