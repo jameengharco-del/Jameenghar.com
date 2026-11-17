@@ -146,7 +146,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
           <div class="field"><label for="listingFacing">Facing (optional)</label><select id="listingFacing"><option value="">Not specified</option><option>North</option><option>South</option><option>East</option><option>West</option><option>North-East</option><option>North-West</option><option>South-East</option><option>South-West</option></select></div>
           <div class="field"><label for="listingDescription">Property details</label><textarea id="listingDescription" rows="3" maxlength="1200"></textarea></div>
           <div class="field"><label for="listingCover">Cover photo (JPG / PNG / WEBP)</label><input id="listingCover" type="file" accept="image/jpeg,image/png,image/webp" required></div>
-          <div class="field"><label for="listingExtraPhotos">Exactly 3 additional different photos</label><input id="listingExtraPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required></div>
+          <div class="field"><label for="listingExtraPhotos">3 to 9 additional different photos (4 to 10 photos total)</label><input id="listingExtraPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required></div>
           <div class="field"><label for="listingDocument">Official property document (PDF)</label><input id="listingDocument" type="file" accept="application/pdf" required></div>
           <label style="display:flex;gap:9px;align-items:flex-start;font-weight:500"><input id="listingConsent" type="checkbox" required style="width:auto;margin-top:2px"> I confirm I am authorized to submit this property and its details/documents are genuine.</label>
           <button class="primary" id="submitPropertyButton" type="submit">Submit property for verification</button>
@@ -314,12 +314,12 @@ $("propertySubmissionForm").addEventListener("submit", async event => {
   const cover = $("listingCover").files[0];
   const extras = Array.from($("listingExtraPhotos").files);
   const pdf = $("listingDocument").files[0];
-  if (!cover || extras.length !== 3 || !pdf) return showMessage("propertySubmitMessage", "Choose one cover photo, exactly three additional photos and one official PDF.", "error");
+  if (!cover || extras.length < 3 || extras.length > 9 || !pdf) return showMessage("propertySubmitMessage", "Choose one cover photo, 3 to 9 additional photos (4 to 10 total) and one official PDF.", "error");
   const photos = [cover, ...extras];
   if (photos.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type)) || pdf.type !== "application/pdf") return showMessage("propertySubmitMessage", "Only JPG, PNG or WEBP photos and one PDF are accepted.", "error");
   if ([...photos, pdf].some(file => file.size < 1 || file.size > 20 * 1024 * 1024)) return showMessage("propertySubmitMessage", "Each file must be no larger than 20 MB.", "error");
   const hashes = await Promise.all(photos.map(hashFile));
-  if (new Set(hashes).size !== 4) return showMessage("propertySubmitMessage", "All four property photos must be different files.", "error");
+  if (new Set(hashes).size !== photos.length) return showMessage("propertySubmitMessage", "All selected property photos must be different files.", "error");
   const button = $("submitPropertyButton"); button.disabled = true; button.textContent = "Submitting securely...";
   let propertyRef = null;
   try {
