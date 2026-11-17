@@ -48,6 +48,12 @@ the live website, Firebase rules, production data, or the working CRM.
   one PDF. It has not yet been integrated into either owner-facing form, and does
   not itself update the Firestore listing status or notify the Owner.
 - No file malware scanning or deep image/PDF content validation is included.
+- Daybnb payment architecture is documented in `DAYBNB-PAYMENT-ARCHITECTURE.md`.
+- Booking records now carry explicit payment lifecycle placeholders; server-side
+  payment helpers verify Razorpay checkout/webhook HMACs and exact captured INR
+  amounts. These helpers are unit-tested but are not wired to a live gateway.
+- All `/payments/*` routes return HTTP 503, even if an accidental enable flag is
+  present. No gateway credentials, merchant account or checkout are configured.
 - No public photo delivery/CDN route exists; public exposure after approval still
   needs a separate, carefully scoped implementation.
 - A scheduled inventory reconciliation/repair workflow is not yet implemented.
