@@ -18,7 +18,7 @@ test("real local Miniflare D1 + R2 bindings enforce quota, commit inventory and 
     const migration = await readFile(new URL("../migrations/0001_storage_quota.sql", import.meta.url), "utf8");
     const executableMigration = migration.replace(/^\s*--.*$/gm, "").trim();
     for (const statement of executableMigration.split(";").map(sql => sql.trim()).filter(Boolean)) {
-      await db.exec(statement);
+      await db.prepare(statement).run();
     }
 
     const bytes = new TextEncoder().encode("local-test-photo-content");
