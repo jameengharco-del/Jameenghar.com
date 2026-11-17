@@ -100,7 +100,7 @@ test("quota thresholds and per-file cap remain below the storage ceiling", () =>
 
 test("reservation is rejected when it would reach the 9 GB stop", async () => {
   const db=fakeD1({stored:[{byte_size:HARD_STOP_BYTES-MAX_OBJECT_BYTES}]});
-  const ok=await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:MAX_OBJECT_BYTES});
+  const ok=await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:MAX_OBJECT_BYTES,contentSha256:"a".repeat(64)});
   assert.equal(ok,false);
 });
 
@@ -150,7 +150,7 @@ test("duplicate photo bytes are rejected for the same property", async () => {
 
 test("commit transfers bytes from reservation to stored object", async () => {
   const db=attachBatchMetadata(fakeD1());
-  await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:1234,contentSha256:"a".repeat(64),contentSha256:"a".repeat(64)});
+  await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:1234,contentSha256:"a".repeat(64)});
   await commitUpload(db,{reservationId:"r1",objectKey:"k1"});
   const quota=await readQuota(db);
   assert.equal(quota.storedBytes,1234);
