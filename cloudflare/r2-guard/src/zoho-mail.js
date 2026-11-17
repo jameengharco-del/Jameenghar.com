@@ -26,7 +26,8 @@ export async function sendZohoOwnerNotification({ env, subject, html, fetchImpl 
   const token = await getZohoAccessToken(env, fetchImpl);
   const mailBase = env.ZOHO_MAIL_API_BASE || "https://mail.zoho.in";
   const response = await fetchImpl(
-    mailBase.replace(/\\/$/, "") + "/api/accounts/" + encodeURIComponent(env.ZOHO_ACCOUNT_ID) + "/messages",
+  const mailRoot = mailBase.endsWith("/") ? mailBase.slice(0, -1) : mailBase;
+    mailRoot + "/api/accounts/" + encodeURIComponent(env.ZOHO_ACCOUNT_ID) + "/messages",
     {
       method: "POST",
       headers: {
