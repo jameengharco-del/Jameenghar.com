@@ -443,6 +443,16 @@ header{justify-content:center;text-align:center}
 </div>
 
 
+<section class="card" id="privatePropertyFiles" style="margin:18px 0;padding:18px;border:1px solid #e4eae5;border-radius:12px">
+<h3 style="color:#064d2b">Secure Property Documents & Storage</h3>
+<p class="card-description">Owner-only access to private listing documents. Configure the verified secure Worker URL only after zero-cost account review.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+<select id="privateFileCollection" style="padding:10px;border:1px solid #ccd8ce;border-radius:8px"><option value="properties">JameenGhar Property</option><option value="daybnbProperties">Daybnb Property</option></select>
+<input id="privateFilePropertyId" placeholder="Exact Property ID" style="flex:1;min-width:180px;padding:10px;border:1px solid #ccd8ce;border-radius:8px">
+<button id="loadPrivateFiles" class="secondary" type="button">Load Private Files</button>
+</div><p id="privateFileStatus" class="small">Secure file access remains disabled until Worker deployment is approved.</p><div id="privateFileResults"></div>
+</section>
+
 <h3>CRM User Approvals</h3>
 <div id="pendingUsers"></div>
 <button id="refreshUsers" class="secondary">Refresh Users</button>
@@ -588,6 +598,7 @@ measurementId:"G-RQJWG3PBY9"
 };
 
 const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
+const SECURE_STORAGE_WORKER_URL=""; // Set only after verified free-plan deployment; leave blank to keep all file access disabled.
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
@@ -601,6 +612,39 @@ let preserveTransferHistory=true;
 let historySettingLoaded=false;
 let registrationInProgress=false;
 
+async function loadPrivateListingFiles(){
+  const propertyId=$("privateFilePropertyId").value.trim();
+  const collectionName=$("privateFileCollection").value;
+  const status=$("privateFileStatus"),root=$("privateFileResults");
+  root.innerHTML="";
+  if(!/^[A-Za-z0-9_-]{1,80}$/.test(propertyId)){status.textContent="Enter a valid Property ID.";return;}
+  if(!SECURE_STORAGE_WORKER_URL){status.textContent="Secure Worker is not deployed/configured. No private files were requested.";return;}
+  const user=auth.currentUser;
+  if(!user){status.textContent="Owner login is required.";return;}
+  status.textContent="Loading private file index...";
+  try{
+    const base=SECURE_STORAGE_WORKER_URL.replace(/\/$/,"");
+    const response=await fetch(base+"/admin/listing-files?collection="+encodeURIComponent(collectionName)+"&propertyId="+encodeURIComponent(propertyId),{headers:{authorization:"Bearer "+await user.getIdToken(true)}});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||"Could not load private files.");
+    if(!data.files?.length){status.textContent="No secure files are recorded for this listing.";return;}
+    for(const file of data.files){
+      const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px;border-bottom:1px solid #e4eae5";
+      const label=document.createElement("span");label.textContent=(file.kind==="document"?"Private official PDF":"Property photo")+" · "+Math.ceil(file.sizeBytes/1024)+" KB";
+      const button=document.createElement("button");button.className="secondary";button.type="button";button.textContent=file.kind==="document"?"Open private PDF":"Open photo";
+      button.onclick=async()=>{
+        try{
+          const download=await fetch(base+"/download?key="+encodeURIComponent(file.objectKey),{headers:{authorization:"Bearer "+await user.getIdToken(true)}});
+          if(!download.ok)throw new Error("Private file access denied.");
+          const blob=await download.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+        }catch(error){status.textContent=error.message;}
+      };
+      row.append(label,button);root.appendChild(row);
+    }
+    status.textContent="Loaded "+data.files.length+" private file record(s). Files are served only after Owner authorization.";
+  }catch(error){status.textContent="Could not load private files: "+error.message;}
+}
+
 function message(text){
 $("message").textContent=text;
 }
@@ -610,6 +654,8 @@ function hideAll(){
 $(id).classList.add("hidden");
 });
 }
+
+$("loadPrivateFiles").onclick=loadPrivateListingFiles;
 
 $("showRegister").onclick=()=>{
 $("loginBox").classList.add("hidden");
