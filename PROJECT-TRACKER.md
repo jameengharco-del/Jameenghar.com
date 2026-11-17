@@ -12,14 +12,14 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Firestore proposed rules are still not deployed. Registration is staged on `cloudflare-r2-safety`; preserve live CRM/production rules. Next: test email registration and phone linking in Firebase Emulator / a controlled test project, then implement the JameenGhar listing form and secure upload only after the free-cost gate passes.
 
 ### Secure upload quota hardening — staged (2026-11-17)
-- Added atomic per-listing upload caps in the D1 reservation query: no more than four photo objects and one private PDF per listing, counting both committed objects and in-flight reservations. This also prevents a parallel upload race from exceeding those per-listing caps.
-- Finalization now requires exactly four photos and exactly one PDF for the listing, and validates the four selected photo object keys are distinct and owned by the same listing.
-- Quota regression suite covers 8 GB warning / 9 GB stop, concurrent global reservations, per-listing photo/document caps, ambiguous reservations and reservation commit.
+- Added atomic per-listing upload caps in the D1 reservation query: no more than ten photo objects and one private PDF per listing, counting both committed objects and in-flight reservations. This also prevents a parallel upload race from exceeding those per-listing caps.
+- Finalization now requires between four and ten distinct photos and exactly one PDF for the listing, and validates the all selected photo object keys (4–10) are distinct and owned by the same listing.
+- Quota regression suite covers 8 GB warning / 9 GB stop, concurrent global reservations, per-listing 4–10 photo/document caps, ambiguous reservations and reservation commit.
 - Latest GitHub Actions regression passed after correcting the SQL bind order and fake-D1 test adapter: run #44146789632.
 - Still no real D1/R2/Firebase integration test or inventory reconciliation. The quota remains a D1 application guard, not a provider billing hard cap. Uploads remain disabled and no paid resource or production change has been made.
 
 ### JameenGhar owner listing + review flow — staged (2026-11-17)
-- Added the verified-owner property submission UI to `property-owner.html`: sale/rent, property type, Jaipur/locality, area, expected price, facing, details, cover + exactly three extra photos and official PDF. Client validates MIME, 20 MB per file and four distinct SHA-256 photo hashes.
+- Added the verified-owner property submission UI to `property-owner.html`: sale/rent, property type, Jaipur/locality, area, expected price, facing, details, cover + three to nine extra photos (4–10 total) and official PDF. Client validates MIME, 20 MB per file and four distinct SHA-256 photo hashes.
 - Submission is visible only after Firebase email and phone verification. It creates a pending/unpublished `properties/{id}` record with hidden address and empty file metadata; actual uploads call the secure Worker only when `PROPERTY_UPLOAD_WORKER_URL` is configured.
 - Worker finalization now writes the verified four-photo metadata for both `properties` and `daybnbProperties` using server credentials; private download requires matching registered +91 phone claim and file ownership.
 - Added proposed Firestore `validJameenGharProperty` create validation: exact allowed fields, verified owner email + registered mobile, owner UID, data bounds, pending/unpublished status, hidden address and empty initial upload metadata. Owner cannot edit/publish their own listing; only Owner Admin can update.
