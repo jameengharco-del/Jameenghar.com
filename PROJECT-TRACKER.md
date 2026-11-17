@@ -4,6 +4,13 @@ Updated: 2026-11-17
 Working branch: `cloudflare-r2-safety`  
 Production branch: `main` (protected; do not change without explicit approval)
 
+### Property Owner account onboarding — staged on safe branch (2026-11-17)
+- Enabled the Property Owner portal registration form using Firebase Email/Password Authentication. Registration creates a `users/{uid}` profile with role `property_owner`, status `pending`, and email verification required, then sends Firebase email verification.
+- Added Firebase Phone Auth OTP flow to link the exact +91 mobile number entered at registration to the signed-in account. OTP is only sent after the user presses the button and the email is verified; invisible reCAPTCHA is used. UI keeps phone controls hidden for non-owner profiles and until email verification.
+- After successful phone linking, the ID token is refreshed; the proposed Firestore rules validate the authenticated phone claim against the stored 10-digit phone. Account remains pending Owner approval. No property listing submission is enabled yet.
+- **Not activated/tested against live Firebase:** Firebase Phone provider, SMS region policy/quota, authorized domain and reCAPTCHA configuration must be checked in Console; actual OTP delivery can incur Firebase SMS charges or require billing. Do not send test OTP or enable the provider until the Owner confirms the potential charge/plan impact.
+- Firestore proposed rules are still not deployed. Registration is staged on `cloudflare-r2-safety`; preserve live CRM/production rules. Next: test email registration and phone linking in Firebase Emulator / a controlled test project, then implement the JameenGhar listing form and secure upload only after the free-cost gate passes.
+
 ## Track A — Core JameenGhar
 
 ### Existing flow to preserve
