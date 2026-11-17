@@ -175,6 +175,46 @@ async function upload(request, url, env) {
   }, 201);
 }
 
+async function finalizeListing(request, url, env) {
+  if (!env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
+    return json({ error: "Listing verification is not configured." }, 503);
+  }
+  const { token, claims } = await authenticate(request, env);
+  const propertyId = url.searchParams.get("propertyId") || "";
+  const propertyCollection = url.searchParams.get("collection") || "properties";
+  if (!/^[A-Za-z0-9_-]{1,80}$/.test(propertyId)) return json({ error: "Invalid property ID." }, 400);
+  if (!["properties", "daybnbProperties"].includes(propertyCollection)) return json({ error: "Invalid listing collection." }, 400);
+
+  await authorizeOwnerAndProperty({
+    projectId: env.FIREBASE_PROJECT_ID,
+    token,
+    claims,
+    propertyId,
+    propertyCollection,
+    ownerAdminUid: env.OWNER_ADMIN_UID
+  });
+
+  const listingKey = `${propertyCollection}/${propertyId}`;
+  const rows = await env.QUOTA_DB.prepare(
+    "SELECT object_kind, COUNT(*) AS file_count, COUNT(DISTINCT object_key) AS unique_count FROM storage_objects WHERE owner_uid = ? AND property_id = ? GROUP BY object_kind"
+  ).bind(claims.sub, listingKey).all();
+  const counts = { photo: 0, document: 0 };
+  for (const row of rows.results || []) {
+    if (row.object_kind === "photo") counts.photo = Number(row.unique_count || 0);
+    if (row.object_kind === "document") counts.document = Number(row.unique_count || 0);
+  }
+  const ready = counts.photo >= 4 && counts.document >= 1;
+  return json({
+    success: true,
+    readyForOwnerReview: ready,
+    required: { distinctPhotos: 4, privateOfficialPdf: 1 },
+    uploaded: counts,
+    message: ready
+      ? "Required files are present. The listing still needs Owner verification and approval before publication."
+      : "More files are required before this listing can be sent for Owner review."
+  }, ready ? 200 : 409);
+}
+
 async function download(request, url, env) {
   if (!env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
     return json({ error: "Secure storage is not configured." }, 503);
@@ -219,7 +259,7 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false });
     }
-    if ((url.pathname === "/upload" || url.pathname === "/download") && env.ENABLE_UPLOADS !== "true") {
+    if (["/upload", "/download", "/finalize"].includes(url.pathname) && env.ENABLE_UPLOADS !== "true") {
       return json({ error: "Uploads are disabled until the Owner completes the zero-cost and security activation checklist.", code: "UPLOADS_DISABLED" }, 503);
     }
     if (url.pathname === "/upload" && request.method === "POST") {
@@ -229,6 +269,10 @@ export default {
     if (url.pathname === "/download" && request.method === "GET") {
       try { return await download(request, url, env); }
       catch (error) { return json({ error: error?.message || "Download rejected." }, 403); }
+    }
+    if (url.pathname === "/finalize" && request.method === "POST") {
+      try { return await finalizeListing(request, url, env); }
+      catch (error) { return json({ error: error?.message || "Listing verification rejected." }, 403); }
     }
     if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
       return json({ error: "Admin storage operations are not enabled." }, 503);
