@@ -25,6 +25,7 @@ on:
       - "daybnb.html"
       - "daybnb-admin.html"
       - "daybnb-payment.html"
+      - "property-owner.html"
       - "firestore/**"
       - "cloudflare/r2-guard/**"
       - ".github/workflows/**"
@@ -50,7 +51,7 @@ jobs:
           from pathlib import Path
           import re
           import subprocess
-          files = ["crm.html", "admin.html", "daybnb.html", "daybnb-admin.html", "daybnb-payment.html"]
+          files = ["crm.html", "admin.html", "daybnb.html", "daybnb-admin.html", "daybnb-payment.html", "property-owner.html"]
           for filename in files:
               html = Path(filename).read_text()
               scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.I | re.S)
