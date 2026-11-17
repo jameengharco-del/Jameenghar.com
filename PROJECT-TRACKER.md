@@ -43,7 +43,9 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added quota helper with 8 GB warning, 9 GB hard application stop, and 20 MB per-object maximum.
 - Added quota tests for 9 GB boundary, below-limit reservations, parallel reservations, ambiguous R2 outcomes and reservation-to-object commit.
 - Added staged Firebase ID-token verification and owner/property authorization module.
-- Added private upload/download route code with 20 MB cap, MIME/signature checks, server-generated keys, and D1 reservation flow.
+- Added private upload/download route code with bounded 20 MB streaming body, MIME/signature checks, server-generated keys, and D1 reservation flow.
+- Added listing authorization for both `properties` and `daybnbProperties` collections.
+- Added a default-off `/finalize` endpoint that checks four distinct photos plus one private PDF against the quota ledger for the exact property owner.
 - Changed ambiguous R2 write failures to retain quota reservations until reconciliation; each reservation now stores its object key.
 - Added Firebase token parsing/fail-closed tests.
 - Added an explicit `ENABLE_UPLOADS=true` gate; absent by default, so endpoints stay HTTP 503 even if bindings are later added accidentally.
@@ -53,6 +55,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 
 ### Must complete before any activation
 1. Add real D1/SQLite integration tests for concurrent reservations, transaction rollback, duplicate commit, and reconciliation; current concurrency tests use a deterministic D1 test adapter.
+2. Integrate the staged upload/finalize routes with both owner-facing forms only after Worker is deployed and the activation gate is cleared.
 2. Implement Firebase token verification, verified-owner/Owner-Admin authorization and exact property ownership checks.
 3. Integrate private R2 + D1 bindings only after confirming the account remains on free plans.
 4. Review account-wide R2 usage, operation limits and any other Cloudflare resources; 9 GB app quota is not a provider billing hard cap.
