@@ -91,3 +91,19 @@ export async function createRazorpayOrder({
   }
   return { id: body.id, amount: body.amount, currency: body.currency, receipt: body.receipt || receipt };
 }
+
+
+export async function sha256Hex(value) {
+  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
+  return toHex(digest);
+}
+
+export async function fetchRazorpayPayment({ keyId, keySecret, paymentId, fetchImpl = fetch }) {
+  if (!keyId || !keySecret || !paymentId) throw new Error("Payment lookup is not configured");
+  const response = await fetchImpl("https://api.razorpay.com/v1/payments/" + encodeURIComponent(paymentId), {
+    headers: { authorization: "Basic " + btoa(keyId + ":" + keySecret) }
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Could not verify payment status with gateway");
+  return body;
+}
