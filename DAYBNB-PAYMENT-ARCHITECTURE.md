@@ -4,7 +4,7 @@ Status: DESIGN + PAYMENT RECORD FIELDS ONLY. No gateway account, API key, checko
 
 ## Product decision
 
-Daybnb will show a secure hosted payment checkout after the property owner/authorized team confirms availability and the final price. Do not collect payment for an unconfirmed request. Initial integration recommendation: compare Razorpay Standard Checkout and Cashfree Standard Gateway for India, then select only after the merchant dashboard/offer and written commercial terms are checked. Razorpay's published standard plan currently lists ₹0 setup and ₹0 AMC, with transaction pricing (commonly 2% + GST for standard domestic methods; some instruments may be 3%); the official pricing page also advertises a time/volume-limited 0% offer for eligible new merchants. Cashfree publishes ₹0 setup/AMC and transaction-based pricing, but its actual platform fee/offer must be confirmed for this merchant. Neither provider is selected or activated yet.
+Daybnb will show a secure hosted payment checkout after the property owner/authorized team confirms availability and the final price. Do not collect payment for an unconfirmed request. Recommended starting provider: Razorpay Standard Payment Gateway (not RazorpayX, Subscriptions, Instant Settlements, or any paid add-on). Its official standard pricing states ₹0 setup and ₹0 AMC; standard domestic payments are generally 2% platform fee + 18% GST on that fee for successful payments, with certain premium methods (e.g. EMI/Amex/international/corporate cards) at 3% + GST. Optional Instant Settlements are paid and must remain OFF. We will use the standard settlement cycle. Assume the normal 2% + GST rate in budgets; do not rely on temporary 0% promotional offers. Merchant-specific written terms must still be checked before activation. Cashfree's current page advertises a limited 0% offer, but its terms show a new-signup cutoff of 31 July 2026 (already passed as of this project date), and Cashfree may levy a one-time ₹199 KYC fee for merchants without valid GST registration. Therefore it is not the safe default for this requirement.
 
 Official integration requirements to follow:
 - Create the gateway order on the server, not in browser code.
@@ -53,8 +53,8 @@ Private `daybnbPaymentEvents/{providerEventId}` stores verified webhook event ID
 The Owner's commercial rule is strict:
 - ₹0 setup fee.
 - ₹0 monthly fee, subscription fee, annual maintenance fee (AMC), minimum monthly commitment, inactivity fee, or mandatory paid plan.
-- No paid add-ons, instant-settlement service, premium checkout, or auto-upgrade unless separately approved in writing. Default all optional paid features OFF.
-- The only acceptable provider deduction is a clearly disclosed transaction/platform processing fee (plus applicable GST/tax on that fee) on a successfully captured customer payment. No successful payment = no transaction fee. Confirm the actual merchant-specific rate and payment-method exceptions before activation.
+- No paid add-ons, instant-settlement service, premium checkout, subscription products, RazorpayX or auto-upgrade. Default all optional paid features OFF.
+- The only acceptable provider deduction is a clearly disclosed transaction/platform processing fee (plus applicable GST/tax on that fee) on a successfully captured customer payment. No successful payment = no transaction fee. Budget the standard domestic rate at 2% + GST on that fee; premium payment methods may cost more and should be disabled or clearly approved before activation.
 - Gateway charges are normally deducted from the merchant settlement; do not silently add them to the guest's quoted amount. Show the guest the booking total and any separately approved charge before they pay.
 - Refunds may not return the original processing fee; disclose this to Owner and account for it in refund policy.
 - Do not promise a zero transaction fee indefinitely based on a temporary promotion. Record its expiry/volume cap and the post-offer rate.
@@ -63,7 +63,7 @@ The Owner's commercial rule is strict:
 
 - Payment code remains disabled by default.
 - No gateway account is opened, no KYC submitted, no live key requested, and no real payment attempted by this code change.
-- Before provider selection, obtain merchant-specific confirmation of ₹0 setup, ₹0 monthly/AMC, ₹0 minimum commitment, transaction-only deductions on successful payments, applicable GST, refund/chargeback treatment, settlement timing and offer expiry/cap.
+- Before provider activation, obtain merchant-specific confirmation of ₹0 setup, ₹0 monthly/AMC, ₹0 minimum commitment, transaction-only deductions on successful payments, applicable GST, refund/chargeback treatment and standard settlement timing. Default to standard settlement; paid instant settlement remains OFF.
 - If the merchant dashboard or agreement contains any fixed/monthly/subscription/mandatory fee, reject that plan and do not activate it.
 - Do not enable live payments until Owner explicitly approves the selected provider, exact fee schedule, cancellation/refund terms, merchant settlement account, and test results.
 
