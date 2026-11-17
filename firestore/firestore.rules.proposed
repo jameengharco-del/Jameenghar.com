@@ -289,8 +289,14 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
           "propertyId", "propertyTitle", "ownerName", "ownerPhone",
           "customerName", "phone", "email", "bookingType",
+          "currency", "paymentAmountPaise", "paymentStatus", "paymentProvider",
+          "gatewayOrderId", "gatewayPaymentId", "paidAt", "refundStatus",
+          "bookingStage", "paymentAccessTokenHash",
           "checkInDate", "checkOutDate", "startTime", "endTime",
-          "guests", "quotedTotal", "message", "status", "createdAt"
+          "guests", "quotedTotal", "message", "status", "createdAt",
+          "currency", "paymentAmountPaise", "paymentStatus", "paymentProvider",
+          "gatewayOrderId", "gatewayPaymentId", "paidAt", "refundStatus",
+          "bookingStage", "paymentAccessTokenHash"
         ])
         && request.resource.data.keys().hasAll([
           "propertyId", "propertyTitle", "ownerName", "ownerPhone",
@@ -339,6 +345,17 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.message.size() <= 500
         && request.resource.data.status == "pending"
+        && request.resource.data.currency == "INR"
+        && request.resource.data.paymentAmountPaise == null
+        && request.resource.data.paymentStatus == "not_started"
+        && request.resource.data.paymentProvider == null
+        && request.resource.data.gatewayOrderId == null
+        && request.resource.data.gatewayPaymentId == null
+        && request.resource.data.paidAt == null
+        && request.resource.data.refundStatus == "not_applicable"
+        && request.resource.data.bookingStage == "awaiting_owner_confirmation"
+        && request.resource.data.paymentAccessTokenHash is string
+        && request.resource.data.paymentAccessTokenHash.matches("^[a-f0-9]{64}$")
         && request.resource.data.createdAt == request.time;
     }
 
