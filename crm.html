@@ -1768,18 +1768,18 @@ newRoot.textContent="Loading new leads assigned to you...";
 $("myOpenFollowupsList").textContent="Loading open follow-ups...";
 status.textContent="Please wait...";
 try{
-// Created Leads are visible to their creator only while still unassigned.
-// Once Owner assigns/transfers a lead, it leaves the creator's Created Leads
-// and appears as a normal New Lead for the current assignee.
+// Created Leads remain visible in the original consultant's own
+// Created Leads report even after Owner assignment/transfer. The current
+// assignee separately receives the lead in their normal New Leads queue.
 const leadsRef=collection(db,"leads");
-const [assignedSnapshot,createdUnassignedSnapshot]=await Promise.all([
+const [assignedSnapshot,createdSnapshot]=await Promise.all([
 getDocs(query(leadsRef,where("assignedTo","==",user.uid))),
-getDocs(query(leadsRef,where("createdBy","==",user.uid),where("assignedTo","==","unassigned")))
+getDocs(query(leadsRef,where("createdBy","==",user.uid)))
 ]);
 const assignedLeads=[];
 const createdLeads=[];
 assignedSnapshot.forEach(leadDoc=>assignedLeads.push({id:leadDoc.id,...leadDoc.data()}));
-createdUnassignedSnapshot.forEach(leadDoc=>createdLeads.push({id:leadDoc.id,...leadDoc.data()}));
+createdSnapshot.forEach(leadDoc=>createdLeads.push({id:leadDoc.id,...leadDoc.data()}));
 const sortRecent=(a,b)=>{
 const aTime=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
 const bTime=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
@@ -1796,7 +1796,7 @@ $("myCreatedLeadCount").textContent=createdLeads.length;
 $("myNewLeadCount").textContent=newLeads.length;
 $("myOpenFollowupCount").textContent=consultantOpenQueue.length;
 createdRoot.innerHTML="";
-if(!createdLeads.length){createdRoot.textContent="You have not created any unassigned leads.";}
+if(!createdLeads.length){createdRoot.textContent="You have not created any leads yet.";}
 createdLeads.forEach(lead=>{
 const box=document.createElement("div");box.className="queue-lead";
 const title=document.createElement("h3");title.textContent=lead.customerName||"Customer";
@@ -1806,7 +1806,15 @@ const summary=document.createElement("summary");summary.textContent="Open your c
 const info=document.createElement("p");info.textContent=leadInfoText(lead);
 const created=document.createElement("p");created.textContent="Created by you · "+formatDate(lead.createdAt);
 const req=document.createElement("p");req.textContent="Requirement: "+(lead.message||"No message provided");
-details.append(summary,info,created,req,activityPanel(lead),makeTaskForm(lead));
+details.append(summary,info,created,req,activityPanel(lead));
+if(lead.assignedTo==="unassigned"||lead.assignedTo===user.uid){
+details.appendChild(makeTaskForm(lead));
+}else{
+const assignedNote=document.createElement("p");
+assignedNote.className="muted";
+assignedNote.textContent="This lead has been assigned by the Owner. It remains in your Created Leads record for your original creation credit; follow-up actions are managed by the currently assigned consultant.";
+details.appendChild(assignedNote);
+}
 box.append(title,shortInfo,details);createdRoot.appendChild(box);
 });
 newRoot.innerHTML="";
@@ -1824,7 +1832,7 @@ details.append(summary,info,req,activityPanel(lead),makeTaskForm(lead));
 box.append(title,shortInfo,details);newRoot.appendChild(box);
 });
 renderConsultantOpenQueue();
-status.textContent="Created Leads: "+createdLeads.length+" (still unassigned) · New Leads assigned to you: "+newLeads.length+" · Open follow-ups: "+consultantOpenQueue.length+". Leads assigned to another consultant are not shown here.";
+status.textContent="Created Leads: "+createdLeads.length+" (all leads originally created by you) · New Leads assigned to you: "+newLeads.length+" · Open follow-ups: "+consultantOpenQueue.length+". Leads assigned to another consultant remain in your Created Leads record; they are not shown in your assigned work queue.";
 }catch(error){
 status.textContent="Could not load your leads: "+error.message;
 createdRoot.innerHTML="";newRoot.innerHTML="";$("myOpenFollowupsList").innerHTML="";
