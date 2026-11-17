@@ -45,7 +45,7 @@ the live website, Firebase rules, production data, or the working CRM.
 - No Firebase project ID, Owner Admin UID, credentials, or secrets are configured.
 - The Worker routes have not yet been integration-tested against a real Firebase
   project, D1 database, or R2 bucket. Only default-off behavior has unit tests.
-- The finalize endpoint checks the inventory ledger for four distinct photos and
+- The finalize endpoint checks the inventory ledger for four to ten distinct photos and
   one PDF. It has not yet been integrated into either owner-facing form, and does
   not itself update the Firestore listing status or notify the Owner.
 - No file malware scanning or deep image/PDF content validation is included.
