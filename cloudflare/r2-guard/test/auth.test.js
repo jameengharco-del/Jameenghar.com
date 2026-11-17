@@ -166,3 +166,41 @@ test("unverified owner email is denied", async () => {
     }), /verified JameenGhar property-owner/i);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test("property-owner secure upload requires registered Firebase phone claim to match profile", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    await assert.rejects(authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    }), /verified email and registered mobile/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("property-owner secure upload rejects a different verified mobile number", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    await assert.rejects(authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919999999999" },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    }), /verified email and registered mobile/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("property-owner secure upload accepts matching verified email and registered mobile", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    const result = await authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    });
+    assert.equal(result.propertyOwner, "owner-uid");
+  } finally { globalThis.fetch = originalFetch; }
+});
