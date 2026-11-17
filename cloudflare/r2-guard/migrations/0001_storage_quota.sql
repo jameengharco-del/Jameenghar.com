@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS storage_objects (
 
 CREATE TABLE IF NOT EXISTS upload_reservations (
   reservation_id TEXT PRIMARY KEY,
+  object_key TEXT NOT NULL UNIQUE,
   owner_uid TEXT NOT NULL,
   property_id TEXT NOT NULL,
   object_kind TEXT NOT NULL CHECK (object_kind IN ('photo','document')),
