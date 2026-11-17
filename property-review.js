@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const config={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=getApps().length?getApps()[0]:initializeApp(config);const auth=getAuth(app);const db=getFirestore(app);
@@ -21,4 +21,4 @@ async function loadPropertyApprovals(){
  }catch(e){status.textContent="Could not load property submissions: "+e.message}
 }
 $("refreshPropertyApprovals")?.addEventListener("click",loadPropertyApprovals);
-auth.onAuthStateChanged(user=>{if(user&&user.uid==="P46WrdzpVWVHVC4t6vqIOYcZfxC3")loadPropertyApprovals()});
+onAuthStateChanged(auth,user=>{if(user&&user.uid==="P46WrdzpVWVHVC4t6vqIOYcZfxC3")loadPropertyApprovals()});
