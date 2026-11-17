@@ -167,3 +167,26 @@ Before coding or enabling registration:
 - Exact property field schema, validation limits, and public/private address split.
 - File size/type limits, retention policy, and private document review process.
 - Notification method and operational handling for Owner Admin.
+
+
+## 11. Daybnb CRM module and approval location
+
+Daybnb is a dedicated module inside the existing central JameenGhar Owner Dashboard. The central dashboard shows a Daybnb entry card; opening it enters the Daybnb Dashboard. It is not a separate top-level admin dashboard and does not use a separate login or Firebase identity system.
+
+**Daybnb listing approval is performed inside the Daybnb Dashboard.** The Daybnb module contains its own queue and controls for reviewing owner submissions, approving/rejecting listings, and publishing/unpublishing approved listings. The same fixed JameenGhar Owner Admin identity and authorization apply; this is a module boundary in the UI, not a separate security authority.
+
+Recommended Daybnb CRM scope:
+- Overview and pending-listing queue
+- Daybnb owner records and owner-submitted listing details
+- Hourly, day-use, and overnight rates
+- Booking requests and booking status
+- Approve/reject with reason; publish/unpublish
+- Listing and booking history/audit information
+
+Owners use the shared Property Owner account/profile and can submit a Daybnb listing without waiting for separate manual account approval, subject to the required authentication, email/file checks. Their submission is pending and unpublished until reviewed. The owner-facing view shows only their own listings and status; it does not expose admin approval controls or other owners' data.
+
+Use the shared `/users/{uid}` identity (role `property_owner`) and keep Daybnb records in the Daybnb collections. Do not create a separate Daybnb login, duplicate owner account, or separate top-level admin. Normal sale/rent property CRM workflows remain separate from Daybnb booking operations.
+
+Daybnb public/private listing records must be tied to the authenticated owner UID. The current live Rules' Daybnb create paths do not yet enforce that binding; they must be reviewed and corrected before enabling owner submissions. Guest booking requests may remain unauthenticated as currently designed, with admin processing inside the Daybnb Dashboard.
+
+No live code, Firestore Rules, Firebase data, or hosting deployment is changed by this design note.
