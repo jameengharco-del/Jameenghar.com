@@ -103,9 +103,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
         <div class="field"><label for="regPhone">10-digit mobile number</label><input id="regPhone" type="tel" inputmode="numeric" autocomplete="tel" pattern="[0-9]{10}" maxlength="10" placeholder="e.g. 9876543210" required></div>
         <div class="field"><label for="regEmail">Email address</label><input id="regEmail" type="email" autocomplete="email" required></div>
         <div class="field"><label for="regPassword">Create password</label><input id="regPassword" type="password" minlength="6" autocomplete="new-password" required></div>
-        <button class="primary" type="button" id="registerButton" disabled>Registration coming soon</button>
+        <button class="primary" type="submit" id="registerButton">Create Property Owner Account</button>
       </form>
-      <div class="message info show">Registration is temporarily disabled. We are preparing the required Firestore security rules first, so no incomplete account will be created.</div>
+      <div id="registerMessage" class="message" role="status" aria-live="polite"></div>
       <p class="small">If you already have an account, use the Login tab. CRM accounts cannot be converted automatically to Property Owner accounts.</p>
     </section>
 
@@ -122,8 +122,17 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
           <button class="secondary" id="logoutButton" type="button">Logout</button>
         </div>
       </div>
+      <section id="phoneVerifyPanel" class="account" style="margin-top:16px">
+        <h3>Verify your mobile number</h3>
+        <p class="small">Property submission requires a verified Indian mobile number. Standard Firebase reCAPTCHA and SMS charges/quotas may apply; no OTP is sent until you request it.</p>
+        <div id="phoneRecaptcha"></div>
+        <button class="secondary" id="sendPhoneOtp" type="button">Send OTP to registered mobile</button>
+        <div class="field"><label for="phoneOtpCode">6-digit OTP</label><input id="phoneOtpCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="Enter SMS OTP"></div>
+        <button class="primary" id="confirmPhoneOtp" type="button">Verify mobile number</button>
+        <div id="phoneMessage" class="message" role="status" aria-live="polite"></div>
+      </section>
       <div id="accountMessage" class="message" role="status" aria-live="polite"></div>
-      <p class="small">Property submission and listing management will appear here after the security rules and upload workflow are implemented.</p>
+      <p class="small">After email and mobile verification, property submission will be enabled once the Owner-approved secure upload service and Firestore rules are deployed and tested. No listing is published automatically.</p>
     </section>
   </section>
 </main>
@@ -131,8 +140,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, reload } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, reload, RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
@@ -148,6 +157,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
+let phoneConfirmation = null;
+let phoneRecaptcha = null;
+let phoneLinkStarted = false;
+
 
 $("year").textContent = new Date().getFullYear();
 
@@ -174,6 +187,94 @@ function showTab(tab) {
 }
 $("loginTab").addEventListener("click", () => showTab("login"));
 $("registerTab").addEventListener("click", () => showTab("register"));
+
+
+$("registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = $("regName").value.trim();
+  const phone = $("regPhone").value.trim();
+  const email = $("regEmail").value.trim().toLowerCase();
+  const password = $("regPassword").value;
+  if (!/^[0-9]{10}$/.test(phone)) {
+    showMessage("registerMessage", "Enter a valid 10-digit Indian mobile number.", "error");
+    return;
+  }
+  const button = $("registerButton");
+  button.disabled = true;
+  button.textContent = "Creating account...";
+  try {
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(credential.user, { displayName: name });
+    await setDoc(doc(db, "users", credential.user.uid), {
+      uid: credential.user.uid, name, phone, email, role: "property_owner",
+      status: "pending", emailVerificationRequired: true, createdAt: serverTimestamp()
+    });
+    await sendEmailVerification(credential.user);
+    showMessage("registerMessage", "Account created. A verification link has been sent to your email. Complete email verification, then verify your mobile with OTP in the account screen. Your account remains pending Owner approval.", "success");
+    await renderAccount(credential.user);
+  } catch (error) {
+    showMessage("registerMessage", firebaseError(error), "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create Property Owner Account";
+  }
+});
+
+async function preparePhoneRecaptcha() {
+  if (phoneRecaptcha) return phoneRecaptcha;
+  phoneRecaptcha = new RecaptchaVerifier(auth, "phoneRecaptcha", { size: "invisible" });
+  await phoneRecaptcha.render();
+  return phoneRecaptcha;
+}
+$("sendPhoneOtp").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) { showMessage("phoneMessage", "Please sign in first.", "error"); return; }
+  try {
+    await reload(user);
+    if (!user.emailVerified) {
+      showMessage("phoneMessage", "Verify your email first, then request the mobile OTP.", "error");
+      return;
+    }
+    const profileSnap = await getDoc(doc(db, "users", user.uid));
+    if (!profileSnap.exists() || profileSnap.data().role !== "property_owner") {
+      showMessage("phoneMessage", "Only a Property Owner account can verify a mobile number here.", "error");
+      return;
+    }
+    const phone = String(profileSnap.data().phone || "");
+    if (!/^[0-9]{10}$/.test(phone)) throw new Error("Registered mobile number is invalid. Contact Owner support.");
+    const verifier = await preparePhoneRecaptcha();
+    phoneConfirmation = await linkWithPhoneNumber(user, "+91" + phone, verifier);
+    phoneLinkStarted = true;
+    showMessage("phoneMessage", "OTP sent to the registered mobile ending " + phone.slice(-4) + ". Enter the 6-digit code.", "success");
+  } catch (error) {
+    phoneRecaptcha?.clear();
+    phoneRecaptcha = null;
+    phoneConfirmation = null;
+    showMessage("phoneMessage", firebaseError(error), "error");
+  }
+});
+$("confirmPhoneOtp").addEventListener("click", async () => {
+  const code = $("phoneOtpCode").value.trim();
+  if (!phoneConfirmation || !phoneLinkStarted) {
+    showMessage("phoneMessage", "Request an OTP first.", "error");
+    return;
+  }
+  if (!/^[0-9]{6}$/.test(code)) {
+    showMessage("phoneMessage", "Enter the 6-digit SMS OTP.", "error");
+    return;
+  }
+  try {
+    await phoneConfirmation.confirm(code);
+    await reload(auth.currentUser);
+    await auth.currentUser.getIdToken(true);
+    phoneConfirmation = null;
+    phoneLinkStarted = false;
+    showMessage("phoneMessage", "Mobile number verified successfully. Your Property Owner account is still pending Owner approval.", "success");
+    await renderAccount(auth.currentUser);
+  } catch (error) {
+    showMessage("phoneMessage", firebaseError(error), "error");
+  }
+});
 
 function firebaseError(error) {
   const messages = {
@@ -260,8 +361,12 @@ async function renderAccount(user) {
       showMessage("accountMessage", "Please verify your email using the link sent to your inbox, then return here and refresh your status.", "info");
       return;
     }
-    $("accountStatus").textContent = "Email verified · Property Owner profile found.";
-    showMessage("accountMessage", "Your email is verified. Property submission is not active yet; it will be enabled after the security and document-upload workflow is ready.", "success");
+    const phoneVerified = Boolean(user.phoneNumber);
+    $("accountStatus").textContent = "Email verified · " + (phoneVerified ? "Mobile verified" : "Mobile verification pending") + " · Owner approval pending.";
+    $("phoneVerifyPanel").classList.toggle("hidden", phoneVerified);
+    showMessage("accountMessage", phoneVerified
+      ? "Your email and mobile are verified. Your account awaits Owner approval. Property submission will open after secure storage and rules are activated safely."
+      : "Your email is verified. Verify your registered mobile using the OTP section below. Property submission stays locked until security setup is complete.", phoneVerified ? "success" : "info");
   } catch (error) {
     $("accountStatus").textContent = "Could not check your profile.";
     showMessage("accountMessage", "Unable to read your profile. Please try again later.", "error");
