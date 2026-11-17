@@ -479,6 +479,35 @@ async function storageQuotaStatus(request, env) {
   });
 }
 
+
+async function adminListingFiles(request, url, env) {
+  if (!env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
+    return json({ error: "Private document access is not configured." }, 503);
+  }
+  const { token, claims } = await authenticate(request, env);
+  const profile = await getFirestoreDocument(env.FIREBASE_PROJECT_ID, token, `users/${claims.sub}`);
+  if (claims.sub !== env.OWNER_ADMIN_UID || profile?.role?.stringValue !== "admin") {
+    return json({ error: "Owner Admin access is required." }, 403);
+  }
+  const collectionName = url.searchParams.get("collection") || "";
+  const propertyId = url.searchParams.get("propertyId") || "";
+  if (!["properties", "daybnbProperties"].includes(collectionName) ||
+      !/^[A-Za-z0-9_-]{1,80}$/.test(propertyId)) {
+    return json({ error: "Invalid listing reference." }, 400);
+  }
+  const rows = await env.QUOTA_DB.prepare(
+    "SELECT object_key, object_kind, byte_size FROM storage_objects WHERE property_id = ? ORDER BY object_kind, object_key"
+  ).bind(`${collectionName}/${propertyId}`).all();
+  return json({
+    success: true,
+    files: (rows.results || []).map(row => ({
+      objectKey: row.object_key,
+      kind: row.object_kind,
+      sizeBytes: Number(row.byte_size || 0)
+    }))
+  });
+}
+
 async function publicPhoto(url, env) {
   if (env.ENABLE_UPLOADS !== "true" || !env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID) {
     return json({ error: "Public property photos are not enabled." }, 503);
@@ -552,6 +581,10 @@ async function handleRequest(request, env) {
     if (url.pathname === "/upload" && request.method === "POST") {
       try { return await upload(request, url, env); }
       catch (error) { return json({ error: error?.message || "Upload rejected." }, 403); }
+    }
+    if (url.pathname === "/admin/listing-files" && request.method === "GET") {
+      try { return await adminListingFiles(request, url, env); }
+      catch (error) { return json({ error: error?.message || "Could not list private property files." }, 503); }
     }
     if (url.pathname === "/storage/quota" && request.method === "GET") {
       try { return await storageQuotaStatus(request, env); }
