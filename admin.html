@@ -453,6 +453,11 @@ header{justify-content:center;text-align:center}
 </div><p id="privateFileStatus" class="small">Secure file access remains disabled until Worker deployment is approved.</p><div id="privateFileResults"></div>
 </section>
 
+<section class="card" id="jameenPropertyApprovals" style="margin:18px 0;padding:18px;border:1px solid #e4eae5;border-radius:12px">
+<h3 style="color:#064d2b">JameenGhar Property Verification & Publishing</h3>
+<p class="card-description">Review pending submissions, inspect private files, approve and publish separately.</p>
+<button id="refreshPropertyApprovals" class="secondary" type="button">Refresh Property Listings</button>
+<p id="propertyApprovalStatus" class="small">Loading property submissions…</p><div id="propertyApprovalList"></div></section>
 <h3>CRM User Approvals</h3>
 <div id="pendingUsers"></div>
 <button id="refreshUsers" class="secondary">Refresh Users</button>
@@ -2063,5 +2068,6 @@ message(error.message);
 
 </script>
 
+<script type="module" src="property-review.js"></script>
 </body>
 </html>
