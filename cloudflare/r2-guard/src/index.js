@@ -488,6 +488,82 @@ async function storageQuotaStatus(request, env) {
 }
 
 
+async function reconcileStorageInventory(request, env) {
+  if (!env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
+    return json({ error: "Read-only storage reconciliation requires the private R2 bucket, D1 ledger and Owner identity.", code: "RECONCILIATION_NOT_CONFIGURED" }, 503);
+  }
+  const { token, claims } = await authenticate(request, env);
+  const profile = await getFirestoreDocument(env.FIREBASE_PROJECT_ID, token, `users/${claims.sub}`);
+  if (claims.sub !== env.OWNER_ADMIN_UID || profile?.role?.stringValue !== "admin") {
+    return json({ error: "Owner Admin access is required." }, 403);
+  }
+
+  // Read-only, full-bucket paginated inventory. No object is deleted, copied or
+  // repaired automatically; any mismatch means uploads must remain disabled.
+  const bucketObjects = new Map();
+  let cursor;
+  do {
+    const page = await env.STORAGE.list({ limit: 1000, ...(cursor ? { cursor } : {}) });
+    for (const object of page.objects || []) {
+      bucketObjects.set(object.key, Number(object.size || 0));
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+    if (page.truncated && !cursor) throw new Error("R2 inventory pagination did not return a cursor; reconciliation aborted.");
+  } while (cursor);
+
+  const [stored, reserved] = await Promise.all([
+    env.QUOTA_DB.prepare("SELECT object_key, byte_size FROM storage_objects").all(),
+    env.QUOTA_DB.prepare("SELECT object_key, byte_size FROM upload_reservations").all()
+  ]);
+  const ledgerObjects = new Map((stored.results || []).map(row => [row.object_key, Number(row.byte_size || 0)]));
+  const reservations = reserved.results || [];
+  const missingFromR2 = [];
+  const missingFromLedger = [];
+  const sizeMismatches = [];
+
+  for (const [key, bytes] of ledgerObjects) {
+    if (!bucketObjects.has(key)) missingFromR2.push(key);
+    else if (bucketObjects.get(key) !== bytes) sizeMismatches.push(key);
+  }
+  for (const key of bucketObjects.keys()) {
+    if (!ledgerObjects.has(key)) missingFromLedger.push(key);
+  }
+
+  const r2Bytes = [...bucketObjects.values()].reduce((sum, bytes) => sum + bytes, 0);
+  const ledgerBytes = [...ledgerObjects.values()].reduce((sum, bytes) => sum + bytes, 0);
+  const reservedBytes = reservations.reduce((sum, row) => sum + Number(row.byte_size || 0), 0);
+  const matched = reservations.length === 0 && missingFromR2.length === 0 &&
+    missingFromLedger.length === 0 && sizeMismatches.length === 0 && r2Bytes === ledgerBytes;
+
+  return json({
+    success: true,
+    readOnly: true,
+    matched,
+    uploadsMustRemainDisabled: !matched,
+    bucketObjectCount: bucketObjects.size,
+    ledgerObjectCount: ledgerObjects.size,
+    pendingReservationCount: reservations.length,
+    r2Bytes,
+    ledgerBytes,
+    reservedBytes,
+    quotaWarningAtBytes: 8_000_000_000,
+    quotaStopAtBytes: 9_000_000_000,
+    withinNineGbStop: r2Bytes + reservedBytes < 9_000_000_000,
+    mismatchCounts: {
+      missingFromR2: missingFromR2.length,
+      missingFromLedger: missingFromLedger.length,
+      sizeMismatches: sizeMismatches.length,
+      pendingReservations: reservations.length
+    },
+    // Limit returned diagnostics to avoid oversized Owner responses.
+    examples: {
+      missingFromR2: missingFromR2.slice(0, 20),
+      missingFromLedger: missingFromLedger.slice(0, 20),
+      sizeMismatches: sizeMismatches.slice(0, 20)
+    }
+  });
+}
+
 async function adminListingFiles(request, url, env) {
   if (!env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
     return json({ error: "Private document access is not configured." }, 503);
@@ -589,6 +665,10 @@ async function handleRequest(request, env) {
     if (url.pathname === "/upload" && request.method === "POST") {
       try { return await upload(request, url, env); }
       catch (error) { return json({ error: error?.message || "Upload rejected." }, 403); }
+    }
+    if (url.pathname === "/admin/storage/reconcile" && request.method === "POST") {
+      try { return await reconcileStorageInventory(request, env); }
+      catch (error) { return json({ error: error?.message || "Storage reconciliation failed; uploads must remain disabled." }, 503); }
     }
     if (url.pathname === "/admin/listing-files" && request.method === "GET") {
       try { return await adminListingFiles(request, url, env); }
