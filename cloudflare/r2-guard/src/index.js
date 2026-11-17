@@ -154,6 +154,11 @@ async function paymentVerify(request, env) {
   if (!booking || await sha256Hex(accessToken) !== booking.fields.paymentAccessTokenHash) return json({ error: "Invalid booking access." }, 403);
   const row = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE booking_id=? AND provider_order_id=?").bind(bookingId, orderId).first();
   if (!row || row.state !== "created") return json({ error: "Payment order not found." }, 404);
+  if (Number(booking.fields.quoteVersion) !== Number(row.quote_version) ||
+      Number(booking.fields.totalAmountPaise) !== Number(row.amount_paise) ||
+      booking.fields.gatewayOrderId !== orderId) {
+    return json({ error: "This payment order belongs to an older quote and cannot confirm the current booking. Contact support before retrying." }, 409);
+  }
   if (!await verifyRazorpayCheckoutSignature({ orderId, paymentId, signature, keySecret: env.RAZORPAY_KEY_SECRET })) {
     return json({ error: "Payment signature verification failed." }, 400);
   }
@@ -195,7 +200,11 @@ async function paymentWebhook(request, env) {
     actualAmountPaise: payment.amount, expectedCurrency: row.currency, actualCurrency: payment.currency
   })) return json({ error: "Captured payment does not match expected booking amount." }, 409);
   const booking = await getAdminDocument(env, "daybnbBookings", row.booking_id);
-  if (!booking || booking.fields.gatewayOrderId !== payment.order_id) return json({ error: "Booking/order mismatch." }, 409);
+  if (!booking || booking.fields.gatewayOrderId !== payment.order_id ||
+      Number(booking.fields.quoteVersion) !== Number(row.quote_version) ||
+      Number(booking.fields.totalAmountPaise) !== Number(row.amount_paise)) {
+    return json({ error: "Booking/order/quote mismatch. Payment requires manual reconciliation." }, 409);
+  }
   await patchAdminDocument(env, "daybnbBookings", row.booking_id, {
     paymentStatus: "paid", bookingStage: "confirmed", status: "confirmed",
     gatewayPaymentId: payment.id, paidAt: new Date(), updatedAt: new Date()
