@@ -107,6 +107,10 @@ async function paymentCreateOrder(request, env) {
   const key = `${bookingId}:q${quoteVersion}`;
   const existing = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE idempotency_key = ?").bind(key).first();
   if (existing?.state === "created" && existing.provider_order_id) {
+    await patchAdminDocument(env, "daybnbBookings", bookingId, {
+      paymentStatus: "created", paymentProvider: "razorpay", gatewayOrderId: existing.provider_order_id,
+      paymentAmountPaise: existing.amount_paise, updatedAt: new Date()
+    });
     return json({ orderId: existing.provider_order_id, amount: existing.amount_paise, currency: existing.currency, keyId: env.RAZORPAY_KEY_ID, bookingId, quoteVersion });
   }
   if (existing?.state === "creating") return json({ error: "A payment order is already being prepared. Please wait and refresh." }, 409);
@@ -119,21 +123,25 @@ async function paymentCreateOrder(request, env) {
     const retry = await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='creating', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='failed'").bind(key).run();
     if (!retry.meta?.changes) return json({ error: "This payment order is already being retried. Please wait and refresh." }, 409);
   }
+  let order;
   try {
-    const order = await createRazorpayOrder({
+    order = await createRazorpayOrder({
       keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET,
       bookingId, quoteVersion, amountPaise, currency
     });
-    await env.QUOTA_DB.prepare("UPDATE payment_orders SET provider_order_id=?, state='created', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?").bind(order.id, key).run();
-    await patchAdminDocument(env, "daybnbBookings", bookingId, {
-      paymentStatus: "created", paymentProvider: "razorpay", gatewayOrderId: order.id,
-      paymentAmountPaise: amountPaise, updatedAt: new Date()
-    });
-    return json({ orderId: order.id, amount: amountPaise, currency, keyId: env.RAZORPAY_KEY_ID, bookingId, quoteVersion });
   } catch (error) {
     await env.QUOTA_DB.prepare("UPDATE payment_orders SET state='failed', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND state='creating'").bind(key).run();
     throw error;
   }
+  // Persist the provider order before updating Firestore. If Firestore is
+  // temporarily unavailable, the retry reuses this exact order instead of
+  // creating a second chargeable order.
+  await env.QUOTA_DB.prepare("UPDATE payment_orders SET provider_order_id=?, state='created', updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?").bind(order.id, key).run();
+  await patchAdminDocument(env, "daybnbBookings", bookingId, {
+    paymentStatus: "created", paymentProvider: "razorpay", gatewayOrderId: order.id,
+    paymentAmountPaise: amountPaise, updatedAt: new Date()
+  });
+  return json({ orderId: order.id, amount: amountPaise, currency, keyId: env.RAZORPAY_KEY_ID, bookingId, quoteVersion });
 }
 
 async function paymentVerify(request, env) {
