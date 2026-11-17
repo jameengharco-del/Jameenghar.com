@@ -65,6 +65,15 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Updated Owner Dashboard copy so quote approval is clearly not a charge and checkout is not live until deployment.
 - Combined GitHub Actions regression checks passed after payment-status endpoint and private checkout changes (runs #44129209262 and #44129179449). Latest Firestore-rule edit is awaiting its own CI result.
 
+### Latest Daybnb secure upload integration (2026-11-17)
+- Replaced external image-link fields in the safe-branch Daybnb owner form with real file inputs: cover photo, exactly three additional distinct photos, and one official PDF. Browser validates MIME, 20 MB maximum per file and SHA-256 duplicate-photo hashes.
+- Submission creates paired pending/unpublished public/private listing documents, then uploads sequentially to the staged Worker using the verified Firebase ID token. It calls `/finalize` with the selected photo keys only after the cover, three extra photos and private PDF upload.
+- Worker finalization verifies the selected four photo objects and a private PDF against the quota ledger, then writes R2 object keys to the Daybnb listing via server-side Firestore credentials. Listing remains pending and unpublished.
+- Added `GET /public-photo`, which serves only image objects belonging to Firestore listings with `status=approved` and `isPublished=true`. Private PDF documents are never served by this route. Daybnb gallery resolves stored object keys through this endpoint.
+- Added tests for public photo route default-off behavior and unsafe object-key rejection.
+- **Not live:** upload Worker URL constants remain blank, R2/D1 bindings and secrets are absent, `ENABLE_UPLOADS` remains off. The Daybnb upload form intentionally refuses to create a listing until the verified Worker endpoint is configured. No live storage upload has been made.
+- Main JameenGhar property-owner submission form still needs this secure upload integration. Daybnb actual Firebase/Cloudflare integration tests and admin private-document retrieval remain outstanding.
+
 ## Track C — Secure storage / zero-cost gate
 
 ### Implemented on safe branch (not deployed)
