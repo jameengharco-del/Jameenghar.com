@@ -32,11 +32,11 @@ function fakeD1({ stored = [], reserved = [] } = {}) {
           if (sql.includes("INSERT INTO upload_reservations")) {
             const used = state.stored.reduce((n,x)=>n+x.byte_size,0) +
               state.reserved.reduce((n,x)=>n+x.byte_size,0);
-            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, extra, limit, countProperty1, countKind1, maxCount1, countProperty2, countKind2, maxCount2] = args;
+            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, extra, limit, countProperty1, countKind1, countProperty2, countKind2, maxCount] = args;
             const existingCount = [...state.stored, ...state.reserved].filter(x =>
               x.property_id === property_id && x.object_kind === object_kind
             ).length;
-            if (used + extra >= limit || existingCount >= maxCount1 || existingCount >= maxCount2 ||
+            if (used + extra >= limit || existingCount >= maxCount ||
                 countProperty1 !== property_id || countProperty2 !== property_id ||
                 countKind1 !== object_kind || countKind2 !== object_kind ||
                 state.reserved.some(x=>x.reservation_id===reservation_id)) {
