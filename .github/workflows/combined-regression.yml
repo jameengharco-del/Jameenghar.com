@@ -13,6 +13,7 @@ on:
       - "daybnb-admin.html"
       - "daybnb-payment.html"
       - "property-owner.html"
+      - "property-review.js"
       - "firestore/**"
       - "cloudflare/r2-guard/**"
       - ".github/workflows/**"
@@ -51,7 +52,11 @@ jobs:
           from pathlib import Path
           import re
           import subprocess
-          files = ["crm.html", "admin.html", "daybnb.html", "daybnb-admin.html", "daybnb-payment.html", "property-owner.html", "property-review.js"]
+          files = ["crm.html", "admin.html", "daybnb.html", "daybnb-admin.html", "daybnb-payment.html", "property-owner.html"]
+          standalone = ["property-review.js"]
+          for filename in standalone:
+              subprocess.run(["node", "--check", filename], check=True)
+              print(f"Syntax OK: {filename}")
           for filename in files:
               html = Path(filename).read_text()
               scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.I | re.S)
