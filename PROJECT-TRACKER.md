@@ -47,9 +47,10 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added listing authorization for both `properties` and `daybnbProperties` collections.
 - Added a default-off `/finalize` endpoint that checks four distinct photos plus one private PDF against the quota ledger for the exact property owner.
 - Changed ambiguous R2 write failures to retain quota reservations until reconciliation; each reservation now stores its object key.
-- Added Firebase token parsing/fail-closed tests.
+- Added Firebase token parsing/fail-closed tests plus a generated RSA key test for valid/expired JWTs.
+- Added Firestore-mocked tests for owner isolation, verified email, pending/unpublished state, and Daybnb collection authorization.
 - Added an explicit `ENABLE_UPLOADS=true` gate; absent by default, so endpoints stay HTTP 503 even if bindings are later added accidentally.
-- Added Worker endpoint tests and GitHub Actions CI; quota/concurrency tests passed in run #6. Latest commit's CI still needs confirmation after documentation-only update.
+- Added Worker endpoint tests and GitHub Actions CI; latest authentication/owner-isolation test job completed its Node test step successfully (run #44110697503).
 - Added `ACTIVATION-CHECKLIST.md` documenting free-plan, account-wide usage, spending-limit scope, private bucket and fail-closed requirements.
 - Worker endpoints remain disabled (HTTP 503) unless the explicit gate is set; no R2 bucket or D1 database is bound and no Worker is deployed.
 
