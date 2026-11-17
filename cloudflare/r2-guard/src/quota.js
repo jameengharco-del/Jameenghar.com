@@ -26,7 +26,7 @@ export async function readQuota(db) {
   };
 }
 
-function propertyLimit(kind) { return kind === "photo" ? 4 : 1; }
+function propertyLimit(kind) { return kind === "photo" ? 10 : 1; }
 
 export async function reserveUpload(db, {
   reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize
