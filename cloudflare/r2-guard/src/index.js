@@ -383,23 +383,37 @@ async function finalizeListing(request, url, env) {
 
   const listingKey = `${propertyCollection}/${propertyId}`;
   const listingOwnerUid = authorization.propertyOwner || claims.sub;
+  const body = await request.json().catch(() => ({}));
+  const requestedCover = String(body.coverKey || "");
+  const requestedPhotos = Array.isArray(body.photoKeys) ? body.photoKeys.map(String) : [];
   const rows = await env.QUOTA_DB.prepare(
-    "SELECT object_kind, COUNT(*) AS file_count, COUNT(DISTINCT object_key) AS unique_count FROM storage_objects WHERE owner_uid = ? AND property_id = ? GROUP BY object_kind"
+    "SELECT object_key, object_kind, COUNT(*) AS file_count FROM storage_objects WHERE owner_uid = ? AND property_id = ? GROUP BY object_key, object_kind ORDER BY object_key"
   ).bind(listingOwnerUid, listingKey).all();
-  const counts = { photo: 0, document: 0 };
-  for (const row of rows.results || []) {
-    if (row.object_kind === "photo") counts.photo = Number(row.unique_count || 0);
-    if (row.object_kind === "document") counts.document = Number(row.unique_count || 0);
+  const ownedPhotos = new Set((rows.results || []).filter(row => row.object_kind === "photo").map(row => row.object_key));
+  const counts = { photo: ownedPhotos.size, document: (rows.results || []).filter(row => row.object_kind === "document").length };
+  const uniqueRequested = new Set([requestedCover, ...requestedPhotos]);
+  const selectedKeysValid = /^[A-Za-z0-9_\/-]{1,500}$/.test(requestedCover) &&
+    requestedPhotos.length === 3 && uniqueRequested.size === 4 &&
+    [...uniqueRequested].every(key => ownedPhotos.has(key));
+  const ready = counts.photo >= 4 && counts.document >= 1 && selectedKeysValid;
+  if (ready && propertyCollection === "daybnbProperties") {
+    await patchAdminDocument(env, "daybnbProperties", propertyId, {
+      coverImage: requestedCover,
+      imageUrls: requestedPhotos,
+      status: "pending",
+      isPublished: false,
+      storageVerifiedAt: new Date(),
+      updatedAt: new Date()
+    });
   }
-  const ready = counts.photo >= 4 && counts.document >= 1;
   return json({
     success: true,
     readyForOwnerReview: ready,
     required: { distinctPhotos: 4, privateOfficialPdf: 1 },
     uploaded: counts,
     message: ready
-      ? "Required files are present. The listing still needs Owner verification and approval before publication."
-      : "More files are required before this listing can be sent for Owner review."
+      ? "Required files are securely stored. The listing remains private and pending Owner review."
+      : "Four distinct selected photos and at least one private PDF are required before Owner review."
   }, ready ? 200 : 409);
 }
 
