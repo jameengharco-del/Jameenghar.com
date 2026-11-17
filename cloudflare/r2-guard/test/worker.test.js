@@ -129,3 +129,19 @@ test("private Daybnb payment status requires configured server-side Firebase cre
   assert.equal(response.status,503);
   assert.match((await response.json()).error,/not fully configured/i);
 });
+
+
+test("public photo delivery remains disabled until secure storage activation", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/public-photo?key=owners/u/daybnbProperties/p/photo/a"),{
+    STORAGE:{get(){throw new Error("must not be called")}},QUOTA_DB:{},FIREBASE_PROJECT_ID:"test-project"
+  });
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not enabled/i);
+});
+
+test("public photo route rejects missing or malformed object keys", async () => {
+  const response=await worker.fetch(new Request("https://guard.example/public-photo?key=../private.pdf"),{
+    ENABLE_UPLOADS:"true",STORAGE:{},QUOTA_DB:{prepare(){return {bind(){return this},async first(){return null}}}},FIREBASE_PROJECT_ID:"test-project"
+  });
+  assert.equal(response.status,400);
+});
