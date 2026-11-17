@@ -27,4 +27,6 @@ jobs:
           node-version: 22
       - name: Run R2 Guard unit tests
         working-directory: cloudflare/r2-guard
-        run: npm test
+        run: |
+          npm install --no-audit --no-fund
+          npm test
