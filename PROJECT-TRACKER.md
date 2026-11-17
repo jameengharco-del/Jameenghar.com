@@ -28,6 +28,14 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Pending/unpublished listing submission and admin approve/reject/publish controls.
 - Booking types normalized to `hourly`, `day`, `overnight`; guest booking remains public with Firestore validation.
 
+### Daybnb payment work — staged, not live
+- Updated new booking records with `currency=INR`, `paymentStatus=not_started`, payment/refund placeholders and `bookingStage=awaiting_owner_confirmation`.
+- Booking confirmation message now states that a secure payment link follows Owner availability/price confirmation; a request is not yet a confirmed reservation.
+- Added `DAYBNB-PAYMENT-ARCHITECTURE.md` covering Owner-confirmed quotes, integer paise, hosted checkout, server-side order creation, webhook/signature validation, idempotency, refunds and Owner payment reporting.
+- Added Razorpay checkout/webhook HMAC verification helpers and captured-INR amount checks with unit tests.
+- All `/payments/*` Worker endpoints return HTTP 503; payment processing is explicitly disabled. No gateway account, credentials, checkout or live charge is configured.
+- Initial India gateway recommendation: Razorpay Standard Checkout, subject to merchant KYC, current fee review and explicit Owner approval; provider adapter can be switched after comparison.
+
 ### Remaining Daybnb launch work
 1. Configure Firebase Phone provider, authorized domain, reCAPTCHA and test OTP on the actual domain.
 2. Run Firestore Emulator tests for signed-out, unverified, wrong-owner, verified-owner and Owner Admin access.
