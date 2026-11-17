@@ -42,6 +42,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added D1 quota-ledger schema for stored objects and pending upload reservations.
 - Added quota helper with 8 GB warning, 9 GB hard application stop, and 20 MB per-object maximum.
 - Added basic threshold tests.
+- Added `ACTIVATION-CHECKLIST.md` documenting free-plan, account-wide usage, spending-limit scope, private bucket and fail-closed requirements.
 - Worker endpoints remain disabled (HTTP 503); no R2 bucket or D1 database is bound.
 
 ### Must complete before any activation
