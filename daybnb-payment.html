@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Daybnb Booking & Payment | JameenGhar</title>
+<style>
+:root{--g:#064d2b;--o:#ff5a0a;--ink:#17251d;--muted:#64736a;--line:#e4eae5}*{box-sizing:border-box}body{margin:0;background:#f6f8f5;color:var(--ink);font-family:Arial,sans-serif}.wrap{max-width:620px;margin:45px auto;padding:18px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:25px;box-shadow:0 8px 28px #12331b0c}img{max-width:190px;max-height:65px;object-fit:contain}h1{color:var(--g)}.muted{color:var(--muted);font-size:14px;line-height:1.6}.status{padding:14px;background:#edf5ef;border-radius:10px;margin:16px 0;line-height:1.6}.warning{background:#fff4e5}.amount{font-size:30px;font-weight:800;color:var(--g)}button{background:var(--o);color:white;border:0;border-radius:9px;padding:14px 20px;font-weight:800;font-size:16px;cursor:pointer;width:100%}button:disabled{opacity:.5;cursor:not-allowed}a{color:var(--g)}
+</style></head><body><main class="wrap"><section class="card"><a href="daybnb.html"><img src="jameenghar-logo.png" alt="JameenGhar"></a><h1>Daybnb Booking Payment</h1><p class="muted">Secure booking checkout. Pay only after the property team confirms availability and the final amount.</p><div id="status" class="status">Checking your booking details…</div><div id="amount" class="amount"></div><button id="pay" disabled>Pay securely</button><p class="muted">Payments are processed by the payment gateway. JameenGhar does not collect or store card numbers, CVV, UPI PIN or OTP. Your booking is confirmed only after the gateway verifies successful payment.</p></section></main>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const PAYMENT_WORKER_URL = ""; // Set only after the Worker is deployed, verified and explicitly approved.
+const params=new URLSearchParams(location.search),bookingId=params.get("bookingId")||"",accessToken=params.get("token")||"";
+const statusEl=document.getElementById("status"),amountEl=document.getElementById("amount"),payBtn=document.getElementById("pay");
+const say=(text,warning=false)=>{statusEl.textContent=text;statusEl.className="status"+(warning?" warning":"")};
+if(!/^[A-Za-z0-9_-]{1,64}$/.test(bookingId)||!/^[a-f0-9]{64}$/.test(accessToken)){say("This private booking link is invalid. Please use the link shared when you submitted your booking.",true)}
+else if(!PAYMENT_WORKER_URL){say("Your private booking link is ready. Payment will appear here after the Owner approves the final price and the secure payment service is activated. No amount has been charged.",true)}
+else{say("Your booking is ready to check. Press Pay securely to request a payment order after Owner approval.");payBtn.disabled=false}
+payBtn.addEventListener("click",async()=>{
+ payBtn.disabled=true;
+ try{
+  const response=await fetch(PAYMENT_WORKER_URL.replace(/\/$/,"")+"/payments/create-order",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({bookingId,accessToken})});
+  const order=await response.json();if(!response.ok)throw new Error(order.error||"Payment order could not be prepared.");
+  amountEl.textContent="₹"+(order.amount/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const checkout=new Razorpay({key:order.keyId,amount:order.amount,currency:order.currency,name:"JameenGhar Daybnb",description:"Booking "+bookingId,order_id:order.orderId,handler:async result=>{
+   say("Payment received by gateway. Verifying securely…");
+   const verified=await fetch(PAYMENT_WORKER_URL.replace(/\/$/,"")+"/payments/verify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...result,bookingId,accessToken})});
+   const data=await verified.json();if(!verified.ok)throw new Error(data.error||"Payment verification is pending. Do not pay again; contact support with your booking reference.");
+   say("Payment verified successfully. Your Daybnb booking is confirmed. Booking reference: "+bookingId);
+   payBtn.textContent="Payment successful";payBtn.disabled=true;
+  },modal:{ondismiss:()=>{say("Checkout was closed. Your booking is not confirmed yet. You can reopen this private link and retry while the quote is valid.",true);payBtn.disabled=false}}});
+  checkout.on("payment.failed",failure=>{say("Payment did not complete: "+(failure.error?.description||"Please retry later."),true);payBtn.disabled=false});
+  checkout.open();
+ }catch(error){say(error.message,true);payBtn.disabled=false}
+});
+</script></body></html>
