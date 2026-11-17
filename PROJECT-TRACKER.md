@@ -19,6 +19,13 @@ Production branch: `main` (protected; do not change without explicit approval)
 4. Replace seller/landlord enquiry-only form with full verified property-owner submission while retaining existing enquiry capture until replacement passes tests.
 5. Enforce owner OTP, official document upload, minimum four property images, hidden address before approval, pending/unpublished status, and Owner-only approval.
 
+### CRM Owner email notification — staged, not live
+- Added a server-only Zoho Mail API sender using OAuth refresh-token flow. It sends from/to the official `owner@jameenghar.com` mailbox; OAuth secrets and account ID are Worker secrets, never browser code.
+- Added authenticated `POST /notifications/crm-lead-created`: Firebase ID token is verified, Worker re-reads the Firestore lead using server credentials, and only the original creator can request a notification for their own CRM lead. Successful sends are marked on the lead to avoid repeat notices.
+- CRM consultant lead creation now calls the staged endpoint when `CRM_NOTIFICATION_WORKER_URL` is configured; it never rolls back a saved lead if email delivery fails.
+- Zoho API OAuth and send-mail tests were added. Required Zoho OAuth scope: `ZohoMail.messages.CREATE` (or `ZohoMail.messages.ALL`). Account ID, client ID, client secret and refresh token still need to be added as Worker secrets. Worker is not deployed and the CRM Worker URL remains blank, so email delivery is not yet live.
+- API implementation follows Zoho's official India data-centre API docs: `https://mail.zoho.in/api/accounts/{accountId}/messages`.
+
 ## Track B — Daybnb
 
 ### Safe-branch code present
