@@ -156,3 +156,14 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Never publish Firestore Rules, change live Firebase data, activate R2/Workers, or merge to `main` without explicit approval.
 - Safe-branch code is not live functionality; do not claim otherwise.
 - Do not regress the existing JameenGhar CRM to deliver Daybnb.
+
+
+### ImageKit Free storage evaluation — approved for isolated testing (2026-11-18)
+- Owner selected ImageKit Forever Free as the next storage candidate to test instead of activating Cloudflare R2. No ImageKit account, storage, API key, upload, billing method, or production integration has been created/configured by this repository change.
+- Official published Free plan: $0/month; 3 GB DAM storage (fixed cap; new uploads stop at the cap); 20 GB bandwidth/month (media delivery stops at the cap and resets monthly); 2 users. The paid Lite tier is $9/month plus overages, so it must never be selected. No credit card is required to sign up according to ImageKit's official free-plan page.
+- Official docs support marking uploaded files private; original URL and unnamed transformations require signed URLs. This may support private title/ownership documents, but access-control behavior must be tested before using any real property document.
+- Test plan: create an ImageKit account only on Forever Free; verify account plan and absence of payment method; test a harmless dummy image and dummy PDF; test private PDF direct URL denial, valid short-lived signed URL, expiry/revocation behavior, and whether Free plan quota stops uploads/delivery without enabling paid overages; verify 2-user limit is adequate (Owner account only; no consultant seats).
+- Application-side safety remains stricter than provider caps: use a conservative local upload ceiling below 3 GB and bandwidth budget below 20 GB/month; fail closed before any upload if plan/usage status is unknown. Do not rely only on client-side quota checks.
+- No real owner IDs, land/property documents, identity proofs, or customer files may be uploaded during testing. Do not store ImageKit private API keys in GitHub, browser code, chat, or screenshots. Add credentials only as server-side secrets after the design and free-plan behavior pass review.
+- Existing Cloudflare R2 and D1 scaffold is retained but remains disabled and unbound. No R2 activation, paid checkout, Cloudflare resource, Worker deployment, Firebase rules change, or production merge is authorized by this evaluation.
+- Continue CRM enquiry/assignment/transfer tests and Daybnb payment/auth/upload work on `cloudflare-r2-safety`; preserve `main` and existing live website/CRM behavior.
