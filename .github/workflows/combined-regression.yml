@@ -38,7 +38,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run secure Worker and payment unit tests
+      - name: Run secure Worker, payment and email unit tests
         working-directory: cloudflare/r2-guard
         run: npm test
       - name: Syntax-check browser JavaScript modules
@@ -51,9 +51,9 @@ jobs:
           files = ["crm.html", "admin.html", "daybnb.html", "daybnb-admin.html", "daybnb-payment.html"]
           for filename in files:
               html = Path(filename).read_text()
-          scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.I | re.S)
+              scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, re.I | re.S)
               if not scripts:
-                  raise SystemExit(f'No script tags found in {filename}; refusing a vacuous syntax pass')
+                  raise SystemExit(f"No script tags found in {filename}; refusing a vacuous syntax pass")
               for index, script in enumerate(scripts):
                   if not script.strip():
                       continue
