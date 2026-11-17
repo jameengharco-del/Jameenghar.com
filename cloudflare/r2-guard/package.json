@@ -4,5 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test"
+  },
+  "devDependencies": {
+    "miniflare": "^4.20241106.0"
   }
 }
