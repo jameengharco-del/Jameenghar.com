@@ -396,10 +396,14 @@ async function finalizeListing(request, url, env) {
     requestedPhotos.length === 3 && uniqueRequested.size === 4 &&
     [...uniqueRequested].every(key => ownedPhotos.has(key));
   const ready = counts.photo >= 4 && counts.document >= 1 && selectedKeysValid;
-  if (ready && propertyCollection === "daybnbProperties") {
-    await patchAdminDocument(env, "daybnbProperties", propertyId, {
+  if (ready) {
+    await patchAdminDocument(env, propertyCollection, propertyId, {
       coverImage: requestedCover,
       imageUrls: requestedPhotos,
+      imageCount: 4,
+      documentUploaded: true,
+      documentsVerified: false,
+      verificationStatus: "pending",
       status: "pending",
       isPublished: false,
       storageVerifiedAt: new Date(),
@@ -436,9 +440,11 @@ async function download(request, url, env) {
     return getFirestoreDocument(env.FIREBASE_PROJECT_ID, token, `users/${claims.sub}`);
   })();
   const role = profile?.role?.stringValue;
+  const registeredPhone = profile?.phone?.stringValue || "";
+  const phoneVerified = /^[0-9]{10}$/.test(registeredPhone) && claims.phone_number === `+91${registeredPhone}`;
   const isAdmin = safeEqual(claims.sub, env.OWNER_ADMIN_UID) && role === "admin";
-  if (!isAdmin && (role !== "property_owner" || claims.email_verified !== true || record.owner_uid !== claims.sub)) {
-    return json({ error: "You are not allowed to access this file." }, 403);
+  if (!isAdmin && (role !== "property_owner" || claims.email_verified !== true || !phoneVerified || record.owner_uid !== claims.sub)) {
+    return json({ error: "Verified owner email, registered mobile and matching file ownership are required." }, 403);
   }
 
   const object = await env.STORAGE.get(objectKey);
