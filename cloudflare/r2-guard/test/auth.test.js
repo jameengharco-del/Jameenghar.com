@@ -90,7 +90,7 @@ function firestoreMock({ role = "property_owner", ownerUid = "owner-uid", status
     const path = new URL(url).pathname;
     let fields;
     if (path.endsWith("/users/owner-uid") || path.endsWith("/users/admin-uid")) {
-      fields = { role: { stringValue: path.endsWith("/admin-uid") ? "admin" : role } };
+      fields = { role: { stringValue: path.endsWith("/admin-uid") ? "admin" : role }, phone: { stringValue: "9876543210" } };
     } else if (path.endsWith("/properties/listing-1") || path.endsWith("/daybnbProperties/listing-1")) {
       fields = {
         ownerUid: { stringValue: ownerUid },
