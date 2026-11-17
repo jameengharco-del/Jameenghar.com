@@ -129,12 +129,12 @@ test("ambiguous reservations remain counted until reconciled", async () => {
 });
 
 
-test("each property is limited to four photos and one private document", async () => {
+test("each property allows four to ten photos and exactly one private document", async () => {
   const db=fakeD1();
-  for(let i=0;i<4;i++) {
+  for(let i=0;i<10;i++) {
     assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),true);
   }
-  assert.equal(await reserveUpload(db,{reservationId:"photo5",objectKey:"photo-key-5",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"photo11",objectKey:"photo-key-11",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),false);
   assert.equal(await reserveUpload(db,{reservationId:"doc1",objectKey:"doc-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),true);
   assert.equal(await reserveUpload(db,{reservationId:"doc2",objectKey:"doc-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),false);
   assert.equal(await reserveUpload(db,{reservationId:"other-photo",objectKey:"other-photo-key",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100}),true);
