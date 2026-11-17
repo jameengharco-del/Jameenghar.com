@@ -60,6 +60,9 @@ the live website, Firebase rules, production data, or the working CRM.
 - Payment routes are default-off and require the exact `PAYMENTS_ENABLED=true` switch,
   the server secrets and D1 binding. No gateway credentials, merchant account,
   D1 binding, Worker deployment or checkout activation is configured.
+- Added Owner-only GET `/admin/listing-files`: after Firebase ID-token verification and Owner UID + Firestore admin-role check, it returns only the file index for a validated property reference. The existing authenticated `/download` route streams the private PDF only to the exact Owner Admin or the verified owner UID. No public PDF route exists.
+- Added an Owner Dashboard panel to request a listing's private file index and open files through the authenticated private download endpoint. The Worker URL is blank by default, so the UI remains fail-closed until deployment is explicitly approved.
+- Added default-off/fail-closed tests for the Owner private file index.
 - Public photo delivery is staged and scoped to approved/published listings only;
   no public bucket URL or private document route is exposed.
 - A scheduled inventory reconciliation/repair workflow is not yet implemented.
@@ -89,8 +92,7 @@ unclear, leave uploads disabled.
 5. Integrate the staged finalize endpoint into both owner-facing forms and add a
    server-side, tested Firestore state transition to Owner review. Until that is
    complete, do not treat uploads as a submitted listing.
-6. Implement owner/admin-only private document access, plus approved/published
-   photo delivery without exposing private documents.
+6. Complete real Worker integration tests for the Owner-only private file index and authenticated PDF download, plus approved/published photo delivery without exposing private documents.
 7. Reconcile D1 ledger against actual R2 inventory and stop uploads on mismatch.
 8. Complete Firestore Emulator and Daybnb/CRM regression tests.
 9. Obtain explicit owner approval after the Cloudflare account cost review.
