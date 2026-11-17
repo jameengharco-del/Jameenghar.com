@@ -19,9 +19,9 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Still no real D1/R2/Firebase integration test or inventory reconciliation. The quota remains a D1 application guard, not a provider billing hard cap. Uploads remain disabled and no paid resource or production change has been made.
 
 ### JameenGhar owner listing + review flow — staged (2026-11-17)
-- Added the verified-owner property submission UI to `property-owner.html`: sale/rent, property type, Jaipur/locality, area, expected price, facing, details, cover + three to nine extra photos (4–10 total) and official PDF. Client validates MIME, 20 MB per file and four distinct SHA-256 photo hashes.
+- Added the verified-owner property submission UI to `property-owner.html`: sale/rent, property type, Jaipur/locality, area, expected price, facing, details, cover + three to nine extra photos (4–10 total) and official PDF. Client validates MIME, 20 MB per file and 4–10 distinct SHA-256 photo hashes; Worker also fingerprints uploads server-side and rejects duplicate photo bytes per property.
 - Submission is visible only after Firebase email and phone verification. It creates a pending/unpublished `properties/{id}` record with hidden address and empty file metadata; actual uploads call the secure Worker only when `PROPERTY_UPLOAD_WORKER_URL` is configured.
-- Worker finalization now writes the verified four-photo metadata for both `properties` and `daybnbProperties` using server credentials; private download requires matching registered +91 phone claim and file ownership.
+- Worker finalization now writes the verified 4–10-photo metadata for both `properties` and `daybnbProperties` using server credentials; private download requires matching registered +91 phone claim and file ownership.
 - Added proposed Firestore `validJameenGharProperty` create validation: exact allowed fields, verified owner email + registered mobile, owner UID, data bounds, pending/unpublished status, hidden address and empty initial upload metadata. Owner cannot edit/publish their own listing; only Owner Admin can update.
 - Added `property-review.js` and Owner Dashboard section: list unpublished submissions, approve only after manual file review, reject with reason, and publish separately only after document verification + four photos. This module is included in CI syntax checks.
 - **Still staged and NOT live:** Worker URL remains blank; R2/D1 bindings are absent; proposed Firestore rules are not deployed. Do not enable until ₹0 billing/resource review, real Firebase/D1/R2 integration tests, and quota reconciliation are completed. Browser form remains fail-closed until that point.
@@ -39,7 +39,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 2. Test Owner assignment → consultant view → follow-up/status → transfer → new assignee view → Owner Created Leads report.
 3. Implement secure notification to `owner@jameenghar.com` using a trusted server-side email service; never expose SMTP/API credentials in browser code.
 4. Replace seller/landlord enquiry-only form with full verified property-owner submission while retaining existing enquiry capture until replacement passes tests.
-5. Enforce owner OTP, official document upload, minimum four property images, hidden address before approval, pending/unpublished status, and Owner-only approval.
+5. Enforce owner OTP, official document upload, four to ten distinct property images, hidden address before approval, pending/unpublished status, and Owner-only approval.
 
 ### CRM Owner email notification — staged, not live
 - Added a server-only Zoho Mail API sender using OAuth refresh-token flow. It sends from/to the official `owner@jameenghar.com` mailbox; OAuth secrets and account ID are Worker secrets, never browser code.
@@ -88,7 +88,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Combined GitHub Actions regression checks passed after payment-status endpoint and private checkout changes (runs #44129209262 and #44129179449). Latest Firestore-rule edit is awaiting its own CI result.
 
 ### Latest Daybnb secure upload integration (2026-11-17)
-- Replaced external image-link fields in the safe-branch Daybnb owner form with real file inputs: cover photo, exactly three additional distinct photos, and one official PDF. Browser validates MIME, 20 MB maximum per file and SHA-256 duplicate-photo hashes.
+- Replaced external image-link fields in the safe-branch Daybnb owner form with real file inputs: cover photo, three to nine additional distinct photos (4–10 total), and one official PDF. Browser validates MIME, 20 MB maximum per file and SHA-256 duplicate-photo hashes.
 - Submission creates paired pending/unpublished public/private listing documents, then uploads sequentially to the staged Worker using the verified Firebase ID token. It calls `/finalize` with the selected photo keys only after the cover, three extra photos and private PDF upload.
 - Worker finalization verifies the selected four photo objects and a private PDF against the quota ledger, then writes R2 object keys to the Daybnb listing via server-side Firestore credentials. Listing remains pending and unpublished.
 - Added `GET /public-photo`, which serves only image objects belonging to Firestore listings with `status=approved` and `isPublished=true`. Private PDF documents are never served by this route. Daybnb gallery resolves stored object keys through this endpoint.
@@ -106,7 +106,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added staged Firebase ID-token verification and owner/property authorization module.
 - Added private upload/download route code with bounded 20 MB streaming body, MIME/signature checks, server-generated keys, and D1 reservation flow.
 - Added listing authorization for both `properties` and `daybnbProperties` collections.
-- Added a default-off `/finalize` endpoint that checks four distinct photos plus one private PDF against the quota ledger for the exact property owner.
+- Added a default-off `/finalize` endpoint that checks four to ten distinct photos plus exactly one private PDF against the quota ledger for the exact property owner.
 - Changed ambiguous R2 write failures to retain quota reservations until reconciliation; each reservation now stores its object key.
 - Added Firebase token parsing/fail-closed tests plus a generated RSA key test for valid/expired JWTs.
 - Added Firestore-mocked tests for owner isolation, verified email, pending/unpublished state, and Daybnb collection authorization.
