@@ -16,11 +16,16 @@ the live website, Firebase rules, production data, or the working CRM.
   Accepted photos: JPEG, PNG, WEBP. Accepted private documents: PDF.
 - Object keys are generated server-side under owner/property paths. Documents are
   served as private attachments; no public bucket URL is returned.
-- D1 quota reservation is made before R2 write. If R2 write fails, reservation is
-  released; if D1 finalization is uncertain, reservation is retained fail-closed.
+- D1 quota reservation is made before R2 write and stores the unique object key.
+  If R2 returns an ambiguous failure, the reservation is retained (not released)
+  until reconciliation proves whether the object exists. D1 finalization failure
+  also retains the reservation fail-closed.
 - **Explicit activation switch:** upload and download return HTTP 503 unless
   `ENABLE_UPLOADS` is exactly `true`. It is not set in `wrangler.toml`.
-- Added Worker tests for public health, default-off upload/download, and admin path.
+- Added Worker tests for public health and default-off upload/download/admin paths.
+- Added quota tests for exact 9 GB boundary, below-limit reservation, parallel
+  reservation pressure, ambiguous reservations, and reservation-to-object commit.
+- Added fail-closed Firebase token parsing tests.
 - The existing quota helper and D1 migration provide an 8 GB warning, 9 GB
   application stop, and 20 MB per-file limit.
 
