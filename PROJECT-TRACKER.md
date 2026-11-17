@@ -33,7 +33,8 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Booking confirmation message now states that a secure payment link follows Owner availability/price confirmation; a request is not yet a confirmed reservation.
 - Added `DAYBNB-PAYMENT-ARCHITECTURE.md` covering Owner-confirmed quotes, integer paise, hosted checkout, server-side order creation, webhook/signature validation, idempotency, refunds and Owner payment reporting.
 - Added Razorpay checkout/webhook HMAC verification helpers and captured-INR amount checks with unit tests.
-- All `/payments/*` Worker endpoints return HTTP 503; payment processing is explicitly disabled. No gateway account, credentials, checkout or live charge is configured.
+- All `/payments/*` Worker endpoints return HTTP 503; payment processing is explicitly disabled even if an accidental `ENABLE_PAYMENTS` flag is set. No gateway account, credentials, checkout or live charge is configured.
+- Added unit tests for valid/tampered checkout signatures, exact-raw-body webhook HMAC, captured INR amount/currency checks and payment route default-off behavior. GitHub Actions run #44114945249 passed.
 - Initial India gateway recommendation: Razorpay Standard Checkout, subject to merchant KYC, current fee review and explicit Owner approval; provider adapter can be switched after comparison.
 
 ### Remaining Daybnb launch work
