@@ -1899,7 +1899,7 @@ let notificationMessage="Owner email notification is pending Worker setup.";
 if(CRM_NOTIFICATION_WORKER_URL){
   try{
     const idToken=await user.getIdToken();
-    const notifyResponse=await fetch(CRM_NOTIFICATION_WORKER_URL.replace(/\\/$/,"")+"/notifications/crm-lead-created",{
+    const notifyResponse=await fetch((CRM_NOTIFICATION_WORKER_URL.endsWith("/")?CRM_NOTIFICATION_WORKER_URL.slice(0,-1):CRM_NOTIFICATION_WORKER_URL)+"/notifications/crm-lead-created",{
       method:"POST",
       headers:{"authorization":"Bearer "+idToken,"content-type":"application/json"},
       body:JSON.stringify({leadId:leadRef.id})
