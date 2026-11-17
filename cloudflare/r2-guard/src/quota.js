@@ -29,18 +29,19 @@ export async function readQuota(db) {
 function propertyLimit(kind) { return kind === "photo" ? 10 : 1; }
 
 export async function reserveUpload(db, {
-  reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize
+  reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize, contentSha256
 }) {
   if (!reservationId || !objectKey || !ownerUid || !propertyId) throw new Error("Missing reservation identity");
   if (!["photo", "document"].includes(objectKind)) throw new Error("Invalid object kind");
+  if (!/^[a-f0-9]{64}$/.test(contentSha256 || "")) throw new Error("Invalid file fingerprint");
   if (!Number.isSafeInteger(byteSize) || byteSize < 1 || byteSize > MAX_OBJECT_BYTES) {
     throw new Error("File size is outside the allowed limit");
   }
 
   const result = await db.prepare(`
     INSERT INTO upload_reservations
-      (reservation_id, object_key, owner_uid, property_id, object_kind, byte_size)
-    SELECT ?, ?, ?, ?, ?, ?
+      (reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, content_sha256)
+    SELECT ?, ?, ?, ?, ?, ?, ?
     WHERE
       (SELECT COALESCE(SUM(byte_size), 0) FROM storage_objects)
       + (SELECT COALESCE(SUM(byte_size), 0) FROM upload_reservations)
@@ -52,11 +53,16 @@ export async function reserveUpload(db, {
         SELECT COUNT(*) FROM upload_reservations
         WHERE property_id = ? AND object_kind = ?
       ) < ?
+      AND (? != 'photo' OR (
+        NOT EXISTS (SELECT 1 FROM storage_objects WHERE property_id = ? AND object_kind = 'photo' AND content_sha256 = ?)
+        AND NOT EXISTS (SELECT 1 FROM upload_reservations WHERE property_id = ? AND object_kind = 'photo' AND content_sha256 = ?)
+      ))
   `).bind(
-    reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize,
+    reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize, contentSha256,
     byteSize, HARD_STOP_BYTES,
     propertyId, objectKind,
-    propertyId, objectKind, propertyLimit(objectKind)
+    propertyId, objectKind, propertyLimit(objectKind),
+    objectKind, propertyId, contentSha256, propertyId, contentSha256
   ).run();
 
   return Number(result?.meta?.changes || 0) === 1;
@@ -65,7 +71,7 @@ export async function reserveUpload(db, {
 export async function commitUpload(db, { reservationId, objectKey }) {
   if (!reservationId || !objectKey) throw new Error("Missing commit identity");
   const reservation = await db.prepare(`
-    SELECT object_key, owner_uid, property_id, object_kind, byte_size
+    SELECT object_key, owner_uid, property_id, object_kind, byte_size, content_sha256
     FROM upload_reservations WHERE reservation_id = ?
   `).bind(reservationId).first();
 
@@ -75,11 +81,11 @@ export async function commitUpload(db, { reservationId, objectKey }) {
   const results = await db.batch([
     db.prepare(`
       INSERT INTO storage_objects
-        (object_key, owner_uid, property_id, object_kind, byte_size)
-      VALUES (?, ?, ?, ?, ?)
+        (object_key, owner_uid, property_id, object_kind, byte_size, content_sha256)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).bind(
       objectKey, reservation.owner_uid, reservation.property_id,
-      reservation.object_kind, reservation.byte_size
+      reservation.object_kind, reservation.byte_size, reservation.content_sha256
     ),
     db.prepare("DELETE FROM upload_reservations WHERE reservation_id = ?")
       .bind(reservationId)
