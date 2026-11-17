@@ -106,7 +106,7 @@ test("reservation is rejected when it would reach the 9 GB stop", async () => {
 
 test("reservation is accepted below 9 GB and included in usage", async () => {
   const db=fakeD1({stored:[{byte_size:HARD_STOP_BYTES-MAX_OBJECT_BYTES-1}]});
-  const ok=await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:MAX_OBJECT_BYTES});
+  const ok=await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"photo",byteSize:MAX_OBJECT_BYTES,contentSha256:"a".repeat(64)});
   assert.equal(ok,true);
   const quota=await readQuota(db);
   assert.equal(quota.totalBytes,HARD_STOP_BYTES-1);
@@ -133,9 +133,9 @@ test("ambiguous reservations remain counted until reconciled", async () => {
 test("each property allows four to ten photos and exactly one private document", async () => {
   const db=fakeD1();
   for(let i=0;i<10;i++) {
-    assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),true);
+    assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:String(i).padStart(64,"0")}),true);
   }
-  assert.equal(await reserveUpload(db,{reservationId:"photo11",objectKey:"photo-key-11",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"photo11",objectKey:"photo-key-11",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100,contentSha256:"f".repeat(64)}),false);
   assert.equal(await reserveUpload(db,{reservationId:"doc1",objectKey:"doc-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100,contentSha256:"a".repeat(64)}),true);
   assert.equal(await reserveUpload(db,{reservationId:"doc2",objectKey:"doc-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100,contentSha256:"a".repeat(64)}),false);
   assert.equal(await reserveUpload(db,{reservationId:"other-photo",objectKey:"other-photo-key",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100,contentSha256:"a".repeat(64)}),true);
