@@ -22,13 +22,13 @@ the live website, Firebase rules, production data, or the working CRM.
   If R2 returns an ambiguous failure, the reservation is retained (not released)
   until reconciliation proves whether the object exists. D1 finalization failure
   also retains the reservation fail-closed.
-- Added Owner-only GET `/storage/quota` to report the D1 ledger's 8 GB warning and 9 GB stop thresholds. It explicitly labels the report as ledger-only until reconciled with actual R2 inventory.
+- Added Owner-only GET `/storage/quota` to report the D1 ledger's 8 GB warning and 9 GB stop thresholds. It explicitly labels the report as ledger-only until reconciled with actual R2 inventory.\n- Added Owner-only POST `/admin/storage/reconcile`: read-only paginated R2 inventory vs D1 object-key/byte-size comparison, including pending reservations. Any missing, extra, size-mismatched or reserved object makes the result fail closed; it never deletes or repairs files.
 - Added POST `/finalize` to count four to ten distinct photo objects and exactly one
   private PDF for the exact owner/listing. It only reports readiness; Owner review
   and publication remain separate manual approval steps.
 - **Explicit activation switch:** upload, download and finalize return HTTP 503 unless
   `ENABLE_UPLOADS` is exactly `true`. It is not set in `wrangler.toml`.
-- Added Worker tests for public health and default-off upload/download/admin paths.
+- Added Worker tests for public health and default-off upload/download/admin paths. Latest combined regression run includes 56 passing Worker/unit tests, 8 passing Firebase Emulator security tests and browser syntax checks.
 - Added quota tests for exact 9 GB boundary, below-limit reservation, parallel
   reservation pressure, ambiguous reservations, and reservation-to-object commit.
 - Added fail-closed Firebase token parsing tests and generated-RSA-key JWT tests
