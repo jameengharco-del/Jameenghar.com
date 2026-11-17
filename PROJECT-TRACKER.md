@@ -9,7 +9,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 ### Existing flow to preserve
 - Website buyer, seller/landlord and home-loan enquiry forms write to Firestore `leads`.
 - Owner CRM has Created Leads reporting, assignment/reassignment/transfer, consultant follow-up/status and activity history.
-- Original consultant-created lead attribution remains visible to Owner after transfer; new assignee sees the lead as their assigned lead without prior consultant identity exposed.
+- Original consultant-created lead attribution remains visible to Owner after transfer; the original creator retains a read-only Created Leads record after transfer, while the new assignee sees the lead as a normal assigned lead without prior consultant identity exposed.
 - Existing JameenGhar logo and green/orange branding must remain.
 
 ### Remaining core work
@@ -35,7 +35,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Added Razorpay checkout/webhook HMAC verification helpers, captured-INR amount checks, server-only order-creation helper and strict integer-paise/quote-version validation with unit tests.
 - Locked commercial rule: ₹0 setup/monthly/subscription/AMC/minimum commitment, no paid add-ons or instant settlement. Recommended Razorpay Standard Gateway at published standard domestic 2% + GST per successful payment (premium methods may cost more); no live activation until merchant-specific terms are confirmed.
 - Cashfree limited 0% offer is not used as default: its current T&Cs show a new-signup cutoff already passed (31 July 2026), and Cashfree may charge ₹199 KYC where merchant has no valid GST registration.
-- All `/payments/*` Worker endpoints return HTTP 503; payment processing is explicitly disabled even if an accidental `ENABLE_PAYMENTS` flag is set. No gateway account, credentials, checkout or live charge is configured.
+- Server-side `/payments/create-order`, `/payments/verify` and `/payments/webhook` handlers are staged behind `PAYMENTS_ENABLED=true` and required secrets/D1 binding. No gateway account, credentials, D1 binding, Worker deployment or live charge is configured; the guest checkout page's Worker URL remains blank.
 - Added unit tests for valid/tampered checkout signatures, exact-raw-body webhook HMAC, captured INR amount/currency checks, payment route default-off behavior, integer-paise quote validation and server-side order payload/response validation. GitHub Actions run #44116566736 passed.
 - Initial India gateway recommendation: Razorpay Standard Checkout, subject to merchant KYC, current fee review and explicit Owner approval; provider adapter can be switched after comparison.
 
@@ -73,6 +73,11 @@ Production branch: `main` (protected; do not change without explicit approval)
 4. Review account-wide R2 usage, operation limits and any other Cloudflare resources; 9 GB app quota is not a provider billing hard cap.
 5. Confirm no paid add-ons, no automatic upgrades, and available account spending controls/alerts (including whether they cover R2).
 6. Keep uploads fail-closed on any quota/database/account uncertainty. Do not deploy until reviewed.
+
+### Latest combined progress (2026-11-17)
+- Corrected CRM consultant Created Leads behavior: a creator can still see their own originally created lead after Owner assignment/transfer, as a read-only creator record. Current assignee receives it in their New Leads/assigned queue; prior creator identity remains hidden from the receiving consultant. Activity history remains visible with prior consultant identities masked in the receiving consultant UI.
+- Updated the proposed Firestore rules to permit original creator read-only access to the lead and its activity history after transfer; consultant follow-up writes remain limited to current assigned owner/unassigned creator rules. Rules are proposed only and NOT published.
+- Added `.github/workflows/combined-regression.yml` to run Worker/payment unit tests and syntax-check CRM, Owner Dashboard, Daybnb and guest checkout browser scripts on safe-branch changes. CI result must be checked before treating this regression pass as complete.
 
 ## Work order — keep both tracks active
 1. Protect and test the core website enquiry + CRM assignment/transfer flow.
