@@ -31,7 +31,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 ### Remaining Daybnb launch work
 1. Configure Firebase Phone provider, authorized domain, reCAPTCHA and test OTP on the actual domain.
 2. Run Firestore Emulator tests for signed-out, unverified, wrong-owner, verified-owner and Owner Admin access.
-3. Implement trusted upload for required property images and official documents. Current form has no file-upload control/backend; URL fields alone do not verify files.
+3. Implement trusted upload for required property images and official documents. Current form has no file-upload control/backend; URL fields alone do not verify files.\n   - Progress: Daybnb now requires one cover photo plus at least three distinct additional photo URLs (four total) in the form and proposed Firestore validation. This is URL validation only, not secure upload or document verification.
 4. Enforce minimum four images and required official document before submission/approval.
 5. Test owner isolation, atomic paired writes, approval/rejection, publish/unpublish and guest bookings.
 
