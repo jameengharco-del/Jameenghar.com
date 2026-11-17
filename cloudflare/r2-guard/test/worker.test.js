@@ -168,3 +168,94 @@ test("Owner private listing-file index rejects requests without Owner credential
   }),{QUOTA_DB:{},FIREBASE_PROJECT_ID:"test-project",OWNER_ADMIN_UID:"owner-uid"});
   assert.equal(response.status,503);
 });
+
+import { webcrypto } from "node:crypto";
+
+async function makeAdminToken() {
+  const pair = await webcrypto.subtle.generateKey(
+    { name:"RSASSA-PKCS1-v1_5", modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:"SHA-256" },
+    true, ["sign","verify"]
+  );
+  const jwk = await webcrypto.subtle.exportKey("jwk", pair.publicKey);
+  jwk.kid = "reconcile-test-key";
+  jwk.alg = "RS256";
+  jwk.use = "sig";
+  const b64 = value => Buffer.from(typeof value === "string" ? value : JSON.stringify(value)).toString("base64url");
+  const now = Math.floor(Date.now()/1000);
+  const header = b64({alg:"RS256",kid:jwk.kid,typ:"JWT"});
+  const payload = b64({aud:"demo-jameenghar",iss:"https://securetoken.google.com/demo-jameenghar",sub:"owner-admin",email:"owner@jameenghar.com",email_verified:true,iat:now,auth_time:now,exp:now+3600});
+  const input = header+"."+payload;
+  const signature = await webcrypto.subtle.sign("RSASSA-PKCS1-v1_5",pair.privateKey,new TextEncoder().encode(input));
+  return {token:input+"."+Buffer.from(signature).toString("base64url"),jwk};
+}
+
+function reconciliationDb({stored,reserved=[]}) {
+  return {prepare(sql) {
+    return {bind() { return this; }, async all() {
+      return {results:sql.includes("upload_reservations")?reserved:stored};
+    }};
+  }};
+}
+
+test("Owner read-only R2/D1 reconciliation paginates and reports a clean exact inventory", async () => {
+  const {token,jwk}=await makeAdminToken();
+  const originalFetch=globalThis.fetch;
+  globalThis.fetch=async url => {
+    if(String(url).includes("securetoken@system.gserviceaccount.com")) return new Response(JSON.stringify({keys:[jwk]}),{headers:{"cache-control":"max-age=60"}});
+    if(String(url).includes("/documents/users/owner-admin")) return new Response(JSON.stringify({fields:{role:{stringValue:"admin"}}}));
+    throw new Error("Unexpected external request: "+url);
+  };
+  try {
+    let pages=0;
+    const env={
+      FIREBASE_PROJECT_ID:"demo-jameenghar",OWNER_ADMIN_UID:"owner-admin",
+      STORAGE:{async list(options={}) {
+        pages++;
+        if(!options.cursor) return {objects:[{key:"owners/a/photo/1",size:120}],truncated:true,cursor:"page-2"};
+        return {objects:[{key:"owners/a/document/1",size:80}],truncated:false};
+      }},
+      QUOTA_DB:reconciliationDb({stored:[
+        {object_key:"owners/a/photo/1",byte_size:120},
+        {object_key:"owners/a/document/1",byte_size:80}
+      ]})
+    };
+    const response=await worker.fetch(new Request("https://guard.example/admin/storage/reconcile",{
+      method:"POST",headers:{authorization:"Bearer "+token}
+    }),env);
+    assert.equal(response.status,200);
+    const body=await response.json();
+    assert.equal(pages,2);
+    assert.equal(body.readOnly,true);
+    assert.equal(body.matched,true);
+    assert.equal(body.uploadsMustRemainDisabled,false);
+    assert.equal(body.r2Bytes,200);
+    assert.equal(body.ledgerBytes,200);
+  } finally { globalThis.fetch=originalFetch; }
+});
+
+test("R2/D1 reconciliation fails closed and reports orphaned objects and reservations", async () => {
+  const {token,jwk}=await makeAdminToken();
+  const originalFetch=globalThis.fetch;
+  globalThis.fetch=async url => {
+    if(String(url).includes("securetoken@system.gserviceaccount.com")) return new Response(JSON.stringify({keys:[jwk]}),{headers:{"cache-control":"max-age=60"}});
+    if(String(url).includes("/documents/users/owner-admin")) return new Response(JSON.stringify({fields:{role:{stringValue:"admin"}}}));
+    throw new Error("Unexpected external request: "+url);
+  };
+  try {
+    const env={
+      FIREBASE_PROJECT_ID:"demo-jameenghar",OWNER_ADMIN_UID:"owner-admin",
+      STORAGE:{async list(){return {objects:[{key:"orphan-in-r2",size:500}],truncated:false};}},
+      QUOTA_DB:reconciliationDb({stored:[{object_key:"missing-in-r2",byte_size:300}],reserved:[{object_key:"pending",byte_size:100}]})
+    };
+    const response=await worker.fetch(new Request("https://guard.example/admin/storage/reconcile",{
+      method:"POST",headers:{authorization:"Bearer "+token}
+    }),env);
+    assert.equal(response.status,200);
+    const body=await response.json();
+    assert.equal(body.matched,false);
+    assert.equal(body.uploadsMustRemainDisabled,true);
+    assert.equal(body.mismatchCounts.missingFromR2,1);
+    assert.equal(body.mismatchCounts.missingFromLedger,1);
+    assert.equal(body.mismatchCounts.pendingReservations,1);
+  } finally { globalThis.fetch=originalFetch; }
+});
