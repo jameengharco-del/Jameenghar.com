@@ -57,7 +57,7 @@ the live website, Firebase rules, production data, or the working CRM.
 - Guest booking submissions now receive a random private access token; only its SHA-256 hash is stored on the booking. `daybnb-payment.html` is a guest checkout page scaffold; the Worker URL is intentionally blank until safe deployment.
 - Booking records now carry explicit payment lifecycle placeholders; server-side
   payment helpers verify Razorpay checkout/webhook HMACs and exact captured INR
-  amounts. These helpers are unit-tested but are not wired to a live gateway.
+  amounts. A mocked Worker end-to-end test covers order creation, idempotency,\n  captured-payment lookup and booking confirmation; no live gateway is connected.
 - Payment routes are default-off and require the exact `PAYMENTS_ENABLED=true` switch,
   the server secrets and D1 binding. No gateway credentials, merchant account,
   D1 binding, Worker deployment or checkout activation is configured.
@@ -70,7 +70,7 @@ the live website, Firebase rules, production data, or the working CRM.
   Before enabling uploads, implement an Owner-triggered, fail-closed inventory audit
   that compares every R2 object with the D1 ledger, includes incomplete reservations,
   and keeps uploads disabled on any mismatch. Never auto-delete unknown objects.
-- Admin deletion/reconciliation routes remain disabled.
+- Admin deletion routes remain disabled; the only reconciliation route is read-only.
 
 ## Cost guardrails
 
