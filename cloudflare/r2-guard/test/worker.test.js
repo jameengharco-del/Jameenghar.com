@@ -24,6 +24,19 @@ test("upload is denied by default even if storage bindings are accidentally pres
   assert.equal((await response.json()).code, "UPLOADS_DISABLED");
 });
 
+test("listing finalization is denied by default", async () => {
+  const response = await worker.fetch(new Request("https://guard.example/finalize?propertyId=listing123", {
+    method: "POST",
+    headers: { authorization: "Bearer invalid" }
+  }), {
+    QUOTA_DB: {},
+    FIREBASE_PROJECT_ID: "test-project",
+    OWNER_ADMIN_UID: "admin"
+  });
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).code, "UPLOADS_DISABLED");
+});
+
 test("download is denied by default", async () => {
   const response = await worker.fetch(new Request("https://guard.example/download?key=some-key"), {
     STORAGE: { get() { throw new Error("must never be called"); } },
