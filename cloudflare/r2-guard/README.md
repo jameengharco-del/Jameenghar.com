@@ -45,9 +45,10 @@ the live website, Firebase rules, production data, or the working CRM.
 - No Firebase project ID, Owner Admin UID, credentials, or secrets are configured.
 - The Worker routes have not yet been integration-tested against a real Firebase
   project, D1 database, or R2 bucket. Only default-off behavior has unit tests.
-- The finalize endpoint checks the inventory ledger for four to ten distinct photos and
-  one PDF. It has not yet been integrated into either owner-facing form, and does
-  not itself update the Firestore listing status or notify the Owner.
+- The finalize endpoint checks four to ten distinct photo objects and exactly one
+  private PDF. Both owner forms call upload + finalize, but their Worker URLs remain
+  blank and no real integration is live. Finalization keeps listings pending and
+  unpublished; Owner review and publication remain separate.
 - No file malware scanning or deep image/PDF content validation is included.
 - Daybnb payment architecture is documented in `DAYBNB-PAYMENT-ARCHITECTURE.md`.
 - Added server-side Firestore service-account REST access (`firestore-admin.js`) with short-lived signed OAuth assertions; private key is read only from Worker secrets and is not committed.
