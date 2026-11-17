@@ -181,3 +181,15 @@ Likewise, `documentsVerified` must only be changed by Admin/trusted server code,
 - `properties/test_property_001` currently shows `isPublished: true`, `status: "approved"`, `verificationStatus: "approved"`, but `imageCount: 0` and `documentsVerified: false`.
 - `agents/test_agent` currently shows `status: "pending"`, `verificationStatus: "pending"`, `isVerified: false`, while `approvedAt` has a timestamp.
 - These are existing test records, not evidence of a verified owner or valid uploaded files. Do not change them as part of this rules proposal.
+
+
+## Daybnb CRM module — approval and access clarification (2026-11-17)
+
+- Daybnb is a dedicated CRM module opened from the Daybnb card inside the central JameenGhar Owner Dashboard. It is not a separate top-level admin dashboard and has no separate login or Firebase identity system.
+- **All Daybnb listing review and approval actions take place inside the Daybnb Dashboard**: pending queue, approve/reject, rejection reason, publish/unpublish, owner listing details, rates, and booking management.
+- The same fixed JameenGhar Owner Admin UID remains the authority in Firestore Rules. A separate UI module does not imply separate admin permissions.
+- Daybnb owners use the shared authenticated owner identity/profile (`role: "property_owner"`). They can submit without waiting for a separate manual account approval, subject to required authentication, email verification, and trusted file validation. Their listing starts pending and unpublished.
+- Owners can read only their own Daybnb listing/private information and cannot approve, reject, publish, or unpublish.
+- Keep hourly, day-use, and overnight rates in the Daybnb listing workflow. Keep guest booking request creation public/unauthenticated as currently intended; booking administration is inside the Daybnb Dashboard.
+- **Security issue to fix before enabling this flow:** the supplied live Daybnb rules currently do not bind new public/private listing records to the authenticated owner's UID. Add ownerUid validation, immutable ownership, owner-scoped reads, strict field validation, and atomic public/private creation. Do not weaken existing guest booking validation.
+- This clarification is a proposal only. Do not publish Rules, alter live Firebase data, or deploy code without explicit approval.
