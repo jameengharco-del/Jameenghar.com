@@ -23,7 +23,7 @@ the live website, Firebase rules, production data, or the working CRM.
   until reconciliation proves whether the object exists. D1 finalization failure
   also retains the reservation fail-closed.
 - Added Owner-only GET `/storage/quota` to report the D1 ledger's 8 GB warning and 9 GB stop thresholds. It explicitly labels the report as ledger-only until reconciled with actual R2 inventory.
-- Added POST `/finalize` to count four distinct photo objects and at least one
+- Added POST `/finalize` to count four to ten distinct photo objects and exactly one
   private PDF for the exact owner/listing. It only reports readiness; Owner review
   and publication remain separate manual approval steps.
 - **Explicit activation switch:** upload, download and finalize return HTTP 503 unless
