@@ -12,9 +12,9 @@ async function getZohoAccessToken(env, fetchImpl = fetch) {
   url.searchParams.set("client_id", env.ZOHO_CLIENT_ID);
   url.searchParams.set("client_secret", env.ZOHO_CLIENT_SECRET);
   url.searchParams.set("grant_type", "refresh_token");
-  const response = await fetchImpl(url.toString(), { method: "POST" });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.access_token) throw new Error("Zoho Mail access token refresh failed");
+  const mailRoot = mailBase.endsWith("/") ? mailBase.slice(0, -1) : mailBase;
+  const response = await fetchImpl(
+    mailRoot + "/api/accounts/" + encodeURIComponent(env.ZOHO_ACCOUNT_ID) + "/messages",
   cachedAccessToken = body.access_token;
   cachedTokenExpiresAt = Date.now() + Math.max(60, Number(body.expires_in || 3600)) * 1000;
   return cachedAccessToken;
