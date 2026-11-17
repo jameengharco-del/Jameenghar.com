@@ -185,7 +185,7 @@ async function finalizeListing(request, url, env) {
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(propertyId)) return json({ error: "Invalid property ID." }, 400);
   if (!["properties", "daybnbProperties"].includes(propertyCollection)) return json({ error: "Invalid listing collection." }, 400);
 
-  await authorizeOwnerAndProperty({
+  const authorization = await authorizeOwnerAndProperty({
     projectId: env.FIREBASE_PROJECT_ID,
     token,
     claims,
@@ -195,9 +195,10 @@ async function finalizeListing(request, url, env) {
   });
 
   const listingKey = `${propertyCollection}/${propertyId}`;
+  const listingOwnerUid = authorization.propertyOwner || claims.sub;
   const rows = await env.QUOTA_DB.prepare(
     "SELECT object_kind, COUNT(*) AS file_count, COUNT(DISTINCT object_key) AS unique_count FROM storage_objects WHERE owner_uid = ? AND property_id = ? GROUP BY object_kind"
-  ).bind(claims.sub, listingKey).all();
+  ).bind(listingOwnerUid, listingKey).all();
   const counts = { photo: 0, document: 0 };
   for (const row of rows.results || []) {
     if (row.object_kind === "photo") counts.photo = Number(row.unique_count || 0);
