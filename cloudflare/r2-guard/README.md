@@ -59,8 +59,8 @@ the live website, Firebase rules, production data, or the working CRM.
 - Payment routes are default-off and require the exact `PAYMENTS_ENABLED=true` switch,
   the server secrets and D1 binding. No gateway credentials, merchant account,
   D1 binding, Worker deployment or checkout activation is configured.
-- No public photo delivery/CDN route exists; public exposure after approval still
-  needs a separate, carefully scoped implementation.
+- Public photo delivery is staged and scoped to approved/published listings only;
+  no public bucket URL or private document route is exposed.
 - A scheduled inventory reconciliation/repair workflow is not yet implemented.
 - Admin deletion/reconciliation routes remain disabled.
 
