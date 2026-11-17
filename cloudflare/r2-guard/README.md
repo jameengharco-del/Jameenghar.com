@@ -1,52 +1,67 @@
-# JameenGhar R2 Guard — staged rollout
+# JameenGhar R2 Guard — staged, zero-paid-service design
 
-This folder is an isolated scaffold on the `cloudflare-r2-safety` branch.
-It does not change the live website, Firebase rules, or the working CRM.
+This folder is isolated on `cloudflare-r2-safety`. It does not change the live website,
+Firebase rules, production data, or the working CRM.
 
-## Current status
+## Current implementation status
 
-- Worker scaffold only.
-- Upload, download, and admin storage endpoints return HTTP 503.
-- No R2 bucket is bound.
-- No files can be uploaded through this Worker.
-- No Firebase credentials, owner UID, or secrets are stored in this repository.
+- Worker remains a health-check-only scaffold.
+- `/upload`, `/download`, and `/admin` remain disabled and return HTTP 503.
+- No R2 bucket binding exists; no upload can occur through this Worker.
+- A D1 quota-ledger migration and atomic quota helper have been added, but are not
+  connected to the Worker and have not been deployed or integration-tested.
+- Quota constants: warning at 8,000,000,000 bytes; reject new reservations at
+  9,000,000,000 bytes; maximum object size 20,000,000 bytes.
+- D1 schema records stored objects and pending reservations. A reservation must
+  happen before any object write. A successful R2 write must be finalized in a
+  D1 transaction. Uncertain failures must keep the reservation until reconciled.
 
-## Why uploads are disabled
+## Cost guardrails
 
-Before enabling storage, the implementation must verify all of the following:
+The intended design uses Cloudflare Workers Free, D1 Free, and R2 Standard only.
+Current published free allowances include R2 Standard 10 GB-month, 1 million
+Class A requests/month, and 10 million Class B requests/month. D1 Free includes
+5 million rows read/day, 100,000 rows written/day, and 5 GB total storage.
+Workers Free includes 100,000 requests/day. These are usage allowances, not
+guarantees that the account cannot be charged.
 
-1. Firebase ID tokens against the correct Firebase project.
-2. The authenticated user's role and email-verification state.
-3. That the property belongs to that exact user.
-4. That the property is in an allowed pending state.
-5. At least four valid listing photos and the required private document.
-6. Private document access is limited to the owner and JameenGhar Owner Admin.
-7. Public photo delivery is allowed only after the listing is approved and published.
-8. Quota reservations are atomic and fail closed when limits are reached.
-9. Failed and abandoned uploads are reconciled safely.
-10. Tests cover forged IDs, cross-owner access, replay, oversized files, and quota races.
+The 9 GB application quota is deliberately below R2's 10 GB-month allowance.
+It is an application-level limit, NOT a provider-enforced billing cap. Other
+buckets, other applications, operations beyond free allowances, storage billing
+rounding, delayed metering, or changes to Cloudflare account settings may still
+cause charges. Never promise a guaranteed ₹0 bill from this guard alone.
 
-## Free-tier and billing warning
+Before any activation:
+1. Confirm the Cloudflare account is on Workers Free and has no paid add-ons.
+2. Confirm R2 Standard only and check the account-wide usage across all buckets.
+3. Configure the strongest available account spending controls/alerts and verify
+   their exact scope; do not assume a spending limit covers R2.
+4. Keep this bucket private. All writes must pass through the authenticated Worker.
+5. Verify the bucket is not writable by browser credentials, public APIs, or any
+   other Worker.
+6. Enforce 8 GB warning and 9 GB hard application stop using atomic reservations.
+7. Reconcile the ledger against actual R2 object inventory before reopening uploads.
+8. Test free-tier exhaustion paths: fail closed; never auto-upgrade or create paid
+   resources. If a free limit is reached, uploads stop until the free quota resets
+   or an Owner manually reviews the issue. Never prompt/perform an upgrade.
 
-Application-side quotas are a safety measure, not a Cloudflare billing hard cap.
-Cloudflare usage outside this Worker, metering delays, request patterns, and other
-account resources can still create charges. Do not activate paid R2 billing or
-deploy this scaffold on the assumption that it guarantees a zero bill.
+## Security work still required before enabling uploads
 
-The intended internal thresholds must remain below the published free allowances
-and must be reviewed against current Cloudflare pricing and Durable Objects limits
-before deployment. Keep a safety buffer; never configure the app to consume the
-entire advertised free allowance.
-
-## Next implementation stages
-
-1. Confirm Firebase Auth and Firestore ownership schema without changing existing CRM.
-2. Implement and test token verification and owner/admin authorization.
-3. Implement atomic quota accounting and reconciliation.
-4. Add a private R2 bucket binding and restricted upload/download routes.
-5. Test on the isolated branch and a non-production bucket.
-6. Only after explicit review, plan integration with the live property-owner flow.
+1. Verify Firebase ID tokens against the exact Firebase project.
+2. Require the correct verified owner role and validate the exact property owner.
+3. Enforce pending listing state, at least four image files, and required private
+   official property document.
+4. Keep documents private to that owner and Owner Admin; expose photos only after
+   approval and publication.
+5. Bind the private R2 bucket and D1 database only after tests pass.
+6. Implement upload size/content checks, unique server-generated object keys,
+   authorization, safe deletion, idempotency, and reconciliation.
+7. Add automated tests for forged tokens/IDs, cross-owner access, replay, file
+   size/type, quota boundary, simultaneous reservations, R2 failure, D1 failure,
+   and storage-ledger reconciliation.
 
 ## Deployment
 
-Do not deploy this scaffold. The storage routes are intentionally disabled.
+Do not deploy this scaffold or create/bind Cloudflare resources yet. Do not modify
+production Firestore rules or merge to `main`. The current implementation is
+preparatory code only; storage is not live.
