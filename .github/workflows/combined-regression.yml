@@ -12,6 +12,7 @@ on:
       - "daybnb.html"
       - "daybnb-admin.html"
       - "daybnb-payment.html"
+      - "property-owner.html"
       - "firestore/**"
       - "cloudflare/r2-guard/**"
       - ".github/workflows/**"
