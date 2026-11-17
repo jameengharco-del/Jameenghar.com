@@ -12,7 +12,9 @@ the live website, Firebase rules, production data, or the working CRM.
   status. The configured Owner Admin UID + admin role is separately recognized.
 - `src/index.js` now contains staged POST `/upload` and GET `/download` routes.
 - Uploads require bearer authentication, a pending property owned by the caller,
-  declared size <=20 MB, allowed MIME type and matching basic file signature.
+  a streamed body capped at 20 MB even when Content-Length is absent, allowed MIME
+  type and matching basic file signature. Supported listing collections are
+  JameenGhar `properties` and Daybnb `daybnbProperties`.
   Accepted photos: JPEG, PNG, WEBP. Accepted private documents: PDF.
 - Object keys are generated server-side under owner/property paths. Documents are
   served as private attachments; no public bucket URL is returned.
@@ -20,7 +22,10 @@ the live website, Firebase rules, production data, or the working CRM.
   If R2 returns an ambiguous failure, the reservation is retained (not released)
   until reconciliation proves whether the object exists. D1 finalization failure
   also retains the reservation fail-closed.
-- **Explicit activation switch:** upload and download return HTTP 503 unless
+- Added POST `/finalize` to count four distinct photo objects and at least one
+  private PDF for the exact owner/listing. It only reports readiness; Owner review
+  and publication remain separate manual approval steps.
+- **Explicit activation switch:** upload, download and finalize return HTTP 503 unless
   `ENABLE_UPLOADS` is exactly `true`. It is not set in `wrangler.toml`.
 - Added Worker tests for public health and default-off upload/download/admin paths.
 - Added quota tests for exact 9 GB boundary, below-limit reservation, parallel
@@ -35,9 +40,9 @@ the live website, Firebase rules, production data, or the working CRM.
 - No Firebase project ID, Owner Admin UID, credentials, or secrets are configured.
 - The Worker routes have not yet been integration-tested against a real Firebase
   project, D1 database, or R2 bucket. Only default-off behavior has unit tests.
-- Four distinct images and the required document are not yet enforced as a
-  complete listing-submission transaction. Uploading individual files is not
-  proof that the listing has the required complete set.
+- The finalize endpoint checks the inventory ledger for four distinct photos and
+  one PDF. It has not yet been integrated into either owner-facing form, and does
+  not itself update the Firestore listing status or notify the Owner.
 - No file malware scanning or deep image/PDF content validation is included.
 - No public photo delivery/CDN route exists; public exposure after approval still
   needs a separate, carefully scoped implementation.
@@ -65,9 +70,9 @@ unclear, leave uploads disabled.
    cross-owner property, non-pending and published listings.
 3. Ensure the D1 schema is applied to a new dedicated free-tier database only.
 4. Verify every R2 write path is exclusively this Worker; keep bucket private.
-5. Add a trusted listing-finalization endpoint that verifies four distinct image
-   objects plus one required private PDF and atomically marks listing ready for
-   Owner review. Until then, do not treat the uploads as a complete listing.
+5. Integrate the staged finalize endpoint into both owner-facing forms and add a
+   server-side, tested Firestore state transition to Owner review. Until that is
+   complete, do not treat uploads as a submitted listing.
 6. Implement owner/admin-only private document access, plus approved/published
    photo delivery without exposing private documents.
 7. Reconcile D1 ledger against actual R2 inventory and stop uploads on mismatch.
