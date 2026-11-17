@@ -56,8 +56,9 @@ the live website, Firebase rules, production data, or the working CRM.
 - Booking records now carry explicit payment lifecycle placeholders; server-side
   payment helpers verify Razorpay checkout/webhook HMACs and exact captured INR
   amounts. These helpers are unit-tested but are not wired to a live gateway.
-- All `/payments/*` routes return HTTP 503, even if an accidental enable flag is
-  present. No gateway credentials, merchant account or checkout are configured.
+- Payment routes are default-off and require the exact `PAYMENTS_ENABLED=true` switch,
+  the server secrets and D1 binding. No gateway credentials, merchant account,
+  D1 binding, Worker deployment or checkout activation is configured.
 - No public photo delivery/CDN route exists; public exposure after approval still
   needs a separate, carefully scoped implementation.
 - A scheduled inventory reconciliation/repair workflow is not yet implemented.
