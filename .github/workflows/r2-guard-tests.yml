@@ -1,0 +1,30 @@
+name: R2 Guard tests
+
+on:
+  push:
+    branches:
+      - cloudflare-r2-safety
+    paths:
+      - "cloudflare/r2-guard/**"
+      - ".github/workflows/r2-guard-tests.yml"
+  pull_request:
+    branches:
+      - cloudflare-r2-safety
+    paths:
+      - "cloudflare/r2-guard/**"
+      - ".github/workflows/r2-guard-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run R2 Guard unit tests
+        working-directory: cloudflare/r2-guard
+        run: npm test
