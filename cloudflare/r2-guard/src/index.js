@@ -75,6 +75,31 @@ async function readLimitedBody(request, maxBytes) {
   return bytes.buffer;
 }
 
+async function readLimitedBody(request, maxBytes) {
+  if (!request.body) throw new Error("File body is missing");
+  const reader = request.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel("File exceeds maximum size");
+        throw new Error("File exceeds the 20 MB upload limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes.buffer;
+}
+
 async function upload(request, url, env) {
   if (!env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID || !env.OWNER_ADMIN_UID) {
     return json({ error: "Secure storage is not configured; uploads remain closed." }, 503);
@@ -93,18 +118,20 @@ async function upload(request, url, env) {
     token,
     claims,
     propertyId,
+    propertyCollection,
     ownerAdminUid: env.OWNER_ADMIN_UID
   });
 
-  const declaredLength = Number(request.headers.get("content-length") || 0);
-  if (!Number.isSafeInteger(declaredLength) || declaredLength < 1 || declaredLength > MAX_OBJECT_BYTES) {
+  const declaredHeader = request.headers.get("content-length");
+  const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
+  if (declaredLength !== null && (!Number.isSafeInteger(declaredLength) || declaredLength < 1 || declaredLength > MAX_OBJECT_BYTES)) {
     return json({ error: "File must be between 1 byte and 20 MB." }, 413);
   }
   const contentType = (request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
   if (!allowedType(kind, contentType)) return json({ error: "Only JPG, PNG, WEBP photos and PDF documents are accepted." }, 415);
 
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength !== declaredLength || !hasValidMagic(kind, bytes, contentType)) {
+  const bytes = await readLimitedBody(request, MAX_OBJECT_BYTES);
+  if (bytes.byteLength < 1 || (declaredLength !== null && bytes.byteLength !== declaredLength) || !hasValidMagic(kind, bytes, contentType)) {
     return json({ error: "File content does not match its declared type or size." }, 415);
   }
 
