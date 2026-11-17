@@ -233,7 +233,13 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/health") {
-      return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false });
+      return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false, paymentsEnabled: false });
+    }
+    if (url.pathname.startsWith("/payments/")) {
+      return json({
+        error: "Daybnb payment checkout is not enabled. Provider setup, server-side order creation, webhook processing and end-to-end tests must be completed first.",
+        code: "PAYMENTS_DISABLED"
+      }, 503);
     }
     if (["/upload", "/download", "/finalize"].includes(url.pathname) && env.ENABLE_UPLOADS !== "true") {
       return json({ error: "Uploads are disabled until the Owner completes the zero-cost and security activation checklist.", code: "UPLOADS_DISABLED" }, 503);
