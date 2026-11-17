@@ -69,3 +69,23 @@ test("health response clearly reports payment processing is disabled", async () 
   const body = await response.json();
   assert.equal(body.paymentsEnabled, false);
 });
+
+
+test("payment create-order stays closed unless explicit enable switch and secrets are configured", async () => {
+  const response = await worker.fetch(new Request("https://guard.example/payments/create-order", {
+    method:"POST", headers:{"content-type":"application/json"},
+    body:JSON.stringify({bookingId:"booking123",accessToken:"a".repeat(64)})
+  }), { PAYMENTS_ENABLED:"true" });
+  assert.equal(response.status,503);
+  assert.match((await response.json()).error,/not fully configured/i);
+});
+
+test("payment verification and webhook stay disabled by default", async () => {
+  for (const path of ["/payments/verify","/payments/webhook"]) {
+    const response=await worker.fetch(new Request("https://guard.example"+path,{
+      method:"POST",headers:{"content-type":"application/json"},body:"{}"
+    }),{});
+    assert.equal(response.status,503);
+    assert.equal((await response.json()).code,"PAYMENTS_DISABLED");
+  }
+});
