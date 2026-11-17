@@ -11,6 +11,14 @@ Production branch: `main` (protected; do not change without explicit approval)
 - **Not activated/tested against live Firebase:** Firebase Phone provider, SMS region policy/quota, authorized domain and reCAPTCHA configuration must be checked in Console; actual OTP delivery can incur Firebase SMS charges or require billing. Do not send test OTP or enable the provider until the Owner confirms the potential charge/plan impact.
 - Firestore proposed rules are still not deployed. Registration is staged on `cloudflare-r2-safety`; preserve live CRM/production rules. Next: test email registration and phone linking in Firebase Emulator / a controlled test project, then implement the JameenGhar listing form and secure upload only after the free-cost gate passes.
 
+### JameenGhar owner listing + review flow — staged (2026-11-17)
+- Added the verified-owner property submission UI to `property-owner.html`: sale/rent, property type, Jaipur/locality, area, expected price, facing, details, cover + exactly three extra photos and official PDF. Client validates MIME, 20 MB per file and four distinct SHA-256 photo hashes.
+- Submission is visible only after Firebase email and phone verification. It creates a pending/unpublished `properties/{id}` record with hidden address and empty file metadata; actual uploads call the secure Worker only when `PROPERTY_UPLOAD_WORKER_URL` is configured.
+- Worker finalization now writes the verified four-photo metadata for both `properties` and `daybnbProperties` using server credentials; private download requires matching registered +91 phone claim and file ownership.
+- Added proposed Firestore `validJameenGharProperty` create validation: exact allowed fields, verified owner email + registered mobile, owner UID, data bounds, pending/unpublished status, hidden address and empty initial upload metadata. Owner cannot edit/publish their own listing; only Owner Admin can update.
+- Added `property-review.js` and Owner Dashboard section: list unpublished submissions, approve only after manual file review, reject with reason, and publish separately only after document verification + four photos. This module is included in CI syntax checks.
+- **Still staged and NOT live:** Worker URL remains blank; R2/D1 bindings are absent; proposed Firestore rules are not deployed. Do not enable until ₹0 billing/resource review, real Firebase/D1/R2 integration tests, and quota reconciliation are completed. Browser form remains fail-closed until that point.
+
 ## Track A — Core JameenGhar
 
 ### Existing flow to preserve
