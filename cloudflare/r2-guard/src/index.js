@@ -410,11 +410,14 @@ async function download(request, url, env) {
   });
 }
 
-export default {
-  async fetch(request, env) {
+async function handleRequest(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/health") {
-      return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false, paymentsEnabled: false });
+      return json({ service: "jameenghar-r2-guard", status: "secure-upload-staged", uploadsEnabled: false, paymentsEnabled: false, crmNotifications: "staged" });
+    }
+    if (url.pathname === "/notifications/crm-lead-created" && request.method === "POST") {
+      try { return await notifyCrmLeadCreated(request, env); }
+      catch (error) { return json({ error: error?.message || "Owner notification failed." }, 503); }
     }
     if (url.pathname === "/payments/create-order" && request.method === "POST") {
       try { return await paymentCreateOrder(request, env); }
@@ -450,5 +453,24 @@ export default {
       return json({ error: "Admin storage operations are not enabled." }, 503);
     }
     return json({ error: "Not found." }, 404);
+}
+
+export default {
+  async fetch(request, env) {
+    const origin = request.headers.get("origin") || "";
+    const allowedOrigins = new Set(["https://jameenghar.com", "https://www.jameenghar.com"]);
+    const headers = new Headers({
+      "access-control-allow-methods": "GET, POST, OPTIONS",
+      "access-control-allow-headers": "authorization, content-type, x-razorpay-signature, x-razorpay-event-id",
+      "access-control-max-age": "86400",
+      "vary": "Origin"
+    });
+    if (allowedOrigins.has(origin)) headers.set("access-control-allow-origin", origin);
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+    const response = await handleRequest(request, env);
+    const merged = new Headers(response.headers);
+    for (const [key, value] of headers.entries()) merged.set(key, value);
+    if (allowedOrigins.has(origin)) merged.set("access-control-allow-origin", origin);
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers: merged });
   }
 };
