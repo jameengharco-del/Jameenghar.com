@@ -32,8 +32,14 @@ function fakeD1({ stored = [], reserved = [] } = {}) {
           if (sql.includes("INSERT INTO upload_reservations")) {
             const used = state.stored.reduce((n,x)=>n+x.byte_size,0) +
               state.reserved.reduce((n,x)=>n+x.byte_size,0);
-            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, extra, limit] = args;
-            if (used + extra >= limit || state.reserved.some(x=>x.reservation_id===reservation_id)) {
+            const [reservation_id, object_key, owner_uid, property_id, object_kind, byte_size, extra, limit, countProperty1, countKind1, maxCount1, countProperty2, countKind2, maxCount2] = args;
+            const existingCount = [...state.stored, ...state.reserved].filter(x =>
+              x.property_id === property_id && x.object_kind === object_kind
+            ).length;
+            if (used + extra >= limit || existingCount >= maxCount1 || existingCount >= maxCount2 ||
+                countProperty1 !== property_id || countProperty2 !== property_id ||
+                countKind1 !== object_kind || countKind2 !== object_kind ||
+                state.reserved.some(x=>x.reservation_id===reservation_id)) {
               return { meta: { changes: 0 } };
             }
             state.reserved.push({ reservation_id, object_key, owner_uid, property_id, object_kind, byte_size });
@@ -120,6 +126,18 @@ test("ambiguous reservations remain counted until reconciled", async () => {
   const db=fakeD1();
   assert.equal(await reserveUpload(db,{reservationId:"r1",objectKey:"k1",ownerUid:"u1",propertyId:"p1",objectKind:"document",byteSize:1024}),true);
   assert.equal((await readQuota(db)).reservedBytes,1024);
+});
+
+
+test("each property is limited to four photos and one private document", async () => {
+  const db=fakeD1();
+  for(let i=0;i<4;i++) {
+    assert.equal(await reserveUpload(db,{reservationId:"photo"+i,objectKey:"photo-key-"+i,ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),true);
+  }
+  assert.equal(await reserveUpload(db,{reservationId:"photo5",objectKey:"photo-key-5",ownerUid:"u1",propertyId:"properties/p1",objectKind:"photo",byteSize:100}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"doc1",objectKey:"doc-key-1",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),true);
+  assert.equal(await reserveUpload(db,{reservationId:"doc2",objectKey:"doc-key-2",ownerUid:"u1",propertyId:"properties/p1",objectKind:"document",byteSize:100}),false);
+  assert.equal(await reserveUpload(db,{reservationId:"other-photo",objectKey:"other-photo-key",ownerUid:"u1",propertyId:"properties/p2",objectKind:"photo",byteSize:100}),true);
 });
 
 test("commit transfers bytes from reservation to stored object", async () => {
