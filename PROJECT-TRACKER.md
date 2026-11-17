@@ -32,7 +32,9 @@ Production branch: `main` (protected; do not change without explicit approval)
 - Updated new booking records with `currency=INR`, `paymentStatus=not_started`, payment/refund placeholders and `bookingStage=awaiting_owner_confirmation`.
 - Booking confirmation message now states that a secure payment link follows Owner availability/price confirmation; a request is not yet a confirmed reservation.
 - Added `DAYBNB-PAYMENT-ARCHITECTURE.md` covering Owner-confirmed quotes, integer paise, hosted checkout, server-side order creation, webhook/signature validation, idempotency, refunds and Owner payment reporting.
-- Added Razorpay checkout/webhook HMAC verification helpers and captured-INR amount checks with unit tests.
+- Added Razorpay checkout/webhook HMAC verification helpers, captured-INR amount checks, server-only order-creation helper and strict integer-paise/quote-version validation with unit tests.
+- Locked commercial rule: ₹0 setup/monthly/subscription/AMC/minimum commitment, no paid add-ons or instant settlement. Recommended Razorpay Standard Gateway at published standard domestic 2% + GST per successful payment (premium methods may cost more); no live activation until merchant-specific terms are confirmed.
+- Cashfree limited 0% offer is not used as default: its current T&Cs show a new-signup cutoff already passed (31 July 2026), and Cashfree may charge ₹199 KYC where merchant has no valid GST registration.
 - All `/payments/*` Worker endpoints return HTTP 503; payment processing is explicitly disabled even if an accidental `ENABLE_PAYMENTS` flag is set. No gateway account, credentials, checkout or live charge is configured.
 - Added unit tests for valid/tampered checkout signatures, exact-raw-body webhook HMAC, captured INR amount/currency checks and payment route default-off behavior. GitHub Actions run #44114945249 passed.
 - Initial India gateway recommendation: Razorpay Standard Checkout, subject to merchant KYC, current fee review and explicit Owner approval; provider adapter can be switched after comparison.
