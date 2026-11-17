@@ -169,7 +169,8 @@ test("Owner private listing-file index rejects requests without Owner credential
   assert.equal(response.status,503);
 });
 
-import { webcrypto } from "node:crypto";
+import { webcrypto, createHmac } from "node:crypto";
+import { sha256Hex } from "../src/payments.js";
 
 let reconciliationKeyMaterial;
 async function makeAdminToken(uid = "owner-admin") {
@@ -307,4 +308,107 @@ test("CRM lead notification route authenticates creator and sends escaped Owner 
     assert.match(mail.content,/&lt;Buyer&gt;/);
     assert.ok(calls.some(x=>x.options.method==="PATCH"&&x.url.includes("/documents/leads/lead_123")));
   } finally { globalThis.fetch=originalFetch; }
+});
+
+test("Daybnb booking checkout creates one idempotent order and confirms only captured exact INR payment", async () => {
+  const accessToken="b".repeat(64);
+  const tokenHash=await sha256Hex(accessToken);
+  const servicePair=await webcrypto.subtle.generateKey(
+    {name:"RSASSA-PKCS1-v1_5",modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:"SHA-256"},
+    true,["sign","verify"]
+  );
+  const der=new Uint8Array(await webcrypto.subtle.exportKey("pkcs8",servicePair.privateKey));
+  let binary="";for(const byte of der)binary+=String.fromCharCode(byte);
+  const pem="-----BEGIN PRIVATE KEY-----\\n"+Buffer.from(binary,"binary").toString("base64").match(/.{1,64}/g).join("\\n")+"\\n-----END PRIVATE KEY-----";
+  const booking={
+    paymentAccessTokenHash:tokenHash,bookingStage:"awaiting_payment",paymentStatus:"ready_for_checkout",
+    quoteExpiresAt:new Date(Date.now()+60*60*1000).toISOString(),quoteVersion:1,
+    totalAmountPaise:125000,currency:"INR",gatewayOrderId:null
+  };
+  const toFirestore=value=>{
+    if(value===null)return {nullValue:null};
+    if(typeof value==="number")return {integerValue:String(value)};
+    if(typeof value==="boolean")return {booleanValue:value};
+    return {stringValue:String(value)};
+  };
+  const fromFirestore=value=>value.stringValue??(value.integerValue!==undefined?Number(value.integerValue):value.booleanValue??(value.nullValue===null?null:undefined));
+  let orderRow=null;
+  const db={prepare(sql){
+    let args=[];
+    return {bind(...values){args=values;return this;},
+      async first(){
+        if(sql.includes("WHERE idempotency_key"))return orderRow;
+        if(sql.includes("WHERE booking_id")&&orderRow?.booking_id===args[0]&&orderRow?.provider_order_id===args[1])return orderRow;
+        return null;
+      },
+      async run(){
+        if(sql.startsWith("INSERT OR IGNORE INTO payment_orders")){
+          if(orderRow)return {meta:{changes:0}};
+          orderRow={idempotency_key:args[0],booking_id:args[1],quote_version:args[2],amount_paise:args[3],currency:args[4],guest_token_hash:args[5],state:"creating"};
+          return {meta:{changes:1}};
+        }
+        if(sql.startsWith("UPDATE payment_orders SET provider_order_id")){
+          orderRow.provider_order_id=args[0];orderRow.state="created";return {meta:{changes:1}};
+        }
+        if(sql.startsWith("UPDATE payment_orders SET state='paid'")){
+          orderRow.state="paid";return {meta:{changes:1}};
+        }
+        return {meta:{changes:1}};
+      }
+    };
+  }};
+  const originalFetch=globalThis.fetch;
+  const calls=[];
+  globalThis.fetch=async (url,options={})=>{
+    const target=String(url);calls.push({url:target,options});
+    if(target==="https://oauth2.googleapis.com/token")return new Response(JSON.stringify({access_token:"firebase-admin-token",expires_in:3600}));
+    if(target.includes("/documents/daybnbBookings/booking_123")&&options.method==="PATCH"){
+      const fields=JSON.parse(options.body).fields;
+      for(const [key,value] of Object.entries(fields))booking[key]=fromFirestore(value);
+      return new Response(JSON.stringify({name:"booking_123"}));
+    }
+    if(target.includes("/documents/daybnbBookings/booking_123")){
+      return new Response(JSON.stringify({fields:Object.fromEntries(Object.entries(booking).map(([k,v])=>[k,toFirestore(v)]))}));
+    }
+    if(target==="https://api.razorpay.com/v1/orders"&&options.method==="POST"){
+      const body=JSON.parse(options.body);
+      return new Response(JSON.stringify({id:"order_test_daybnb",amount:body.amount,currency:body.currency,receipt:body.receipt}));
+    }
+    if(target==="https://api.razorpay.com/v1/payments/pay_test_daybnb"){
+      return new Response(JSON.stringify({id:"pay_test_daybnb",order_id:"order_test_daybnb",amount:125000,currency:"INR",status:"captured"}));
+    }
+    throw new Error("Unexpected mocked request: "+target);
+  };
+  try{
+    const env={
+      PAYMENTS_ENABLED:"true",QUOTA_DB:db,FIREBASE_PROJECT_ID:"demo-jameenghar",
+      FIREBASE_CLIENT_EMAIL:"firebase-admin@demo-jameenghar.iam.gserviceaccount.com",FIREBASE_PRIVATE_KEY:pem,
+      RAZORPAY_KEY_ID:"rzp_test_key",RAZORPAY_KEY_SECRET:"rzp_test_secret"
+    };
+    const createResponse=await worker.fetch(new Request("https://guard.example/payments/create-order",{
+      method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({bookingId:"booking_123",accessToken})
+    }),env);
+    assert.equal(createResponse.status,200);
+    const created=await createResponse.json();
+    assert.equal(created.orderId,"order_test_daybnb");
+    assert.equal(created.amount,125000);
+    assert.equal(orderRow.state,"created");
+    assert.equal(booking.paymentStatus,"created");
+
+    const signature=createHmac("sha256","rzp_test_secret").update("order_test_daybnb|pay_test_daybnb").digest("hex");
+    const verifyResponse=await worker.fetch(new Request("https://guard.example/payments/verify",{
+      method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({bookingId:"booking_123",accessToken,razorpay_order_id:"order_test_daybnb",razorpay_payment_id:"pay_test_daybnb",razorpay_signature:signature})
+    }),env);
+    assert.equal(verifyResponse.status,200);
+    const verified=await verifyResponse.json();
+    assert.equal(verified.paymentStatus,"paid");
+    assert.equal(verified.bookingStage,"confirmed");
+    assert.equal(orderRow.state,"paid");
+    assert.equal(booking.paymentStatus,"paid");
+    assert.equal(booking.bookingStage,"confirmed");
+    assert.ok(calls.some(x=>x.url==="https://api.razorpay.com/v1/orders"));
+    assert.ok(calls.some(x=>x.url==="https://api.razorpay.com/v1/payments/pay_test_daybnb"));
+  }finally{globalThis.fetch=originalFetch;}
 });
