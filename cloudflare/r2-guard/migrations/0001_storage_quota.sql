@@ -21,8 +21,12 @@ CREATE TABLE IF NOT EXISTS upload_reservations (
   property_id TEXT NOT NULL,
   object_kind TEXT NOT NULL CHECK (object_kind IN ('photo','document')),
   byte_size INTEGER NOT NULL CHECK (byte_size > 0),
+  content_sha256 TEXT NOT NULL CHECK (length(content_sha256) = 64),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_storage_photo_unique_hash ON storage_objects(property_id, content_sha256) WHERE object_kind = 'photo';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reservation_photo_unique_hash ON upload_reservations(property_id, content_sha256) WHERE object_kind = 'photo';
 
 CREATE INDEX IF NOT EXISTS idx_storage_objects_owner ON storage_objects(owner_uid);
 CREATE INDEX IF NOT EXISTS idx_storage_objects_property ON storage_objects(property_id);
