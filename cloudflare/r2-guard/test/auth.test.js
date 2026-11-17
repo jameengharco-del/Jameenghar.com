@@ -82,3 +82,87 @@ test("Firebase token verifier rejects an expired token before fetching signing k
   ].join(".");
   await assert.rejects(verifyFirebaseIdToken(token, projectId), /invalid or expired/i);
 });
+
+import { authorizeOwnerAndProperty } from "../src/auth.js";
+
+function firestoreMock({ role = "property_owner", ownerUid = "owner-uid", status = "pending", published = false } = {}) {
+  return async (url) => {
+    const path = new URL(url).pathname;
+    let fields;
+    if (path.endsWith("/users/owner-uid") || path.endsWith("/users/admin-uid")) {
+      fields = { role: { stringValue: path.endsWith("/admin-uid") ? "admin" : role } };
+    } else if (path.endsWith("/properties/listing-1") || path.endsWith("/daybnbProperties/listing-1")) {
+      fields = {
+        ownerUid: { stringValue: ownerUid },
+        status: { stringValue: status },
+        isPublished: { booleanValue: published }
+      };
+    } else {
+      return new Response("", { status: 404 });
+    }
+    return new Response(JSON.stringify({ fields }), { status: 200 });
+  };
+}
+
+test("owner can authorize own pending unpublished JameenGhar listing", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    const result = await authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true },
+      propertyId: "listing-1", propertyCollection: "properties", ownerAdminUid: "admin-uid"
+    });
+    assert.equal(result.propertyOwner, "owner-uid");
+    assert.equal(result.published, false);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("owner cannot authorize another person's property", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock({ ownerUid: "someone-else" });
+  try {
+    await assert.rejects(authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    }), /do not own this property/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("owner cannot upload to an already published listing", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock({ published: true, status: "approved" });
+  try {
+    await assert.rejects(authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    }), /pending, unpublished/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("Daybnb listing owner is checked in the Daybnb collection", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    const result = await authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: true },
+      propertyId: "listing-1", propertyCollection: "daybnbProperties", ownerAdminUid: "admin-uid"
+    });
+    assert.equal(result.propertyOwner, "owner-uid");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("unverified owner email is denied", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = firestoreMock();
+  try {
+    await assert.rejects(authorizeOwnerAndProperty({
+      projectId, token: "firebase-token",
+      claims: { sub: "owner-uid", email_verified: false },
+      propertyId: "listing-1", ownerAdminUid: "admin-uid"
+    }), /verified JameenGhar property-owner/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
