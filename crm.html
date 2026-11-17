@@ -562,7 +562,7 @@ header{justify-content:center;text-align:center}
 
 <section class="queue-panel" id="consultantCreatedLeadsPanel">
 <h2>Created Leads <span class="queue-count" id="myCreatedLeadCount">0</span></h2>
-<p class="queue-subtitle">Leads you created that are still unassigned. Once Owner assigns a lead, it moves out of this section.</p>
+<p class="queue-subtitle">All leads you originally created remain listed here, including leads later assigned or transferred by the Owner.</p>
 <div id="myCreatedLeadsList"></div>
 </section>
 
@@ -626,6 +626,7 @@ measurementId:"G-RQJWG3PBY9"
 };
 
 const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
+const CRM_NOTIFICATION_WORKER_URL=""; // Fill only after secure Worker deployment and Zoho secrets are verified.
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
@@ -1894,7 +1895,24 @@ $("newLeadType").value="buyer";
 $("newLeadLocation").value="";
 $("newLeadBudget").value="";
 $("newLeadMessage").value="";
-output.textContent="New lead saved successfully. It is visible in your New Leads queue and the Owner Dashboard.";
+let notificationMessage="Owner email notification is pending Worker setup.";
+if(CRM_NOTIFICATION_WORKER_URL){
+  try{
+    const idToken=await user.getIdToken();
+    const notifyResponse=await fetch(CRM_NOTIFICATION_WORKER_URL.replace(/\\/$/,"")+"/notifications/crm-lead-created",{
+      method:"POST",
+      headers:{"authorization":"Bearer "+idToken,"content-type":"application/json"},
+      body:JSON.stringify({leadId:leadRef.id})
+    });
+    const notifyData=await notifyResponse.json().catch(()=>({}));
+    if(!notifyResponse.ok)throw new Error(notifyData.error||"Notification could not be sent.");
+    notificationMessage="Owner email notification sent to owner@jameenghar.com.";
+  }catch(notificationError){
+    console.error("CRM Owner notification pending:",notificationError);
+    notificationMessage="Lead saved; Owner email notification could not be confirmed and needs retry.";
+  }
+}
+output.textContent="New lead saved successfully. "+notificationMessage;
 await loadMyAssignedLeads(user);
 }catch(error){
 output.textContent="Could not save lead: "+error.message;
