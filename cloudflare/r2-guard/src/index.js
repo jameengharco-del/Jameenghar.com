@@ -1,6 +1,6 @@
 import { verifyFirebaseIdToken, authorizeOwnerAndProperty } from "./auth.js";
 import {
-  readQuota, reserveUpload, commitUpload, releaseFailedUpload,
+  readQuota, reserveUpload, commitUpload,
   MAX_OBJECT_BYTES
 } from "./quota.js";
 
@@ -85,7 +85,7 @@ async function upload(request, url, env) {
   const reservationId = crypto.randomUUID();
   const objectKey = `owners/${ownerUid}/properties/${propertyId}/${kind}/${crypto.randomUUID()}`;
   const reserved = await reserveUpload(env.QUOTA_DB, {
-    reservationId, ownerUid, propertyId, objectKind: kind, byteSize: bytes.byteLength
+    reservationId, objectKey, ownerUid, propertyId, objectKind: kind, byteSize: bytes.byteLength
   });
   if (!reserved) {
     const quota = await readQuota(env.QUOTA_DB);
@@ -103,8 +103,9 @@ async function upload(request, url, env) {
       customMetadata: { ownerUid, propertyId, kind }
     });
   } catch {
-    await releaseFailedUpload(env.QUOTA_DB, reservationId);
-    return json({ error: "File storage failed. No upload was completed." }, 503);
+    // The R2 result may be ambiguous. Keep the reservation and block this
+    // capacity until inventory reconciliation proves the object is absent.
+    return json({ error: "Storage result is uncertain. This capacity is reserved while the Owner reconciles storage; uploads may pause temporarily." }, 503);
   }
 
   // If metadata finalization fails, keep the reservation (fail closed) for reconciliation.
