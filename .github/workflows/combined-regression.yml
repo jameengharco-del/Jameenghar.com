@@ -1,6 +1,7 @@
 name: JameenGhar CRM and Daybnb regression checks
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - cloudflare-r2-safety
@@ -51,7 +52,7 @@ jobs:
           for filename in files:
               html = Path(filename).read_text()
               scripts = re.findall(r'<script\\b[^>]*>([\\s\\S]*?)</script>', html, re.I)
-              for index, script in enumerate(scripts):
+              if not scripts:\n                  raise SystemExit(f'No script tags found in {filename}; refusing a vacuous syntax pass')\n              for index, script in enumerate(scripts):
                   if not script.strip():
                       continue
                   path = Path("/tmp") / f"{Path(filename).stem}-{index}.mjs"
