@@ -8,7 +8,7 @@ test("real local Miniflare D1 + R2 bindings enforce quota, commit inventory and 
   const mf = new Miniflare({
     modules: true,
     script: "export default { fetch() { return new Response('local bindings ready'); } }",
-    compatibilityDate: "2026-11-16",
+    compatibilityDate: "2026-08-06",
     d1Databases: { QUOTA_DB: "jameenghar-local-quota" },
     r2Buckets: { STORAGE: "jameenghar-local-private-bucket" }
   });
