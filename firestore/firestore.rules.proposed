@@ -357,6 +357,7 @@ service cloud.firestore {
           "emailVerificationRequired", "createdAt"
         ])
         && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
         && request.resource.data.role in ["crm", "property_owner"]
         && request.resource.data.status == "pending"
         && request.resource.data.emailVerificationRequired == true
