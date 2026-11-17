@@ -328,6 +328,7 @@ async function renderAccount(user) {
   $("accountName").textContent = user.displayName || "JameenGhar account";
   $("accountEmail").textContent = user.email || "";
   $("accountStatus").textContent = "Checking account role...";
+  $("phoneVerifyPanel").classList.add("hidden");
   $("resendVerification").classList.toggle("hidden", user.emailVerified);
   clearMessage("accountMessage");
 
@@ -335,7 +336,7 @@ async function renderAccount(user) {
     const profileSnap = await getDoc(doc(db, "users", user.uid));
     if (!profileSnap.exists()) {
       $("accountStatus").textContent = "No JameenGhar profile was found for this account.";
-      showMessage("accountMessage", "This account does not have a Property Owner profile yet. Registration is not enabled at this stage.", "info");
+      showMessage("accountMessage", "This account does not have a Property Owner profile. Please create a Property Owner account or contact support.", "info");
       return;
     }
     const profile = profileSnap.data();
