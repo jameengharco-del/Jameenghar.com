@@ -52,3 +52,20 @@ test("unknown paths do not expose storage", async () => {
   const response = await worker.fetch(new Request("https://guard.example/admin"), {});
   assert.equal(response.status, 503);
 });
+
+test("all payment routes remain explicitly disabled even if an accidental flag is set", async () => {
+  for (const path of ["/payments/create-order", "/payments/verify", "/payments/webhook"]) {
+    const response = await worker.fetch(new Request("https://guard.example" + path, { method: "POST" }), {
+      ENABLE_PAYMENTS: "true",
+      RAZORPAY_KEY_SECRET: "not-a-real-secret"
+    });
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).code, "PAYMENTS_DISABLED");
+  }
+});
+
+test("health response clearly reports payment processing is disabled", async () => {
+  const response = await worker.fetch(new Request("https://guard.example/health"), {});
+  const body = await response.json();
+  assert.equal(body.paymentsEnabled, false);
+});
