@@ -289,9 +289,6 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly([
           "propertyId", "propertyTitle", "ownerName", "ownerPhone",
           "customerName", "phone", "email", "bookingType",
-          "currency", "paymentAmountPaise", "paymentStatus", "paymentProvider",
-          "gatewayOrderId", "gatewayPaymentId", "paidAt", "refundStatus",
-          "bookingStage", "paymentAccessTokenHash",
           "checkInDate", "checkOutDate", "startTime", "endTime",
           "guests", "quotedTotal", "message", "status", "createdAt",
           "currency", "paymentAmountPaise", "paymentStatus", "paymentProvider",
@@ -302,7 +299,10 @@ service cloud.firestore {
           "propertyId", "propertyTitle", "ownerName", "ownerPhone",
           "customerName", "phone", "email", "bookingType",
           "checkInDate", "checkOutDate", "startTime", "endTime",
-          "guests", "quotedTotal", "message", "status", "createdAt"
+          "guests", "quotedTotal", "message", "status", "createdAt",
+          "currency", "paymentAmountPaise", "paymentStatus", "paymentProvider",
+          "gatewayOrderId", "gatewayPaymentId", "paidAt", "refundStatus",
+          "bookingStage", "paymentAccessTokenHash"
         ])
         && request.resource.data.propertyId is string
         && request.resource.data.propertyId.size() > 0
