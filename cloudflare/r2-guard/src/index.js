@@ -170,8 +170,13 @@ async function paymentWebhook(request, env) {
   }
   const eventId = request.headers.get("x-razorpay-event-id") || "";
   if (!eventId || eventId.length > 200) return json({ error: "Missing webhook event ID." }, 400);
+  const priorEvent = await env.QUOTA_DB.prepare("SELECT provider_event_id FROM payment_webhook_events WHERE provider_event_id=?").bind(eventId).first();
+  if (priorEvent) return json({ received: true, duplicate: true });
   const event = JSON.parse(rawBody);
-  if (event.event !== "payment.captured") return json({ received: true, ignored: true });
+  if (event.event !== "payment.captured") {
+    await env.QUOTA_DB.prepare("INSERT OR IGNORE INTO payment_webhook_events (provider_event_id) VALUES (?)").bind(eventId).run();
+    return json({ received: true, ignored: true });
+  }
   const payment = event.payload?.payment?.entity;
   if (!payment?.order_id || !payment?.id) return json({ error: "Malformed captured payment event." }, 400);
   const row = await env.QUOTA_DB.prepare("SELECT * FROM payment_orders WHERE provider_order_id=?").bind(payment.order_id).first();
