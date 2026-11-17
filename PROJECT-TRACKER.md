@@ -77,7 +77,7 @@ Production branch: `main` (protected; do not change without explicit approval)
 ### Latest combined progress (2026-11-17)
 - Corrected CRM consultant Created Leads behavior: a creator can still see their own originally created lead after Owner assignment/transfer, as a read-only creator record. Current assignee receives it in their New Leads/assigned queue; prior creator identity remains hidden from the receiving consultant. Activity history remains visible with prior consultant identities masked in the receiving consultant UI.
 - Updated the proposed Firestore rules to permit original creator read-only access to the lead and its activity history after transfer; consultant follow-up writes remain limited to current assigned owner/unassigned creator rules. Rules are proposed only and NOT published.
-- Added `.github/workflows/combined-regression.yml` to run Worker/payment unit tests and syntax-check CRM, Owner Dashboard, Daybnb and guest checkout browser scripts on safe-branch changes. CI result must be checked before treating this regression pass as complete.
+- Added `.github/workflows/combined-regression.yml` to run Worker/payment unit tests and syntax-check CRM, Owner Dashboard, Daybnb and guest checkout browser scripts on safe-branch changes. Latest combined regression run #44124883657 completed successfully (unit tests + browser-script syntax checks).
 
 ## Work order — keep both tracks active
 1. Protect and test the core website enquiry + CRM assignment/transfer flow.
