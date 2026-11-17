@@ -35,6 +35,61 @@ service cloud.firestore {
         && request.auth.token.phone_number == "+91" + phone;
     }
 
+    function isVerifiedPropertyOwner() {
+      return isEmailVerifiedPropertyOwner()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone is string
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone.matches("^[0-9]{10}$")
+        && request.auth.token.phone_number == "+91" + get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone;
+    }
+
+    function validJameenGharProperty() {
+      return isVerifiedPropertyOwner()
+        && request.resource.data.keys().hasOnly([
+          "ownerUid", "title", "propertyType", "listingPurpose", "city", "locality",
+          "areaGaj", "price", "facing", "description", "coverImage", "imageUrls",
+          "imageCount", "documentUploaded", "documentsVerified", "verificationStatus",
+          "status", "addressVisibility", "isPublished", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "ownerUid", "title", "propertyType", "listingPurpose", "city", "locality",
+          "areaGaj", "price", "facing", "description", "coverImage", "imageUrls",
+          "imageCount", "documentUploaded", "documentsVerified", "verificationStatus",
+          "status", "addressVisibility", "isPublished", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.propertyType in ["Residential Plot", "House / Villa", "Apartment / Flat", "Commercial", "Agricultural Land"]
+        && request.resource.data.listingPurpose in ["sale", "rent"]
+        && request.resource.data.city is string
+        && request.resource.data.city.size() > 0
+        && request.resource.data.city.size() <= 80
+        && request.resource.data.locality is string
+        && request.resource.data.locality.size() > 0
+        && request.resource.data.locality.size() <= 120
+        && request.resource.data.areaGaj is number
+        && request.resource.data.areaGaj > 0
+        && request.resource.data.areaGaj <= 1000000
+        && request.resource.data.price is number
+        && request.resource.data.price > 0
+        && request.resource.data.price <= 10000000000
+        && request.resource.data.facing is string
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 1200
+        && request.resource.data.coverImage == ""
+        && request.resource.data.imageUrls.size() == 0
+        && request.resource.data.imageCount == 0
+        && request.resource.data.documentUploaded == false
+        && request.resource.data.documentsVerified == false
+        && request.resource.data.verificationStatus == "pending"
+        && request.resource.data.status == "pending"
+        && request.resource.data.addressVisibility == "hidden"
+        && request.resource.data.isPublished == false
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
     function isApprovedCRM() {
       let userData = get(
         /databases/$(database)/documents/users/$(request.auth.uid)
@@ -526,8 +581,12 @@ service cloud.firestore {
 
     // NORMAL PROPERTY LISTINGS
     match /properties/{propertyId} {
-      allow read: if isAdmin() || resource.data.isPublished == true;
-      allow write: if isAdmin();
+      allow read: if isAdmin()
+        || resource.data.isPublished == true
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow create: if isAdmin() || validJameenGharProperty();
+      // Owner cannot alter submitted property data or publish it. Only Owner Admin may review/update.
+      allow update, delete: if isAdmin();
     }
 
     // AGENTS
