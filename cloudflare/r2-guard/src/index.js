@@ -441,6 +441,50 @@ async function download(request, url, env) {
   });
 }
 
+
+/**
+ * Public delivery is intentionally limited to photos on listings that the
+ * Owner has approved and published. Private PDFs never pass this route.
+ */
+async function publicPhoto(url, env) {
+  if (env.ENABLE_UPLOADS !== "true" || !env.STORAGE || !env.QUOTA_DB || !env.FIREBASE_PROJECT_ID) {
+    return json({ error: "Public property photos are not enabled." }, 503);
+  }
+  const objectKey = url.searchParams.get("key") || "";
+  if (!objectKey || objectKey.length > 500 || objectKey.includes("..")) {
+    return json({ error: "Invalid photo reference." }, 400);
+  }
+  const record = await env.QUOTA_DB.prepare(
+    "SELECT owner_uid, property_id, object_kind, byte_size FROM storage_objects WHERE object_key = ?"
+  ).bind(objectKey).first();
+  if (!record || record.object_kind !== "photo") return json({ error: "Photo not found." }, 404);
+
+  const [collection, propertyId] = String(record.property_id || "").split("/");
+  if (!["properties", "daybnbProperties"].includes(collection) || !propertyId) {
+    return json({ error: "Photo listing reference is invalid." }, 404);
+  }
+  const listing = await getAdminDocument(env, collection, propertyId);
+  if (!listing || listing.fields.ownerUid !== record.owner_uid ||
+      listing.fields.status !== "approved" || listing.fields.isPublished !== true) {
+    return json({ error: "This photo is not publicly available." }, 404);
+  }
+  const object = await env.STORAGE.get(objectKey);
+  if (!object) return json({ error: "Photo not found in storage." }, 404);
+  const contentType = object.httpMetadata?.contentType || "application/octet-stream";
+  if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+    return json({ error: "Unsupported public photo type." }, 415);
+  }
+  return new Response(object.body, {
+    headers: {
+      "content-type": contentType,
+      "content-length": String(record.byte_size),
+      "cache-control": "public, max-age=3600, s-maxage=3600",
+      "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'; sandbox"
+    }
+  });
+}
+
 async function handleRequest(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/health") {
@@ -475,6 +519,10 @@ async function handleRequest(request, env) {
     if (url.pathname === "/upload" && request.method === "POST") {
       try { return await upload(request, url, env); }
       catch (error) { return json({ error: error?.message || "Upload rejected." }, 403); }
+    }
+    if (url.pathname === "/public-photo" && request.method === "GET") {
+      try { return await publicPhoto(url, env); }
+      catch (error) { return json({ error: error?.message || "Public photo unavailable." }, 503); }
     }
     if (url.pathname === "/download" && request.method === "GET") {
       try { return await download(request, url, env); }
