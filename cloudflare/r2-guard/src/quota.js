@@ -26,6 +26,8 @@ export async function readQuota(db) {
   };
 }
 
+function propertyLimit(kind) { return kind === "photo" ? 4 : 1; }
+
 export async function reserveUpload(db, {
   reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize
 }) {
@@ -43,9 +45,18 @@ export async function reserveUpload(db, {
       (SELECT COALESCE(SUM(byte_size), 0) FROM storage_objects)
       + (SELECT COALESCE(SUM(byte_size), 0) FROM upload_reservations)
       + ? < ?
+      AND (
+        SELECT COUNT(*) FROM storage_objects
+        WHERE property_id = ? AND object_kind = ?
+      ) + (
+        SELECT COUNT(*) FROM upload_reservations
+        WHERE property_id = ? AND object_kind = ?
+      ) < ?
   `).bind(
     reservationId, objectKey, ownerUid, propertyId, objectKind, byteSize,
-    byteSize, HARD_STOP_BYTES
+    byteSize, HARD_STOP_BYTES,
+    propertyId, objectKind, propertyLimit(objectKind),
+    propertyId, objectKind, propertyLimit(objectKind)
   ).run();
 
   return Number(result?.meta?.changes || 0) === 1;
