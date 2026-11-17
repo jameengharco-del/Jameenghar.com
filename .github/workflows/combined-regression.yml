@@ -21,6 +21,7 @@ on:
     branches:
       - cloudflare-r2-safety
     paths:
+      - "property-review.js"
       - "crm.html"
       - "admin.html"
       - "daybnb.html"
