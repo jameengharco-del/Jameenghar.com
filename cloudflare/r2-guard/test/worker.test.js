@@ -172,7 +172,7 @@ test("Owner private listing-file index rejects requests without Owner credential
 import { webcrypto } from "node:crypto";
 
 let reconciliationKeyMaterial;
-async function makeAdminToken() {
+async function makeAdminToken(uid = "owner-admin") {
   if (!reconciliationKeyMaterial) reconciliationKeyMaterial = await webcrypto.subtle.generateKey(
     { name:"RSASSA-PKCS1-v1_5", modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:"SHA-256" },
     true, ["sign","verify"]
@@ -185,7 +185,7 @@ async function makeAdminToken() {
   const b64 = value => Buffer.from(typeof value === "string" ? value : JSON.stringify(value)).toString("base64url");
   const now = Math.floor(Date.now()/1000);
   const header = b64({alg:"RS256",kid:jwk.kid,typ:"JWT"});
-  const payload = b64({aud:"demo-jameenghar",iss:"https://securetoken.google.com/demo-jameenghar",sub:"owner-admin",email:"owner@jameenghar.com",email_verified:true,iat:now,auth_time:now,exp:now+3600});
+  const payload = b64({aud:"demo-jameenghar",iss:"https://securetoken.google.com/demo-jameenghar",sub:uid,email:uid+"@example.test",email_verified:true,iat:now,auth_time:now,exp:now+3600});
   const input = header+"."+payload;
   const signature = await webcrypto.subtle.sign("RSASSA-PKCS1-v1_5",pair.privateKey,new TextEncoder().encode(input));
   return {token:input+"."+Buffer.from(signature).toString("base64url"),jwk};
@@ -259,5 +259,52 @@ test("R2/D1 reconciliation fails closed and reports orphaned objects and reserva
     assert.equal(body.mismatchCounts.missingFromR2,1);
     assert.equal(body.mismatchCounts.missingFromLedger,1);
     assert.equal(body.mismatchCounts.pendingReservations,1);
+  } finally { globalThis.fetch=originalFetch; }
+});
+
+test("CRM lead notification route authenticates creator and sends escaped Owner email through Zoho", async () => {
+  const {token,jwk}=await makeAdminToken("crm-1");
+  const servicePair=await webcrypto.subtle.generateKey(
+    {name:"RSASSA-PKCS1-v1_5",modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:"SHA-256"},
+    true,["sign","verify"]
+  );
+  const der=new Uint8Array(await webcrypto.subtle.exportKey("pkcs8",servicePair.privateKey));
+  let binary="";for(const byte of der)binary+=String.fromCharCode(byte);
+  const pem="-----BEGIN PRIVATE KEY-----\\n"+Buffer.from(binary,"binary").toString("base64").match(/.{1,64}/g).join("\\n")+"\\n-----END PRIVATE KEY-----";
+  const originalFetch=globalThis.fetch;
+  const calls=[];
+  globalThis.fetch=async (url,options={})=>{
+    const target=String(url);calls.push({url:target,options});
+    if(target.includes("securetoken@system.gserviceaccount.com"))return new Response(JSON.stringify({keys:[jwk]}),{headers:{"cache-control":"max-age=60"}});
+    if(target==="https://oauth2.googleapis.com/token")return new Response(JSON.stringify({access_token:"firebase-admin-token",expires_in:3600}));
+    if(target.includes("/documents/leads/lead_123")&&options.method!=="PATCH")return new Response(JSON.stringify({fields:{
+      source:{stringValue:"crm"},createdBy:{stringValue:"crm-1"},customerName:{stringValue:"A <Buyer>"},
+      phone:{stringValue:"9876543210"},email:{stringValue:"buyer@example.test"},enquiryType:{stringValue:"buyer"},
+      propertyLocation:{stringValue:"Jaipur"},budget:{stringValue:"1 Cr"},createdByName:{stringValue:"Consultant"},
+      message:{stringValue:"Need a plot"}
+    }}));
+    if(target.includes("/documents/leads/lead_123")&&options.method==="PATCH")return new Response(JSON.stringify({name:"lead_123"}));
+    if(target.includes("accounts.zoho.in/oauth/v2/token"))return new Response(JSON.stringify({access_token:"zoho-access",expires_in:3600}));
+    if(target.includes("mail.zoho.in/api/accounts/123/messages"))return new Response(JSON.stringify({status:{code:200},data:{messageId:"owner-mail-1"}}));
+    throw new Error("Unexpected mocked request: "+target);
+  };
+  try {
+    const env={
+      FIREBASE_PROJECT_ID:"demo-jameenghar",FIREBASE_CLIENT_EMAIL:"firebase-admin@demo-jameenghar.iam.gserviceaccount.com",FIREBASE_PRIVATE_KEY:pem,
+      ZOHO_ACCOUNT_ID:"123",ZOHO_CLIENT_ID:"test-client",ZOHO_CLIENT_SECRET:"test-secret",ZOHO_REFRESH_TOKEN:"test-refresh"
+    };
+    const response=await worker.fetch(new Request("https://guard.example/notifications/crm-lead-created",{
+      method:"POST",headers:{authorization:"Bearer "+token,"content-type":"application/json"},
+      body:JSON.stringify({leadId:"lead_123"})
+    }),env);
+    assert.equal(response.status,200);
+    assert.deepEqual(await response.json(),{success:true,notified:true});
+    const mailCall=calls.find(x=>x.url.includes("/api/accounts/123/messages"));
+    assert.ok(mailCall);
+    const mail=JSON.parse(mailCall.options.body);
+    assert.equal(mail.fromAddress,"owner@jameenghar.com");
+    assert.equal(mail.toAddress,"owner@jameenghar.com");
+    assert.match(mail.content,/&lt;Buyer&gt;/);
+    assert.ok(calls.some(x=>x.options.method==="PATCH"&&x.url.includes("/documents/leads/lead_123")));
   } finally { globalThis.fetch=originalFetch; }
 });
