@@ -162,7 +162,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, reload, RecaptchaVerifier, linkWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
@@ -342,7 +342,7 @@ $("propertySubmissionForm").addEventListener("submit", async event => {
     const documentKey = await uploadOne(pdf, "document");
     const response = await fetch(base + "/finalize?collection=properties&propertyId=" + encodeURIComponent(propertyRef.id), { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: JSON.stringify({ coverKey, photoKeys }) });
     const result = await response.json().catch(() => ({})); if (!response.ok || !result.readyForOwnerReview) throw new Error(result.message || "Secure file check did not complete.");
-    await updateDoc(propertyRef, { coverImage: coverKey, imageUrls: photoKeys, imageCount: 4, officialDocumentKey: documentKey, documentUploaded: true, verificationStatus: "pending", updatedAt: serverTimestamp() });
+    // Worker finalization writes verified storage metadata with server credentials; browser owners cannot mutate listing records.
     $("propertySubmissionForm").reset(); showMessage("propertySubmitMessage", "Property and all five files were uploaded securely. Listing is pending Owner review and is not public.", "success");
   } catch (error) { showMessage("propertySubmitMessage", "Submission did not finish: " + error.message + (propertyRef ? " A private pending record may exist; contact support before retrying." : ""), "error"); }
   finally { button.disabled = false; button.textContent = "Submit property for verification"; }
