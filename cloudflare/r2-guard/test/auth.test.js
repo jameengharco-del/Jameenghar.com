@@ -110,7 +110,7 @@ test("owner can authorize own pending unpublished JameenGhar listing", async () 
   try {
     const result = await authorizeOwnerAndProperty({
       projectId, token: "firebase-token",
-      claims: { sub: "owner-uid", email_verified: true },
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
       propertyId: "listing-1", propertyCollection: "properties", ownerAdminUid: "admin-uid"
     });
     assert.equal(result.propertyOwner, "owner-uid");
@@ -124,7 +124,7 @@ test("owner cannot authorize another person's property", async () => {
   try {
     await assert.rejects(authorizeOwnerAndProperty({
       projectId, token: "firebase-token",
-      claims: { sub: "owner-uid", email_verified: true },
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
       propertyId: "listing-1", ownerAdminUid: "admin-uid"
     }), /do not own this property/i);
   } finally { globalThis.fetch = originalFetch; }
@@ -136,7 +136,7 @@ test("owner cannot upload to an already published listing", async () => {
   try {
     await assert.rejects(authorizeOwnerAndProperty({
       projectId, token: "firebase-token",
-      claims: { sub: "owner-uid", email_verified: true },
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
       propertyId: "listing-1", ownerAdminUid: "admin-uid"
     }), /pending, unpublished/i);
   } finally { globalThis.fetch = originalFetch; }
@@ -148,7 +148,7 @@ test("Daybnb listing owner is checked in the Daybnb collection", async () => {
   try {
     const result = await authorizeOwnerAndProperty({
       projectId, token: "firebase-token",
-      claims: { sub: "owner-uid", email_verified: true },
+      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
       propertyId: "listing-1", propertyCollection: "daybnbProperties", ownerAdminUid: "admin-uid"
     });
     assert.equal(result.propertyOwner, "owner-uid");
@@ -174,7 +174,7 @@ test("property-owner secure upload requires registered Firebase phone claim to m
   try {
     await assert.rejects(authorizeOwnerAndProperty({
       projectId, token: "firebase-token",
-      claims: { sub: "owner-uid", email_verified: true, phone_number: "+919876543210" },
+      claims: { sub: "owner-uid", email_verified: true },
       propertyId: "listing-1", ownerAdminUid: "admin-uid"
     }), /verified email and registered mobile/i);
   } finally { globalThis.fetch = originalFetch; }
