@@ -54,6 +54,13 @@ Production branch: `main` (protected; do not change without explicit approval)
 4. Enforce minimum four images and required official document before submission/approval.
 5. Test owner isolation, atomic paired writes, approval/rejection, publish/unpublish and guest bookings.
 
+### Latest Daybnb guest checkout and rule alignment (2026-11-17)
+- Added private `POST /payments/status` endpoint: validates the booking's private token hash and returns only the payment/quote status, amount and expiry. It is disabled unless the payment activation gate and server-side Firebase credentials are configured.
+- Guest payment page now checks the private booking status before enabling checkout, displays the Owner-approved quote/expiry, and avoids creating an order until the quote is ready. A verified paid booking is shown as confirmed when the guest revisits the link.
+- Updated proposed Firestore booking-create validation to allow exactly the new payment lifecycle fields and a SHA-256 private access-token hash, with safe initial values (`not_started`, INR, no order/payment). This is proposed only; it is NOT published.
+- Updated Owner Dashboard copy so quote approval is clearly not a charge and checkout is not live until deployment.
+- Combined GitHub Actions regression checks passed after payment-status endpoint and private checkout changes (runs #44129209262 and #44129179449). Latest Firestore-rule edit is awaiting its own CI result.
+
 ## Track C — Secure storage / zero-cost gate
 
 ### Implemented on safe branch (not deployed)
