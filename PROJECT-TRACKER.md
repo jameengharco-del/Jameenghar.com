@@ -41,16 +41,18 @@ Production branch: `main` (protected; do not change without explicit approval)
 ### Implemented on safe branch (not deployed)
 - Added D1 quota-ledger schema for stored objects and pending upload reservations.
 - Added quota helper with 8 GB warning, 9 GB hard application stop, and 20 MB per-object maximum.
-- Added basic threshold tests.
+- Added quota tests for 9 GB boundary, below-limit reservations, parallel reservations, ambiguous R2 outcomes and reservation-to-object commit.
 - Added staged Firebase ID-token verification and owner/property authorization module.
 - Added private upload/download route code with 20 MB cap, MIME/signature checks, server-generated keys, and D1 reservation flow.
+- Changed ambiguous R2 write failures to retain quota reservations until reconciliation; each reservation now stores its object key.
+- Added Firebase token parsing/fail-closed tests.
 - Added an explicit `ENABLE_UPLOADS=true` gate; absent by default, so endpoints stay HTTP 503 even if bindings are later added accidentally.
-- Added Worker endpoint tests and a GitHub Actions test workflow; no Actions run has appeared yet, so CI results are still unverified.
+- Added Worker endpoint tests and GitHub Actions CI; quota/concurrency tests passed in run #6. Latest commit's CI still needs confirmation after documentation-only update.
 - Added `ACTIVATION-CHECKLIST.md` documenting free-plan, account-wide usage, spending-limit scope, private bucket and fail-closed requirements.
 - Worker endpoints remain disabled (HTTP 503) unless the explicit gate is set; no R2 bucket or D1 database is bound and no Worker is deployed.
 
 ### Must complete before any activation
-1. Complete executable tests for quota boundary, concurrent reservations, D1 transaction failures, R2 write failures, idempotency and reconciliation.
+1. Add real D1/SQLite integration tests for concurrent reservations, transaction rollback, duplicate commit, and reconciliation; current concurrency tests use a deterministic D1 test adapter.
 2. Implement Firebase token verification, verified-owner/Owner-Admin authorization and exact property ownership checks.
 3. Integrate private R2 + D1 bindings only after confirming the account remains on free plans.
 4. Review account-wide R2 usage, operation limits and any other Cloudflare resources; 9 GB app quota is not a provider billing hard cap.
