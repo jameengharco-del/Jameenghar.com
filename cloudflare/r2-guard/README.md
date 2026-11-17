@@ -30,7 +30,11 @@ the live website, Firebase rules, production data, or the working CRM.
 - Added Worker tests for public health and default-off upload/download/admin paths.
 - Added quota tests for exact 9 GB boundary, below-limit reservation, parallel
   reservation pressure, ambiguous reservations, and reservation-to-object commit.
-- Added fail-closed Firebase token parsing tests.
+- Added fail-closed Firebase token parsing tests and generated-RSA-key JWT tests
+  for valid signatures and expired claims.
+- Added mocked-Firestore authorization tests for owner isolation, email verification,
+  pending/unpublished state, and Daybnb collection selection. These are unit tests,
+  not tests against the live Firebase project.
 - The existing quota helper and D1 migration provide an 8 GB warning, 9 GB
   application stop, and 20 MB per-file limit.
 
