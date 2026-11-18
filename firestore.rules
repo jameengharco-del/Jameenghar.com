@@ -185,13 +185,20 @@ service cloud.firestore {
 
     // DAYBNB OWNER PROFILE CHECK
     function validDaybnbOwner() {
-      let ownerPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      return isSignedIn()
-        && exists(ownerPath)
-        && get(ownerPath).data.role == "owner"
-        && get(ownerPath).data.status in ["pending", "approved"]
-        && get(ownerPath).data.email == request.auth.token.email
-        && request.auth.token.email_verified == true;
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        )
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.role == "owner"
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.status in ["pending", "approved"]
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.email == request.auth.token.email;
     }
 
     // DAYBNB PROPERTY VALIDATION
