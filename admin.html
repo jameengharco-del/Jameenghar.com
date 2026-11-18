@@ -557,6 +557,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-
 import {
 getAuth,
 createUserWithEmailAndPassword,
+sendEmailVerification,
 signInWithEmailAndPassword,
 signOut,
 onAuthStateChanged
@@ -656,8 +657,10 @@ phone:phone,
 email:email,
 role:"crm",
 status:"pending",
+emailVerificationRequired:true,
 createdAt:serverTimestamp()
 });
+await sendEmailVerification(result.user);
 
 registrationInProgress=false;
 $("registerBtn").disabled=false;
@@ -666,7 +669,7 @@ hideAll();
 $("pendingCard").classList.remove("hidden");
 
 $("pendingStatus").textContent=
-"Your account is pending Owner approval. Please wait.";
+"Your account is pending Owner approval. Please verify your email using the link sent to your inbox.";
 
 message("");
 
@@ -734,7 +737,8 @@ box.className="userbox";
 const details=document.createElement("p");
 
 details.textContent=
-"Name: "+(user.name||"")+
+"Role: "+(user.role||"crm").toUpperCase()+
+" | Name: "+(user.name||"")+
 " | Email: "+(user.email||"")+
 " | Mobile: "+(user.phone||"");
 
@@ -788,7 +792,7 @@ list.appendChild(box);
 });
 
 if(count===0){
-list.textContent="No pending CRM users.";
+list.textContent="No pending users.";
 }
 
 }catch(error){
