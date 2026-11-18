@@ -45,6 +45,24 @@ service cloud.firestore {
         );
     }
 
+    // Verified and approved property uploader (or the fixed admin account).
+    function isApprovedPropertyUploader() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == request.auth.token.email
+        && (
+          (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "owner"
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved"
+          )
+          || (
+            request.auth.uid == "P46WrdpzVWVHVC4t6vqIOYcZfxC3"
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+          )
+        );
+    }
+
     // WEBSITE LEAD VALIDATION
     function validPublicLead() {
       return request.resource.data.keys().hasOnly([
@@ -68,6 +86,14 @@ service cloud.firestore {
         && request.resource.data.enquiryType in [
           "buyer", "seller", "landlord", "home-loan"
         ]
+        && (
+          request.resource.data.enquiryType in ["buyer", "home-loan"]
+          || isApprovedPropertyUploader()
+        )
+        && (
+          request.resource.data.enquiryType in ["buyer", "home-loan"]
+          || request.resource.data.keys().hasAny(["photoUrls"])
+        )
         && request.resource.data.propertyLocation is string
         && request.resource.data.propertyLocation.size() <= 150
         && request.resource.data.message is string
@@ -97,10 +123,10 @@ service cloud.firestore {
             && request.resource.data.employmentType.size() <= 50))
         && (!request.resource.data.keys().hasAny(["photoUrls"])
           || (request.resource.data.photoUrls is list
-            && request.resource.data.photoUrls.size() >= 2
+            && request.resource.data.photoUrls.size() >= 4
             && request.resource.data.photoUrls.size() <= 10
             && request.resource.data.imageCount == request.resource.data.photoUrls.size()
-            && request.resource.data.minimumImagesRequired == 2
+            && request.resource.data.minimumImagesRequired == 4
             && request.resource.data.maximumImagesAllowed == 10
             && request.resource.data.photoVerificationStatus == "pending"));
     }
