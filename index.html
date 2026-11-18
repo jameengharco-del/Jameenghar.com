@@ -318,6 +318,13 @@ async function saveWebsiteLead(details) {
   for (const key of ["email", "propertyTitle", "propertyType", "budget", "employmentType"]) {
     if (details[key] !== undefined && String(details[key]).trim() !== "") payload[key] = String(details[key]).trim();
   }
+  if (Array.isArray(details.photoUrls) && details.photoUrls.length) {
+    payload.photoUrls = details.photoUrls;
+    payload.imageCount = details.photoUrls.length;
+    payload.minimumImagesRequired = 2;
+    payload.maximumImagesAllowed = 10;
+    payload.photoVerificationStatus = "pending";
+  }
   if (!payload.customerName || payload.customerName.length > 100) throw new Error("Please enter your name.");
   if (payload.propertyLocation.length > 150 || payload.message.length > 1000) throw new Error("Please shorten the details and try again.");
   return addDoc(collection(db, "leads"), payload);
