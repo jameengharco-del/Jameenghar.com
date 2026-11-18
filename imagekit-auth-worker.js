@@ -7,7 +7,8 @@
  *   FIREBASE_API_KEY       (Variable)
  *
  * Upload access is limited to Firebase users whose email is verified and
- * whose Firestore users/{uid} profile is role=owner, status=approved.
+ * whose Firestore users/{uid} profile is an eligible Daybnb owner, or the
+ * fixed JameenGhar main admin account (without changing its CRM admin role).
  * Never put IMAGEKIT_PRIVATE_KEY in browser JavaScript or GitHub Pages.
  */
 const ALLOWED_ORIGINS = new Set([
@@ -65,7 +66,8 @@ async function verifyApprovedOwner(idToken, apiKey) {
   const status = fields.status && fields.status.stringValue;
   const profileEmail = fields.email && fields.email.stringValue;
 
-  if (role !== "owner" || !["pending", "approved"].includes(status) ||
+  const isMainAdmin = user.localId === "P46WrdpzVWVHVC4t6vqIOYcZfxC3" && role === "admin";
+  if ((!isMainAdmin && (role !== "owner" || !["pending", "approved"].includes(status))) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
     throw new Error("Image uploads are available only to email-verified, approved JameenGhar owners.");
   }
