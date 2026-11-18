@@ -393,7 +393,7 @@ async function saveWebsiteLead(details) {
   if (Array.isArray(details.photoUrls) && details.photoUrls.length) {
     payload.photoUrls = details.photoUrls;
     payload.imageCount = details.photoUrls.length;
-    payload.minimumImagesRequired = 2;
+    payload.minimumImagesRequired = 4;
     payload.maximumImagesAllowed = 10;
     payload.photoVerificationStatus = "pending";
   }
