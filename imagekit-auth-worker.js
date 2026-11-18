@@ -65,7 +65,7 @@ async function verifyApprovedOwner(idToken, apiKey) {
   const status = fields.status && fields.status.stringValue;
   const profileEmail = fields.email && fields.email.stringValue;
 
-  if (role !== "owner" || status !== "approved" ||
+  if (role !== "owner" || !["pending", "approved"].includes(status) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
     throw new Error("Image uploads are available only to email-verified, approved JameenGhar owners.");
   }
