@@ -192,13 +192,18 @@ service cloud.firestore {
         )
         && get(
           /databases/$(database)/documents/users/$(request.auth.uid)
-        ).data.role == "owner"
-        && get(
-          /databases/$(database)/documents/users/$(request.auth.uid)
-        ).data.status in ["pending", "approved"]
-        && get(
-          /databases/$(database)/documents/users/$(request.auth.uid)
-        ).data.email == request.auth.token.email;
+        ).data.email == request.auth.token.email
+        && (
+          (
+            get(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.role == "owner"
+            && get(
+              /databases/$(database)/documents/users/$(request.auth.uid)
+            ).data.status in ["pending", "approved"]
+          )
+          || isAdmin()
+        );
     }
 
     // DAYBNB PROPERTY VALIDATION
