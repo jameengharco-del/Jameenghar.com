@@ -261,7 +261,20 @@
         <div><label for="newBeds">Bedrooms</label><select id="newBeds"><option>Not applicable</option><option>1 BHK</option><option>2 BHK</option><option>3 BHK</option><option>4+ BHK</option></select></div>
         <div class="full"><label for="newLocation">Property location *</label><input id="newLocation" required placeholder="Area, city"></div>
         <div class="full"><label for="newDetails">More details</label><textarea id="newDetails" rows="3" placeholder="Area, floor, amenities, availability..."></textarea></div>
-        <div class="full"><label for="sellerPhotos">PROPERTY PHOTOS — HTTPS LINKS * (2–10 PHOTOS)</label><textarea id="sellerPhotos" rows="4" required placeholder="Paste 2 to 10 image links, one per line"></textarea><p class="hint">Minimum 2 and maximum 10 clear property photos are required. SMS OTP is not used, so our team will contact you on the mobile/email provided to verify ownership and property details before approval. Your property will not be published until verification is complete.</p></div>
+        <div class="full" style="padding:14px;border:1px solid var(--line);border-radius:12px;background:#f8fbf8">
+          <strong style="color:var(--green)">Owner account verification</strong>
+          <p class="hint">Create an Owner account, verify your email, and wait for JameenGhar approval before uploading property photos.</p>
+          <input id="ownerAuthEmail" type="email" maxlength="150" placeholder="Owner account email" autocomplete="email" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;margin:6px 0">
+          <input id="ownerAuthPassword" type="password" minlength="6" placeholder="Password (minimum 6 characters)" autocomplete="current-password" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;margin:6px 0">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline" type="button" id="ownerRegister">Create Owner Account</button>
+            <button class="btn btn-outline" type="button" id="ownerLogin">Login</button>
+            <button class="btn btn-outline" type="button" id="ownerRefreshStatus">Refresh Verification</button>
+            <button class="btn btn-outline" type="button" id="ownerLogout" style="display:none">Logout</button>
+          </div>
+          <p id="ownerAuthMessage" class="hint" aria-live="polite">Not signed in.</p>
+        </div>
+        <div class="full"><label for="sellerPhotos">PROPERTY PHOTOS * (4–10 PHOTOS)</label><input id="sellerPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required style="width:100%;padding:12px;border:1px solid var(--line);border-radius:9px"><p class="hint">Upload 4 to 10 clear property photos. Files are uploaded securely through the JameenGhar ImageKit authentication service. Only email-verified and Owner-approved accounts (or the JameenGhar admin) can upload. Your enquiry is reviewed before publication.</p></div>
         <div class="full"><button class="btn btn-primary" type="submit" style="width:100%">Submit Property Enquiry</button></div>
       </div>
       <p class="hint">Your property details will be sent to JameenGhar for review. Submission does not publish the property automatically. Verification and approval are required before publication.</p>
@@ -286,7 +299,8 @@
 </div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, reload } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",
@@ -298,10 +312,68 @@ const firebaseConfig = {
   measurementId: "G-RQJWG3PBY9"
 };
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+const IMAGEKIT_AUTH_URL = "https://jameenghar-imagekit-auth.jameenghar-co.workers.dev/";
+const JAMEENGHAR_ADMIN_UID = "P46WrdpzVWVHVC4t6vqIOYcZfxC3";
 let remoteListings = [];
 let selectedBuyerProperty = null;
 
+async function getEligibleUploader() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please login to your Owner account first.");
+  await reload(user);
+  if (!user.emailVerified) throw new Error("Please verify your email first, then click Refresh Verification.");
+  const snap = await getDoc(doc(db, "users", user.uid));
+  if (!snap.exists()) throw new Error("Owner profile not found.");
+  const profile = snap.data();
+  const admin = user.uid === JAMEENGHAR_ADMIN_UID && profile.role === "admin";
+  const approved = profile.role === "owner" && profile.status === "approved";
+  if (!admin && !approved) throw new Error("Your Owner account is pending JameenGhar approval.");
+  if (String(profile.email||"").toLowerCase() !== String(user.email||"").toLowerCase()) throw new Error("Verified account email does not match the Owner profile.");
+  return user;
+}
+async function uploadPropertyPhotos(files) {
+  const user = await getEligibleUploader();
+  const response = await fetch(IMAGEKIT_AUTH_URL,{method:"POST",headers:{"Authorization":"Bearer "+await user.getIdToken(true)}});
+  const authData = await response.json().catch(()=>({}));
+  if (!response.ok || !authData.token || !authData.signature || !authData.expire || !authData.publicKey) throw new Error(authData.error || "ImageKit authentication failed.");
+  const urls=[];
+  for(let i=0;i<files.length;i++){
+    const file=files[i], body=new FormData();
+    body.append("file",file);
+    body.append("fileName","jameenghar-property-"+Date.now()+"-"+(i+1)+"."+(file.name.split(".").pop()||"jpg"));
+    body.append("publicKey",authData.publicKey);
+    body.append("signature",authData.signature);
+    body.append("expire",String(authData.expire));
+    body.append("token",authData.token);
+    body.append("folder","/jameenghar/property-listings");
+    body.append("useUniqueFileName","true");
+    const uploaded=await fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body});
+    const data=await uploaded.json().catch(()=>({}));
+    if(!uploaded.ok||!data.url) throw new Error(data.message||("ImageKit upload failed: "+file.name));
+    urls.push(data.url);
+  }
+  return urls;
+}
+async function registerOwnerAccount(){
+  const email=$("#ownerAuthEmail").value.trim(), password=$("#ownerAuthPassword").value;
+  const name=$("#ownerName").value.trim(), phone=$("#ownerPhone").value.replace(/\D/g,"");
+  if(!name||! /^[0-9]{10}$/.test(phone)) throw new Error("Enter your name and valid 10-digit mobile number above.");
+  if(!email||password.length<6) throw new Error("Enter email and password (minimum 6 characters).");
+  const cred=await createUserWithEmailAndPassword(auth,email,password);
+  await setDoc(doc(db,"users",cred.user.uid),{uid:cred.user.uid,name,phone,email:cred.user.email,role:"owner",status:"pending",emailVerificationRequired:true,createdAt:serverTimestamp()});
+  await sendEmailVerification(cred.user);
+  $("#ownerAuthMessage").textContent="Owner account created. Verify your email and wait for JameenGhar approval.";
+  $("#ownerLogout").style.display="inline-flex";
+}
+async function refreshOwnerStatus(){
+  const user=auth.currentUser;if(!user)throw new Error("Please login first.");
+  await reload(user);const snap=await getDoc(doc(db,"users",user.uid));if(!snap.exists())throw new Error("Owner profile not found.");
+  const p=snap.data(),admin=user.uid===JAMEENGHAR_ADMIN_UID&&p.role==="admin",approved=p.role==="owner"&&p.status==="approved";
+  $("#ownerAuthMessage").textContent=!user.emailVerified?"Email not verified. Verify the email, then refresh.":admin?"Admin verified. Photo uploads enabled.":approved?"Owner approved. Photo uploads enabled.":"Email verified. Owner approval is pending.";
+  $("#ownerLogout").style.display="inline-flex";
+}
 async function saveWebsiteLead(details) {
   const cleanPhone = String(details.phone || "").replace(/\D/g, "");
   if (!/^[0-9]{10}$/.test(cleanPhone)) throw new Error("Please enter a valid 10-digit mobile number.");
@@ -367,9 +439,13 @@ $("#propertyCards").addEventListener("click",e=>{const btn=e.target.closest(".en
 $("#searchForm").addEventListener("submit",e=>{e.preventDefault();activeFilter="All";document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));renderListings();$("#properties").scrollIntoView({behavior:"smooth"})});
 ["postTop","postSection","postCta","footerPost"].forEach(id=>$("#"+id).addEventListener("click",e=>{e.preventDefault();openModal()}));
 $("#closeModal").addEventListener("click",closeModal);$("#postModal").addEventListener("click",e=>{if(e.target.id==="postModal")closeModal()});
+$("#ownerRegister").addEventListener("click",async()=>{const b=$("#ownerRegister");b.disabled=true;try{await registerOwnerAccount()}catch(e){$("#ownerAuthMessage").textContent=e.message}finally{b.disabled=false}});
+$("#ownerLogin").addEventListener("click",async()=>{const b=$("#ownerLogin");b.disabled=true;try{await signInWithEmailAndPassword(auth,$("#ownerAuthEmail").value.trim(),$("#ownerAuthPassword").value);await refreshOwnerStatus()}catch(e){$("#ownerAuthMessage").textContent=e.message}finally{b.disabled=false}});
+$("#ownerRefreshStatus").addEventListener("click",async()=>{try{await refreshOwnerStatus()}catch(e){$("#ownerAuthMessage").textContent=e.message}});
+$("#ownerLogout").addEventListener("click",async()=>{await signOut(auth);$("#ownerAuthMessage").textContent="Signed out.";$("#ownerLogout").style.display="none"});
 $("#closeBuyerEnquiry").addEventListener("click",closeBuyerModal);$("#buyerEnquiryModal").addEventListener("click",e=>{if(e.target.id==="buyerEnquiryModal")closeBuyerModal()});
 $("#buyerEnquiryForm").addEventListener("submit",async e=>{e.preventDefault();const button=$("#buyerSubmit");button.disabled=true;button.textContent="Submitting...";try{await saveWebsiteLead({customerName:$("#buyerName").value,phone:$("#buyerPhone").value,email:$("#buyerEmail").value,enquiryType:"buyer",propertyTitle:selectedBuyerProperty?.title||"",propertyLocation:selectedBuyerProperty?.location||"",message:$("#buyerMessage").value||"Interested in this property."});e.target.reset();closeBuyerModal();alert("Thank you. Your property enquiry has been submitted successfully.");}catch(error){$("#buyerEnquiryMessage").textContent="Could not submit: "+error.message;}finally{button.disabled=false;button.textContent="Submit Enquiry";}});
-$("#propertyForm").addEventListener("submit",async e=>{e.preventDefault();const button=e.target.querySelector('button[type="submit"]');const purpose=$("#purpose").value;const photoUrls=$("#sellerPhotos").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(photoUrls.some(url=>!/^https:\/\/.+/i.test(url))){alert("Every property photo must be a valid HTTPS image link.");return;}if(photoUrls.length<2||photoUrls.length>10){alert("Please add minimum 2 and maximum 10 property photos.");$("#sellerPhotos").focus();return;}button.disabled=true;button.textContent="Submitting...";try{await saveWebsiteLead({customerName:$("#ownerName").value,phone:$("#ownerPhone").value,email:$("#ownerEmail").value,enquiryType:purpose==="Sell"?"seller":"landlord",propertyTitle:$("#newKind").value+" in "+$("#newLocation").value,propertyType:$("#newKind").value,propertyLocation:$("#newLocation").value,budget:$("#newPrice").value,photoUrls,imageCount:photoUrls.length,minimumImagesRequired:2,maximumImagesAllowed:10,photoVerificationStatus:"pending",message:["Bedrooms: "+$("#newBeds").value,$("#newDetails").value].filter(Boolean).join(" · ")});closeModal();e.target.reset();alert("Thank you. Your property enquiry has been sent to JameenGhar for review. It will not be published until approved.");}catch(error){alert("Could not submit: "+error.message);}finally{button.disabled=false;button.textContent="Submit Property Enquiry";}});
+$("#propertyForm").addEventListener("submit",async e=>{e.preventDefault();const button=e.target.querySelector('button[type="submit"]');const purpose=$("#purpose").value,files=Array.from($("#sellerPhotos").files||[]);if(files.length<4||files.length>10){alert("Please select minimum 4 and maximum 10 property photos.");return;}if(files.some(f=>!["image/jpeg","image/png","image/webp"].includes(f.type))){alert("Only JPG, PNG or WEBP photos are allowed.");return;}if(files.some(f=>f.size>15*1024*1024)){alert("Each photo must be 15 MB or smaller.");return;}button.disabled=true;try{button.textContent="Checking Owner approval...";await getEligibleUploader();button.textContent="Uploading photos...";const photoUrls=await uploadPropertyPhotos(files);button.textContent="Submitting...";await saveWebsiteLead({customerName:$("#ownerName").value,phone:$("#ownerPhone").value,email:$("#ownerEmail").value,enquiryType:purpose==="Sell"?"seller":"landlord",propertyTitle:$("#newKind").value+" in "+$("#newLocation").value,propertyType:$("#newKind").value,propertyLocation:$("#newLocation").value,budget:$("#newPrice").value,photoUrls,imageCount:photoUrls.length,minimumImagesRequired:4,maximumImagesAllowed:10,photoVerificationStatus:"pending",message:["Bedrooms: "+$("#newBeds").value,$("#newDetails").value].filter(Boolean).join(" · ")});closeModal();e.target.reset();alert("Property enquiry and photos submitted for JameenGhar review. This does not publish the listing.");}catch(error){alert("Could not submit: "+error.message);}finally{button.disabled=false;button.textContent="Submit Property Enquiry";}});
 $("#homeLoanForm").addEventListener("submit",async e=>{e.preventDefault();const form=e.target;const button=form.querySelector('button[type="submit"]');const data=new FormData(form);button.disabled=true;button.textContent="Submitting...";$("#homeLoanMessage").textContent="Submitting your enquiry...";try{await saveWebsiteLead({customerName:String(data.get("name")||""),phone:String(data.get("mobile")||""),enquiryType:"home-loan",propertyLocation:String(data.get("city")||""),employmentType:String(data.get("employment")||""),message:"Home loan assistance requested."});form.reset();$("#homeLoanMessage").textContent="Thank you. Your home loan enquiry has been submitted.";}catch(error){$("#homeLoanMessage").textContent="Could not submit: "+error.message;}finally{button.disabled=false;button.textContent="Request Home Loan Assistance";}});
 $("#year").textContent=new Date().getFullYear();renderListings();loadPublishedProperties();
 </script>
