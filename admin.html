@@ -1388,6 +1388,17 @@ details.textContent=
 const requirement=document.createElement("p");
 requirement.textContent="Requirement: "+(lead.message||"No message provided");
 
+if(Array.isArray(lead.photoUrls)){
+const photoStatus=document.createElement("p");
+const photoCount=lead.photoUrls.length;
+photoStatus.textContent="Property photo verification: "+photoCount+"/10 · Minimum 2 required · "+(photoCount>=2&&photoCount<=10?"Photo count passed — document/owner verification pending":"Photo count not met");
+box.appendChild(photoStatus);
+const photoGrid=document.createElement("div");
+photoGrid.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0";
+lead.photoUrls.forEach(url=>{const image=document.createElement("img");image.src=url;image.alt="Seller property photo";image.loading="lazy";image.style.cssText="width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #ddd";photoGrid.appendChild(image);});
+box.appendChild(photoGrid);
+}
+
 const date=document.createElement("p");
 date.className="lead-meta";
 date.textContent="Received: "+formatDate(lead.createdAt);
