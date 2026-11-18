@@ -116,7 +116,7 @@ export default {
     }
 
     const authorization = request.headers.get("Authorization") || "";
-    const match = authorization.match(/^Bearer\\s+(.+)$/i);
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
     if (!match) return json({ error: "Firebase sign-in is required." }, 401, origin);
 
     if (!env.IMAGEKIT_PRIVATE_KEY || !env.IMAGEKIT_PUBLIC_KEY || !env.FIREBASE_API_KEY) {
