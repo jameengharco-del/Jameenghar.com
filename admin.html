@@ -654,7 +654,7 @@ await setDoc(doc(db,"users",result.user.uid),{
 uid:result.user.uid,
 name:name,
 phone:phone,
-email:email,
+email:result.user.email,
 role:"crm",
 status:"pending",
 emailVerificationRequired:true,
