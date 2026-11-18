@@ -253,7 +253,7 @@ service cloud.firestore {
         && request.resource.data.imageCount == request.resource.data.imageUrls.size()
         && request.resource.data.minimumImagesRequired == 4
         && request.resource.data.maximumImagesAllowed == 10
-        && request.resource.data.imageStorage == "external-url"
+        && request.resource.data.imageStorage in ["external-url", "imagekit"]
         && request.resource.data.amenities is list
         && request.resource.data.amenities.size() <= 15
         && request.resource.data.description is string
@@ -271,7 +271,7 @@ service cloud.firestore {
           "address", "createdAt"
         ])
         && request.resource.data.keys().hasAll([
-          "propertyId", "ownerName", "ownerPhone", "ownerEmail",
+          "propertyId", "ownerUid", "ownerName", "ownerPhone", "ownerEmail",
           "address", "createdAt"
         ])
         && validDaybnbOwner()
