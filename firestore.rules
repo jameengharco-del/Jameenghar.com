@@ -1,0 +1,590 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid == "P46WrdzpVWVHVC4t6vqIOYcZfxC3";
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isApprovedCRM() {
+      let userData = get(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      ).data;
+
+      return isSignedIn()
+        && userData.role == "crm"
+        && userData.status == "approved"
+        && (
+          !("emailVerificationRequired" in userData)
+          || userData.emailVerificationRequired != true
+          || request.auth.token.email_verified == true
+        );
+    }
+
+    // CONSULTANT CAN ACCESS ONLY:
+    // 1. Leads assigned to them.
+    // 2. Their own leads which are still unassigned.
+    function canAccessLead(leadData) {
+      return isAdmin()
+        || (
+          isApprovedCRM()
+          && (
+            leadData.assignedTo == request.auth.uid
+            || (
+              leadData.assignedTo == "unassigned"
+              && leadData.createdBy == request.auth.uid
+            )
+          )
+        );
+    }
+
+    // WEBSITE LEAD VALIDATION
+    function validPublicLead() {
+      return request.resource.data.keys().hasOnly([
+          "customerName", "phone", "email", "enquiryType",
+          "propertyTitle", "propertyType", "propertyLocation", "budget",
+          "employmentType", "message", "source", "status", "assignedTo",
+          "assignedAgentName", "followUpDate", "remarks", "createdAt", "updatedAt",
+          "photoUrls", "imageCount", "minimumImagesRequired",
+          "maximumImagesAllowed", "photoVerificationStatus"
+        ])
+        && request.resource.data.keys().hasAll([
+          "customerName", "phone", "enquiryType", "propertyLocation",
+          "message", "source", "status", "assignedTo", "assignedAgentName",
+          "followUpDate", "remarks", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() > 0
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[0-9]{10}$")
+        && request.resource.data.enquiryType in [
+          "buyer", "seller", "landlord", "home-loan"
+        ]
+        && request.resource.data.propertyLocation is string
+        && request.resource.data.propertyLocation.size() <= 150
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.source == "website"
+        && request.resource.data.status == "new"
+        && request.resource.data.assignedTo == "unassigned"
+        && request.resource.data.assignedAgentName == "Unassigned"
+        && request.resource.data.followUpDate == ""
+        && request.resource.data.remarks == ""
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && (!request.resource.data.keys().hasAny(["email"])
+          || (request.resource.data.email is string
+            && request.resource.data.email.size() <= 150))
+        && (!request.resource.data.keys().hasAny(["propertyTitle"])
+          || (request.resource.data.propertyTitle is string
+            && request.resource.data.propertyTitle.size() <= 200))
+        && (!request.resource.data.keys().hasAny(["propertyType"])
+          || (request.resource.data.propertyType is string
+            && request.resource.data.propertyType.size() <= 80))
+        && (!request.resource.data.keys().hasAny(["budget"])
+          || (request.resource.data.budget is string
+            && request.resource.data.budget.size() <= 40))
+        && (!request.resource.data.keys().hasAny(["employmentType"])
+          || (request.resource.data.employmentType is string
+            && request.resource.data.employmentType.size() <= 50))
+        && (!request.resource.data.keys().hasAny(["photoUrls"])
+          || (request.resource.data.photoUrls is list
+            && request.resource.data.photoUrls.size() >= 2
+            && request.resource.data.photoUrls.size() <= 10
+            && request.resource.data.imageCount == request.resource.data.photoUrls.size()
+            && request.resource.data.minimumImagesRequired == 2
+            && request.resource.data.maximumImagesAllowed == 10
+            && request.resource.data.photoVerificationStatus == "pending"));
+    }
+
+    // CONSULTANT-CREATED LEAD VALIDATION
+    function validConsultantLead() {
+      return isApprovedCRM()
+        && request.resource.data.keys().hasOnly([
+          "customerName", "phone", "email", "enquiryType",
+          "propertyLocation", "budget", "message", "source",
+          "status", "assignedTo", "assignedAgentName",
+          "followUpDate", "remarks", "createdBy",
+          "createdByName", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "customerName", "phone", "email", "enquiryType",
+          "propertyLocation", "budget", "message", "source",
+          "status", "assignedTo", "assignedAgentName",
+          "followUpDate", "remarks", "createdBy",
+          "createdByName", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() > 0
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[0-9]{10}$")
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 150
+        && request.resource.data.enquiryType in [
+          "buyer", "seller", "landlord", "home-loan"
+        ]
+        && request.resource.data.propertyLocation is string
+        && request.resource.data.propertyLocation.size() <= 150
+        && request.resource.data.budget is string
+        && request.resource.data.budget.size() <= 40
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.source == "crm"
+        && request.resource.data.status == "new"
+        && request.resource.data.assignedTo == "unassigned"
+        && request.resource.data.assignedAgentName == "Unassigned"
+        && request.resource.data.followUpDate == ""
+        && request.resource.data.remarks == ""
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdByName is string
+        && request.resource.data.createdByName.size() > 0
+        && request.resource.data.createdByName.size() <= 100
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ACTIVITY HISTORY VALIDATION
+    function validActivityFields() {
+      return request.resource.data.keys().hasOnly([
+          "eventType", "actorUid", "actorName", "summary", "status",
+          "followUpDate", "remarks", "createdAt", "previousAssignedTo",
+          "previousAssignedAgentName", "newAssignedTo", "newAssignedAgentName",
+          "previousStatus"
+        ])
+        && request.resource.data.keys().hasAll([
+          "eventType", "actorUid", "actorName", "summary", "status",
+          "followUpDate", "remarks", "createdAt"
+        ])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorName is string
+        && request.resource.data.summary is string
+        && request.resource.data.status is string
+        && request.resource.data.followUpDate is string
+        && request.resource.data.remarks is string
+        && request.resource.data.createdAt == request.time
+        && (!request.resource.data.keys().hasAny(["previousAssignedTo"])
+          || request.resource.data.previousAssignedTo is string)
+        && (!request.resource.data.keys().hasAny(["previousAssignedAgentName"])
+          || request.resource.data.previousAssignedAgentName is string)
+        && (!request.resource.data.keys().hasAny(["newAssignedTo"])
+          || request.resource.data.newAssignedTo is string)
+        && (!request.resource.data.keys().hasAny(["newAssignedAgentName"])
+          || request.resource.data.newAssignedAgentName is string)
+        && (!request.resource.data.keys().hasAny(["previousStatus"])
+          || request.resource.data.previousStatus is string);
+    }
+
+    // DAYBNB OWNER PROFILE CHECK
+    function validDaybnbOwner() {
+      let ownerPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return isSignedIn()
+        && exists(ownerPath)
+        && get(ownerPath).data.role == "owner"
+        && get(ownerPath).data.status in ["pending", "approved"]
+        && get(ownerPath).data.email == request.auth.token.email
+        && request.auth.token.email_verified == true;
+    }
+
+    // DAYBNB PROPERTY VALIDATION
+    function validDaybnbProperty() {
+      return validDaybnbOwner()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail == request.auth.token.email
+        && request.resource.data.keys().hasOnly([
+          "ownerUid", "ownerEmail", "title", "propertyType", "maxGuests", "city", "locality",
+          "hourlyRate", "dayRate", "nightRate", "checkInTime",
+          "checkOutTime", "coverImage", "imageUrls", "imageCount",
+          "minimumImagesRequired", "maximumImagesAllowed", "imageStorage",
+          "amenities", "description", "status", "isPublished", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "ownerUid", "ownerEmail", "title", "propertyType", "maxGuests", "city", "locality",
+          "hourlyRate", "dayRate", "nightRate", "checkInTime",
+          "checkOutTime", "coverImage", "imageUrls", "imageCount",
+          "minimumImagesRequired", "maximumImagesAllowed", "imageStorage",
+          "amenities", "description", "status", "isPublished", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.propertyType is string
+        && request.resource.data.propertyType.size() > 0
+        && request.resource.data.propertyType.size() <= 50
+        && request.resource.data.maxGuests is int
+        && request.resource.data.maxGuests >= 1
+        && request.resource.data.maxGuests <= 50
+        && request.resource.data.city is string
+        && request.resource.data.city.size() > 0
+        && request.resource.data.city.size() <= 80
+        && request.resource.data.locality is string
+        && request.resource.data.locality.size() <= 100
+        && request.resource.data.hourlyRate is number
+        && request.resource.data.hourlyRate >= 0
+        && request.resource.data.hourlyRate <= 1000000
+        && request.resource.data.dayRate is number
+        && request.resource.data.dayRate >= 0
+        && request.resource.data.dayRate <= 1000000
+        && request.resource.data.nightRate is number
+        && request.resource.data.nightRate >= 0
+        && request.resource.data.nightRate <= 1000000
+        && (
+          request.resource.data.hourlyRate > 0
+          || request.resource.data.dayRate > 0
+          || request.resource.data.nightRate > 0
+        )
+        && request.resource.data.checkInTime is string
+        && request.resource.data.checkOutTime is string
+        && request.resource.data.coverImage is string
+        && request.resource.data.coverImage.matches("^https://.+")
+        && request.resource.data.coverImage.size() <= 2000
+        && request.resource.data.imageUrls is list
+        && request.resource.data.imageUrls.size() >= 4
+        && request.resource.data.imageUrls.size() <= 10
+        && request.resource.data.imageUrls[0] == request.resource.data.coverImage
+        && request.resource.data.imageCount == request.resource.data.imageUrls.size()
+        && request.resource.data.minimumImagesRequired == 4
+        && request.resource.data.maximumImagesAllowed == 10
+        && request.resource.data.imageStorage == "external-url"
+        && request.resource.data.amenities is list
+        && request.resource.data.amenities.size() <= 15
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 1200
+        && request.resource.data.status == "pending"
+        && request.resource.data.isPublished == false
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // DAYBNB PRIVATE OWNER DATA VALIDATION
+    function validDaybnbPrivate(propertyId) {
+      return request.resource.data.keys().hasOnly([
+          "propertyId", "ownerUid", "ownerName", "ownerPhone", "ownerEmail",
+          "address", "createdAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "propertyId", "ownerName", "ownerPhone", "ownerEmail",
+          "address", "createdAt"
+        ])
+        && validDaybnbOwner()
+        && request.resource.data.propertyId == propertyId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail == request.auth.token.email
+        && request.resource.data.ownerName is string
+        && request.resource.data.ownerName.size() > 0
+        && request.resource.data.ownerName.size() <= 100
+        && request.resource.data.ownerPhone is string
+        && request.resource.data.ownerPhone.matches("^[0-9]{10}$")
+        && request.resource.data.ownerEmail is string
+        && request.resource.data.ownerEmail.size() <= 150
+        && request.resource.data.address is string
+        && request.resource.data.address.size() <= 250
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // DAYBNB BOOKING VALIDATION
+    function validDaybnbBooking() {
+      let propertyPath = /databases/$(database)/documents/daybnbProperties/$(request.resource.data.propertyId);
+
+      return request.resource.data.keys().hasOnly([
+          "propertyId", "propertyTitle", "ownerName", "ownerPhone",
+          "customerName", "phone", "email", "bookingType",
+          "checkInDate", "checkOutDate", "startTime", "endTime",
+          "guests", "quotedTotal", "message", "status", "createdAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "propertyId", "propertyTitle", "ownerName", "ownerPhone",
+          "customerName", "phone", "email", "bookingType",
+          "checkInDate", "checkOutDate", "startTime", "endTime",
+          "guests", "quotedTotal", "message", "status", "createdAt"
+        ])
+        && request.resource.data.propertyId is string
+        && request.resource.data.propertyId.size() > 0
+        && exists(propertyPath)
+        && get(propertyPath).data.isPublished == true
+        && get(propertyPath).data.status == "approved"
+        && request.resource.data.propertyTitle == get(propertyPath).data.title
+        && request.resource.data.ownerName == ""
+        && request.resource.data.ownerPhone == ""
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() > 0
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[0-9]{10}$")
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 150
+        && request.resource.data.bookingType in ["hourly", "day", "overnight"]
+        && request.resource.data.checkInDate is string
+        && request.resource.data.checkInDate.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        && request.resource.data.checkOutDate is string
+        && (
+          request.resource.data.checkOutDate == ""
+          || request.resource.data.checkOutDate.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        )
+        && request.resource.data.startTime is string
+        && request.resource.data.endTime is string
+        && (
+          request.resource.data.bookingType != "hourly"
+          || (
+            request.resource.data.startTime.matches("^[0-9]{2}:[0-9]{2}$")
+            && request.resource.data.endTime.matches("^[0-9]{2}:[0-9]{2}$")
+          )
+        )
+        && request.resource.data.guests is int
+        && request.resource.data.guests >= 1
+        && request.resource.data.guests <= get(propertyPath).data.maxGuests
+        && request.resource.data.quotedTotal is number
+        && request.resource.data.quotedTotal > 0
+        && request.resource.data.quotedTotal <= 50000000
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 500
+        && request.resource.data.status == "pending"
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // USERS
+    match /users/{userId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId);
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          "uid", "name", "phone", "email", "role", "status",
+          "emailVerificationRequired", "createdAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "uid", "name", "phone", "email", "role", "status",
+          "emailVerificationRequired", "createdAt"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role in ["crm", "owner"]
+        && request.resource.data.status == "pending"
+        && request.resource.data.emailVerificationRequired == true
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() == 10
+        && request.resource.data.phone.matches("^[0-9]{10}$")
+        && request.resource.data.email is string
+        && request.resource.data.createdAt == request.time;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // PERFORMANCE REPORT SETTINGS
+    match /settings/{settingId} {
+      allow read: if isAdmin() && settingId == "performanceReports";
+
+      allow create, update: if isAdmin()
+        && settingId == "performanceReports"
+        && request.resource.data.keys().hasOnly([
+          "preserveTransferredHistory", "updatedAt", "updatedBy"
+        ])
+        && request.resource.data.keys().hasAll([
+          "preserveTransferredHistory", "updatedAt", "updatedBy"
+        ])
+        && request.resource.data.preserveTransferredHistory is bool
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    // LEADS
+    match /leads/{leadId} {
+
+      allow create: if isAdmin()
+        || validPublicLead()
+        || validConsultantLead();
+
+      // Consultant sees assigned leads OR their own unassigned leads.
+      allow read: if isAdmin()
+        || (
+          isApprovedCRM()
+          && (
+            resource.data.assignedTo == request.auth.uid
+            || (
+              resource.data.assignedTo == "unassigned"
+              && resource.data.createdBy == request.auth.uid
+            )
+          )
+        );
+
+      allow delete: if isAdmin();
+
+      // Owner can assign, reassign and transfer.
+      // Consultant can update follow-up fields only while they own
+      // an unassigned lead or it is assigned to them.
+      allow update: if isAdmin()
+        || (
+          isApprovedCRM()
+          && (
+            resource.data.assignedTo == request.auth.uid
+            || (
+              resource.data.assignedTo == "unassigned"
+              && resource.data.createdBy == request.auth.uid
+            )
+          )
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "status", "followUpDate", "remarks", "updatedAt",
+            "followUpCompletedDate", "lastFollowUpBy"
+          ])
+          && request.resource.data.status in [
+            "new", "contacted", "follow-up", "site-visit",
+            "negotiation", "closed-won", "closed-lost"
+          ]
+          && request.resource.data.followUpDate is string
+          && request.resource.data.remarks is string
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.followUpCompletedDate is string
+          && request.resource.data.lastFollowUpBy == request.auth.uid
+        );
+
+      // LEAD ACTIVITY HISTORY
+      match /activities/{activityId} {
+
+        function canReadLeadActivity() {
+          let leadData = get(
+            /databases/$(database)/documents/leads/$(leadId)
+          ).data;
+
+          return isAdmin()
+            || (
+              isApprovedCRM()
+              && (
+                leadData.assignedTo == request.auth.uid
+                || (
+                  leadData.assignedTo == "unassigned"
+                  && leadData.createdBy == request.auth.uid
+                )
+              )
+            );
+        }
+
+        function ownerActivityAllowed() {
+          return isAdmin()
+            && validActivityFields()
+            && request.resource.data.eventType in [
+              "assignment", "reassignment", "transfer", "follow-up"
+            ];
+        }
+
+        function crmFollowUpAllowed() {
+          let beforeLead = get(
+            /databases/$(database)/documents/leads/$(leadId)
+          );
+          let afterLead = getAfter(
+            /databases/$(database)/documents/leads/$(leadId)
+          );
+
+          return isApprovedCRM()
+            && (
+              beforeLead.data.assignedTo == request.auth.uid
+              || (
+                beforeLead.data.assignedTo == "unassigned"
+                && beforeLead.data.createdBy == request.auth.uid
+              )
+            )
+            && (
+              afterLead.data.assignedTo == request.auth.uid
+              || (
+                afterLead.data.assignedTo == "unassigned"
+                && afterLead.data.createdBy == request.auth.uid
+              )
+            )
+            && validActivityFields()
+            && request.resource.data.eventType == "follow-up"
+            && afterLead.data.lastFollowUpBy == request.auth.uid
+            && afterLead.data.status == request.resource.data.status
+            && afterLead.data.followUpDate == request.resource.data.followUpDate
+            && afterLead.data.remarks == request.resource.data.remarks
+            && afterLead.data.updatedAt == request.time
+            && afterLead.data.followUpCompletedDate is string;
+        }
+
+        allow read: if canReadLeadActivity();
+        allow create: if ownerActivityAllowed() || crmFollowUpAllowed();
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // NORMAL PROPERTY LISTINGS
+    match /properties/{propertyId} {
+      allow read: if isAdmin() || resource.data.isPublished == true;
+      allow write: if isAdmin();
+    }
+
+    // AGENTS
+    match /agents/{agentId} {
+      allow read, write: if isAdmin();
+    }
+
+    // DAYBNB PUBLIC PROPERTY LISTINGS
+    match /daybnbProperties/{propertyId} {
+      allow read: if isAdmin() || resource.data.isPublished == true;
+
+      allow create: if isAdmin()
+        || (
+          validDaybnbProperty()
+          && existsAfter(
+            /databases/$(database)/documents/daybnbPrivate/$(propertyId)
+          )
+          && getAfter(
+            /databases/$(database)/documents/daybnbPrivate/$(propertyId)
+          ).data.propertyId == propertyId
+          && getAfter(
+            /databases/$(database)/documents/daybnbPrivate/$(propertyId)
+          ).data.ownerUid == request.auth.uid
+        );
+
+      allow update, delete: if isAdmin();
+    }
+
+    // DAYBNB PRIVATE OWNER INFORMATION
+    match /daybnbPrivate/{propertyId} {
+      allow read: if isAdmin();
+
+      allow create: if isAdmin()
+        || (
+          validDaybnbPrivate(propertyId)
+          && existsAfter(
+            /databases/$(database)/documents/daybnbProperties/$(propertyId)
+          )
+          && getAfter(
+            /databases/$(database)/documents/daybnbProperties/$(propertyId)
+          ).data.ownerUid == request.auth.uid
+          && getAfter(
+            /databases/$(database)/documents/daybnbProperties/$(propertyId)
+          ).data.status == "pending"
+          && getAfter(
+            /databases/$(database)/documents/daybnbProperties/$(propertyId)
+          ).data.isPublished == false
+        );
+
+      allow update, delete: if isAdmin();
+    }
+
+    // DAYBNB BOOKING REQUESTS
+    match /daybnbBookings/{bookingId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || validDaybnbBooking();
+      allow update, delete: if isAdmin();
+    }
+
+    // DENY EVERYTHING ELSE
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
