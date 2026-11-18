@@ -1,19 +1,22 @@
 /**
  * JameenGhar ImageKit upload-auth Worker
  *
- * Deploy as a Cloudflare Worker. Configure these Worker variables/secrets:
+ * Required Cloudflare variables/secrets:
  *   IMAGEKIT_PRIVATE_KEY   (Secret)
  *   IMAGEKIT_PUBLIC_KEY    (Variable)
- *   FIREBASE_API_KEY       (Variable; Firebase web API key)
+ *   FIREBASE_API_KEY       (Variable)
  *
- * Only Firebase Phone-Auth users can receive ImageKit upload credentials.
- * Never put IMAGEKIT_PRIVATE_KEY in GitHub Pages or browser JavaScript.
+ * Upload access is limited to Firebase users whose email is verified and
+ * whose Firestore users/{uid} profile is role=owner, status=approved.
+ * Never put IMAGEKIT_PRIVATE_KEY in browser JavaScript or GitHub Pages.
  */
 const ALLOWED_ORIGINS = new Set([
   "https://jameenghar.com",
   "https://www.jameenghar.com"
 ]);
 const FIREBASE_LOOKUP_URL = "https://identitytoolkit.googleapis.com/v1/accounts:lookup";
+const FIRESTORE_DOCUMENT_URL =
+  "https://firestore.googleapis.com/v1/projects/jameenghar-ffdfd/databases/(default)/documents/users/";
 
 function json(data, status, origin) {
   const headers = {
@@ -34,17 +37,37 @@ function toHex(buffer) {
   return Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function verifyFirebasePhoneUser(idToken, apiKey) {
-  const response = await fetch(FIREBASE_LOOKUP_URL + "?key=" + encodeURIComponent(apiKey), {
+async function verifyApprovedOwner(idToken, apiKey) {
+  const identityResponse = await fetch(FIREBASE_LOOKUP_URL + "?key=" + encodeURIComponent(apiKey), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken })
   });
-  if (!response.ok) throw new Error("Firebase authentication could not be verified.");
-  const data = await response.json();
-  const user = data.users && data.users[0];
-  if (!user || !user.localId || !user.phoneNumber || user.disabled) {
-    throw new Error("Please verify your mobile number with JameenGhar OTP login first.");
+  if (!identityResponse.ok) throw new Error("Firebase sign-in could not be verified.");
+
+  const identityData = await identityResponse.json();
+  const user = identityData.users && identityData.users[0];
+  if (!user || !user.localId || user.disabled || user.emailVerified !== true || !user.email) {
+    throw new Error("Please sign in with a verified email address.");
+  }
+
+  const profileResponse = await fetch(
+    FIRESTORE_DOCUMENT_URL + encodeURIComponent(user.localId),
+    { headers: { "Authorization": "Bearer " + idToken } }
+  );
+  if (!profileResponse.ok) {
+    throw new Error("Owner profile not found. Please contact JameenGhar for approval.");
+  }
+
+  const profileDocument = await profileResponse.json();
+  const fields = profileDocument.fields || {};
+  const role = fields.role && fields.role.stringValue;
+  const status = fields.status && fields.status.stringValue;
+  const profileEmail = fields.email && fields.email.stringValue;
+
+  if (role !== "owner" || status !== "approved" ||
+      !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
+    throw new Error("Image uploads are available only to email-verified, approved JameenGhar owners.");
   }
   return user;
 }
@@ -93,7 +116,7 @@ export default {
     }
 
     const authorization = request.headers.get("Authorization") || "";
-    const match = authorization.match(/^Bearer\s+(.+)$/i);
+    const match = authorization.match(/^Bearer\\s+(.+)$/i);
     if (!match) return json({ error: "Firebase sign-in is required." }, 401, origin);
 
     if (!env.IMAGEKIT_PRIVATE_KEY || !env.IMAGEKIT_PUBLIC_KEY || !env.FIREBASE_API_KEY) {
@@ -101,11 +124,11 @@ export default {
     }
 
     try {
-      await verifyFirebasePhoneUser(match[1], env.FIREBASE_API_KEY);
+      await verifyApprovedOwner(match[1], env.FIREBASE_API_KEY);
       const auth = await createImageKitAuth(env.IMAGEKIT_PRIVATE_KEY);
       return json({ ...auth, publicKey: env.IMAGEKIT_PUBLIC_KEY }, 200, origin);
     } catch (error) {
-      return json({ error: error.message || "Could not create upload authentication." }, 401, origin);
+      return json({ error: error.message || "Could not create upload authentication." }, 403, origin);
     }
   }
 };
