@@ -151,6 +151,12 @@ async function loadOwnerQueue(){
     const meta=document.createElement("p");meta.className="hint";meta.textContent="File reference: "+privateData.proofFileId+" · Status: "+(privateData.proofStatus||"pending");proof.append(meta);
    }catch(err){proof.textContent="Proof preview unavailable: "+err.message+" — do not approve until the document is reviewed.";approve.disabled=true;}
   }
+  const privateItems=await getDocs(collection(db,"marketplacePrivate"));
+  const connects=privateItems.docs.filter(x=>x.data().recordType==="connect_request"&&x.data().status==="new");
+  if(connects.length){
+   const heading=document.createElement("h3");heading.textContent="Private Connect Requests";root.append(heading);
+   for(const item of connects){const d=item.data(),box=document.createElement("div");box.className="notice";box.style.margin="8px 0";box.textContent=(d.createdByName||"CRM user")+" can fulfil Buyer Requirement "+(d.requirementId||"");root.append(box);}
+  }
   for(const snap of pendingReqs){
    const p=snap.data(),card=document.createElement("div");card.className="panel";
    const h=document.createElement("h3");h.textContent="Buyer Requirement: "+(p.title||"Untitled");
@@ -182,16 +188,18 @@ function scorePair(req,prop,km){
  const checks=[];
  const add=(name,ok,weight,detail)=>{checks.push({name,matched:!!ok,weight,detail});};
  const reqType=String(req.propertyType||"").toLowerCase(),propType=String(prop.propertyType||"").toLowerCase();
- add("Property type",reqType===propType||reqType==="other"||propType==="other",25,req.propertyType+" / "+prop.propertyType);
+ add("Property type",reqType===propType||reqType==="other"||propType==="other",20,req.propertyType+" / "+prop.propertyType);
  const price=Number(prop.askingPrice||0),bmin=Number(req.budgetMin||0),bmax=Number(req.budgetMax||0);
  add("Budget",price>=bmin&&price<=bmax,20,"Asking ₹"+price.toLocaleString("en-IN")+" · Buyer ₹"+bmin.toLocaleString("en-IN")+"–₹"+bmax.toLocaleString("en-IN"));
  const area=Number(prop.area||0),amin=Number(req.areaMin||0),amax=Number(req.areaMax||0);
  const units=String(req.areaUnit||"").toLowerCase()===String(prop.areaUnit||"").toLowerCase();
  add("Area",units&&area>=amin&&area<=amax,15,String(prop.area)+" "+prop.areaUnit);
  const facing=String(req.facing||"").trim().toLowerCase(),pf=String(prop.facing||"").trim().toLowerCase();
+ const reqMode=String(req.transactionType||"buy").toLowerCase(),propMode=String(prop.transactionType||"sale").toLowerCase();
+ add("Sale / Rent",reqMode==="buy"&&propMode==="sale"||reqMode==="rent"&&propMode==="rent",10,reqMode+" / "+propMode);
  add("Facing",!facing||facing==="any"||facing===pf,10,pf||"Not specified");
  const road=String(req.roadWidth||"").trim().toLowerCase(),pr=String(prop.roadWidth||"").trim().toLowerCase();
- add("Road width",!road||road===pr,10,pr||"Not specified");
+ add("Road width",!road||road===pr,5,pr||"Not specified");
  const radius=Number(req.preferredRadiusKm||2);
  add("Distance",km<=radius,20,km.toFixed(2)+" km · Initial radius "+radius+" km");
  const score=Math.round(checks.reduce((n,x)=>n+(x.matched?x.weight:0),0));
