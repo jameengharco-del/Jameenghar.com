@@ -124,7 +124,7 @@ async function loadOwnerQueue(){
     const img=document.createElement("img");img.src=signed;img.alt="Private property proof document";img.style.cssText="display:block;max-width:100%;max-height:480px;object-fit:contain;margin-top:10px;border:1px solid #ddd;border-radius:8px";
     proof.textContent="Private proof document preview (short-lived Owner-only link): ";proof.append(img);
     const meta=document.createElement("p");meta.className="hint";meta.textContent="File reference: "+privateData.proofFileId+" · Status: "+(privateData.proofStatus||"pending");proof.append(meta);
-   }catch(err){proof.textContent="Proof preview unavailable: "+err.message+" — do not approve until the document is reviewed.";}
+   }catch(err){proof.textContent="Proof preview unavailable: "+err.message+" — do not approve until the document is reviewed.";approve.disabled=true;}
   }
   for(const snap of pendingReqs){
    const p=snap.data(),card=document.createElement("div");card.className="panel";
@@ -272,7 +272,7 @@ $("sellerForm").onsubmit=async e=>{
  const privateRef=doc(collection(db,"marketplacePrivate"));
  await setDoc(privateRef,{recordType:"seller_property",createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
  const publicRef=await addDoc(collection(db,"marketplaceProperties"),{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
- await setDoc(doc(db,"marketplacePrivate",privateRef.id),{recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
+ await updateDoc(privateRef,{recordId:publicRef.id});
  e.currentTarget.reset();say("Property submitted for Owner verification. It is not public or match-eligible until Owner approves the proof document.","success");
  }catch(err){say(err.message+" If media was uploaded before this error, please contact Owner so unused uploads can be cleaned up.","error");}finally{button.disabled=false;}
 };
