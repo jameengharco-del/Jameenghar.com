@@ -620,6 +620,78 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // SMART MATCHING — public-safe marketplace cards only.
+    // Existing private /leads access rules above remain unchanged.
+    match /marketplaceRequirements/{requirementId} {
+      allow read: if isAdmin()
+        || (isApprovedCRM() && resource.data.status == "active");
+      allow create: if isApprovedCRM()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "pending_review"
+        && request.resource.data.keys().hasOnly([
+          "title", "transactionType", "propertyType", "city", "locality",
+          "approxArea", "budgetMin", "budgetMax", "areaMin", "areaMax",
+          "areaUnit", "preferredRadiusKm", "facing", "roadWidth",
+          "additionalRequirements", "status", "createdBy", "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.city is string
+        && request.resource.data.locality is string
+        && request.resource.data.preferredRadiusKm in [1, 2, 5, 10];
+      allow update, delete: if isAdmin();
+    }
+
+    match /marketplaceProperties/{propertyId} {
+      allow read: if isAdmin()
+        || (isApprovedCRM() && resource.data.status == "active");
+      allow create: if isApprovedCRM()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "pending_verification"
+        && request.resource.data.keys().hasOnly([
+          "title", "transactionType", "propertyType", "city", "locality",
+          "approxArea", "askingPrice", "area", "areaUnit", "facing",
+          "roadWidth", "photoUrls", "videoUrl", "videoDurationSeconds",
+          "photoCount", "proofStatus", "status", "createdBy", "createdAt",
+          "updatedAt"
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.photoUrls is list
+        && request.resource.data.photoUrls.size() >= 1
+        && request.resource.data.photoUrls.size() <= 2
+        && request.resource.data.videoUrl is string
+        && request.resource.data.videoUrl.size() > 0
+        && request.resource.data.videoDurationSeconds is number
+        && request.resource.data.videoDurationSeconds > 0
+        && request.resource.data.videoDurationSeconds <= 60
+        && request.resource.data.proofStatus == "pending"
+        && request.resource.data.proofDocumentId is string;
+      allow update, delete: if isAdmin();
+    }
+
+    // Owner-only private data. CRM may create its own private record but cannot read it back.
+    match /marketplacePrivate/{recordId} {
+      allow read: if isAdmin();
+      allow create: if isApprovedCRM()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /smartMatches/{matchId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /marketplaceInterests/{interestId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /marketplaceMigrationJobs/{jobId} {
+      allow read, write: if isAdmin();
+    }
+
     // DENY EVERYTHING ELSE
     match /{document=**} {
       allow read, write: if false;
