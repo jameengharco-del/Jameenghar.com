@@ -65,13 +65,13 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 <div class="full notice">Owner approval is mandatory. Property will not be published or matched until proof-document verification. The document is private and must never be shared with buyers or other brokers.</div>
 <div class="full"><button type="submit">Submit Property for Owner Verification</button></div>
 </form>
-<div id="status" role="status" aria-live="polite"></div>
+<section id="marketplaceFeed" class="panel hidden"><h2>Shared CRM Marketplace</h2><p class="muted">Only Owner-approved privacy-safe cards appear here. Names, phone numbers, contact details and exact pins are hidden.</p><div id="requirementsFeed"></div><div id="propertiesFeed"></div></section><div id="status" role="status" aria-live="polite"></div>
 </section>
 </main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const WORKER="https://jameenghar-imagekit-auth.jameenghar-co.workers.dev";
@@ -89,9 +89,34 @@ onAuthStateChanged(auth,async user=>{
  if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
  $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
  $("workspace").classList.remove("hidden");
- if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();}
+ if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){$("authStatus").textContent=e.message;}
 });
+async function loadMarketplaceFeed(){
+ const reqRoot=$("requirementsFeed"),propRoot=$("propertiesFeed");reqRoot.innerHTML="<h3>Buyer Requirements</h3>";propRoot.innerHTML="<h3>Verified Properties</h3>";
+ try{
+  const [reqSnap,propSnap]=await Promise.all([
+   getDocs(query(collection(db,"marketplaceRequirements"),where("status","==","active"))),
+   getDocs(query(collection(db,"marketplaceProperties"),where("status","==","active")))
+  ]);
+  for(const snap of reqSnap.docs){
+   const d=snap.data(),box=document.createElement("div");box.className="notice";box.style.margin="10px 0";
+   const h=document.createElement("strong");h.textContent=d.title||"Buyer requirement";
+   const p=document.createElement("p");p.textContent=[d.propertyType,d.transactionType,d.approxArea,"Budget ₹"+Number(d.budgetMin||0).toLocaleString("en-IN")+"–₹"+Number(d.budgetMax||0).toLocaleString("en-IN"),"Area "+d.areaMin+"–"+d.areaMax+" "+d.areaUnit,"Search radius "+d.preferredRadiusKm+" km"].join(" · ");
+   const b=document.createElement("button");b.textContent="I can fulfil — Notify Owner";b.onclick=async()=>{b.disabled=true;try{await addDoc(collection(db,"marketplacePrivate"),{recordType:"connect_request",requirementId:snap.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",status:"new",createdAt:serverTimestamp()});b.textContent="Owner Notified";}catch(e){say(e.message,"error");b.disabled=false;}};
+   box.append(h,p,b);reqRoot.append(box);
+  }
+  if(!reqSnap.size){const p=document.createElement("p");p.className="hint";p.textContent="No approved buyer requirements yet.";reqRoot.append(p);}
+  for(const snap of propSnap.docs){
+   const d=snap.data(),box=document.createElement("div");box.className="notice";box.style.margin="10px 0";
+   const h=document.createElement("strong");h.textContent=d.title||"Verified property";
+   const p=document.createElement("p");p.textContent=[d.propertyType,d.transactionType,d.approxArea,"Asking ₹"+Number(d.askingPrice||0).toLocaleString("en-IN"),"Area "+d.area+" "+d.areaUnit].join(" · ");
+   const img=document.createElement("img");img.src=(d.photoUrls||[])[0]||"";img.alt="Property preview";img.loading="lazy";img.style.cssText="width:100%;max-width:320px;max-height:190px;object-fit:cover;border-radius:8px;margin-top:8px";
+   box.append(h,p);if(img.src)box.append(img);propRoot.append(box);
+  }
+  if(!propSnap.size){const p=document.createElement("p");p.className="hint";p.textContent="No approved properties yet.";propRoot.append(p);}
+ }catch(e){say("Could not load shared marketplace: "+e.message,"error");}
+}
 async function ownerProofPreview(fileId){
  const response=await fetch(WORKER+"/smart-proof-view",{method:"POST",headers:{"Authorization":"Bearer "+await currentUser.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({fileId})});
  const data=await response.json();if(!response.ok||!data.signedUrl)throw new Error(data.error||"Could not open private proof document.");return data.signedUrl;
