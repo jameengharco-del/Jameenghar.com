@@ -654,7 +654,7 @@ service cloud.firestore {
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "askingPrice", "area", "areaUnit", "facing",
           "roadWidth", "photoUrls", "videoUrl", "videoDurationSeconds",
-          "photoCount", "proofStatus", "status", "createdBy", "createdAt",
+          "photoCount", "proofStatus", "proofDocumentId", "status", "createdBy", "createdAt",
           "updatedAt"
         ])
         && request.resource.data.title is string
