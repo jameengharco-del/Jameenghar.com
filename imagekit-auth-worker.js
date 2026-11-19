@@ -123,7 +123,7 @@ export default {
     const requestPath = new URL(request.url).pathname;
     // Keep the legacy root endpoint working until both website clients use explicit routes.
     const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
-    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof" && uploadType !== "/marketplace-media") {
+    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof" && uploadType !== "/marketplace-media" && requestPath !== "/smart-proof-view") {
       return json({ error: "Unknown upload service. Use /property, /daybnb, /marketplace-media or /smart-proof." }, 404, origin);
     }
     if (request.method !== "POST") {
