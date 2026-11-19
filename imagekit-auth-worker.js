@@ -130,6 +130,53 @@ export default {
       return json({ error: "Method not allowed." }, 405, origin);
     }
 
+    if (requestPath === "/smart-proof-view") {
+      if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, origin);
+      const authorization = request.headers.get("Authorization") || "";
+      const authMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+      if (!authMatch) return json({ error: "Firebase sign-in is required." }, 401, origin);
+      if (!env.IMAGEKIT_PRIVATE_KEY || !env.FIREBASE_API_KEY) {
+        return json({ error: "Private proof viewer is not configured." }, 503, origin);
+      }
+      try {
+        const user = await verifyUploadUser(authMatch[1], env.FIREBASE_API_KEY, "/smart-proof-view");
+        if (user.localId !== "P46WrdzpVWVHVC4t6vqIOYcZfxC3") {
+          return json({ error: "Only JameenGhar Owner can view proof documents." }, 403, origin);
+        }
+        const body = await request.json();
+        const fileId = String(body.fileId || "");
+        if (!/^[a-zA-Z0-9_-]{8,100}$/.test(fileId)) {
+          return json({ error: "Invalid proof document reference." }, 400, origin);
+        }
+        const detailResponse = await fetch("https://api.imagekit.io/v1/files/" + encodeURIComponent(fileId) + "/details", {
+          headers: { "Authorization": "Basic " + btoa(env.IMAGEKIT_PRIVATE_KEY + ":") }
+        });
+        const details = await detailResponse.json();
+        if (!detailResponse.ok || details.isPrivateFile !== true || typeof details.url !== "string") {
+          return json({ error: "Private proof document not found or private flag is missing." }, 404, origin);
+        }
+        const assetUrl = new URL(details.url);
+        if (assetUrl.hostname !== "ik.imagekit.io" || !assetUrl.pathname.startsWith("/")) {
+          return json({ error: "Unexpected proof document URL." }, 502, origin);
+        }
+        const endpointPrefix = "/" + assetUrl.pathname.split("/")[1] + "/";
+        const relativePath = assetUrl.pathname.slice(endpointPrefix.length) + assetUrl.search;
+        const expires = Math.floor(Date.now() / 1000) + 300;
+        const key = await crypto.subtle.importKey(
+          "raw", new TextEncoder().encode(env.IMAGEKIT_PRIVATE_KEY),
+          { name: "HMAC", hash: "SHA-1" }, false, ["sign"]
+        );
+        const signatureBytes = await crypto.subtle.sign(
+          "HMAC", key, new TextEncoder().encode(relativePath + expires)
+        );
+        const signature = toHex(signatureBytes);
+        const signedUrl = details.url + (assetUrl.search ? "&" : "?") + "ik-t=" + expires + "&ik-s=" + signature;
+        return json({ signedUrl, expiresAt: expires }, 200, origin);
+      } catch (error) {
+        return json({ error: error.message || "Could not authorize proof document preview." }, 403, origin);
+      }
+    }
+
     const authorization = request.headers.get("Authorization") || "";
     const match = authorization.match(/^Bearer\s+(.+)$/i);
     if (!match) return json({ error: "Firebase sign-in is required." }, 401, origin);
