@@ -69,11 +69,11 @@ async function verifyUploadUser(idToken, apiKey, uploadType) {
 
   const isMainAdmin = user.localId === "P46WrdpzVWVHVC4t6vqIOYcZfxC3" && role === "admin";
   const ownerAllowed = role === "owner" && (
-    uploadType === "property" ? status === "approved" : status !== "rejected"
+    uploadType === "/property" ? status === "approved" : status !== "rejected"
   );
   if ((!isMainAdmin && !ownerAllowed) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
-    throw new Error(uploadType === "property"
+    throw new Error(uploadType === "/property"
       ? "Property photo uploads require an email-verified, approved JameenGhar owner."
       : "Daybnb photo uploads require an email-verified owner account that is not rejected.");
   }
@@ -119,8 +119,8 @@ export default {
     if (!ALLOWED_ORIGINS.has(origin)) {
       return json({ error: "Origin not allowed." }, 403, "");
     }
-    const uploadType = new URL(request.url).pathname.replace(/^\\/+|\\/+$/g, "");
-    if (uploadType !== "property" && uploadType !== "daybnb") {
+    const uploadType = new URL(request.url).pathname;
+    if (uploadType !== "/property" && uploadType !== "/daybnb") {
       return json({ error: "Unknown upload service. Use /property or /daybnb." }, 404, origin);
     }
     if (request.method !== "POST") {
