@@ -71,7 +71,8 @@ async function verifyUploadUser(idToken, apiKey, uploadType) {
   const ownerAllowed = role === "owner" && (
     uploadType === "/property" ? status === "approved" : status !== "rejected"
   );
-  if ((!isMainAdmin && !ownerAllowed) ||
+  const approvedCrmAllowed = uploadType === "/smart-proof" && role === "crm" && status === "approved";
+  if ((!isMainAdmin && !ownerAllowed && !approvedCrmAllowed) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
     throw new Error(uploadType === "/property"
       ? "Property photo uploads require an email-verified, approved JameenGhar owner."
@@ -122,8 +123,8 @@ export default {
     const requestPath = new URL(request.url).pathname;
     // Keep the legacy root endpoint working until both website clients use explicit routes.
     const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
-    if (uploadType !== "/property" && uploadType !== "/daybnb") {
-      return json({ error: "Unknown upload service. Use /property or /daybnb." }, 404, origin);
+    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof") {
+      return json({ error: "Unknown upload service. Use /property, /daybnb or /smart-proof." }, 404, origin);
     }
     if (request.method !== "POST") {
       return json({ error: "Method not allowed." }, 405, origin);
@@ -139,6 +140,48 @@ export default {
 
     try {
       await verifyUploadUser(match[1], env.FIREBASE_API_KEY, uploadType);
+
+      // Proof documents are uploaded through this Worker, not directly from the browser.
+      // The Worker forces ImageKit isPrivateFile=true so a client cannot accidentally
+      // publish a deed/authorization image by changing a browser upload parameter.
+      if (uploadType === "/smart-proof") {
+        const incoming = await request.formData();
+        const file = incoming.get("file");
+        if (!(file instanceof File) || !file.size) {
+          return json({ error: "Please select a property proof document image." }, 400, origin);
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          return json({ error: "Proof document image must be 8 MB or smaller." }, 413, origin);
+        }
+        const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+        if (!allowedTypes.has(file.type)) {
+          return json({ error: "Proof document must be JPG, PNG or WebP." }, 415, origin);
+        }
+        const safeName = (file.name || "property-proof").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+        const uploadForm = new FormData();
+        uploadForm.append("file", file, safeName);
+        uploadForm.append("fileName", "proof_" + crypto.randomUUID() + "_" + safeName);
+        uploadForm.append("folder", "/private/property-proofs/");
+        uploadForm.append("isPrivateFile", "true");
+        uploadForm.append("useUniqueFileName", "true");
+        const imageKitResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+          method: "POST",
+          headers: { "Authorization": "Basic " + btoa(env.IMAGEKIT_PRIVATE_KEY + ":") },
+          body: uploadForm
+        });
+        const imageKitData = await imageKitResponse.json();
+        if (!imageKitResponse.ok || !imageKitData.fileId || !imageKitData.filePath) {
+          return json({ error: "Private proof upload failed. Please retry." }, 502, origin);
+        }
+        return json({
+          fileId: imageKitData.fileId,
+          filePath: imageKitData.filePath,
+          fileType: file.type,
+          fileSize: file.size,
+          isPrivateFile: imageKitData.isPrivateFile === true
+        }, 200, origin);
+      }
+
       const auth = await createImageKitAuth(env.IMAGEKIT_PRIVATE_KEY);
       return json({ ...auth, publicKey: env.IMAGEKIT_PUBLIC_KEY }, 200, origin);
     } catch (error) {
