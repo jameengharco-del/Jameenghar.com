@@ -678,8 +678,8 @@ service cloud.firestore {
     // Owner-only private data. CRM may create its own private record but cannot read it back.
     match /marketplacePrivate/{recordId} {
       allow read: if isAdmin();
-      allow create: if isApprovedCRM()
-        && request.resource.data.createdBy == request.auth.uid;
+      allow create: if isAdmin() || (isApprovedCRM()
+        && request.resource.data.createdBy == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
