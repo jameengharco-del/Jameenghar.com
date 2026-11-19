@@ -27,6 +27,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -70,12 +71,12 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import {getFirestore,doc,getDoc,addDoc,collection,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const WORKER="https://jameenghar-imagekit-auth.jameenghar-co.workers.dev";
 const $=id=>document.getElementById(id);
-let currentUser=null,userProfile=null,mode="buyer";
+let currentUser=null,userProfile=null,mode="buyer",isOwner=false;
 function say(t,kind=""){ $("status").className=kind; $("status").textContent=t; }
 function formData(form){return Object.fromEntries(new FormData(form).entries());}
 function switchMode(next){mode=next;$("buyerForm").classList.toggle("hidden",next!=="buyer");$("sellerForm").classList.toggle("hidden",next!=="seller");$("buyerTab").classList.toggle("active",next==="buyer");$("sellerTab").classList.toggle("active",next==="seller");say("");}
@@ -84,10 +85,66 @@ onAuthStateChanged(auth,async user=>{
  currentUser=user; userProfile=null; $("workspace").classList.add("hidden");
  if(!user){$("authStatus").textContent="Please login through your approved JameenGhar CRM account first.";return;}
  try{const s=await getDoc(doc(db,"users",user.uid));if(!s.exists())throw new Error("CRM profile not found.");userProfile=s.data();
- if(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved")throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
- $("authStatus").textContent="Signed in as an approved CRM user. New posts will remain pending Owner approval."; $("workspace").classList.remove("hidden");
+ isOwner=user.uid==="P46WrdzpVWVHVC4t6vqIOYcZfxC3"&&userProfile.role==="admin";
+ if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
+ $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
+ $("workspace").classList.remove("hidden");
+ if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();}
  }catch(e){$("authStatus").textContent=e.message;}
 });
+async function ownerProofPreview(fileId){
+ const response=await fetch(WORKER+"/smart-proof-view",{method:"POST",headers:{"Authorization":"Bearer "+await currentUser.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({fileId})});
+ const data=await response.json();if(!response.ok||!data.signedUrl)throw new Error(data.error||"Could not open private proof document.");return data.signedUrl;
+}
+async function loadOwnerQueue(){
+ const root=$("ownerQueue");root.textContent="Loading pending property and requirement posts…";
+ try{
+  const [props,reqs]=await Promise.all([getDocs(collection(db,"marketplaceProperties")),getDocs(collection(db,"marketplaceRequirements"))]);
+  const pendingProps=props.docs.filter(x=>x.data().status==="pending_verification");
+  const pendingReqs=reqs.docs.filter(x=>x.data().status==="pending_review");
+  root.innerHTML="";
+  if(!pendingProps.length&&!pendingReqs.length){root.textContent="No pending Smart Matching posts.";return;}
+  for(const snap of pendingProps){
+   const p=snap.data(),card=document.createElement("div");card.className="panel";
+   const h=document.createElement("h3");h.textContent=p.title||"Property post";
+   const detail=document.createElement("p");detail.className="muted";detail.textContent=[p.propertyType,p.transactionType,p.locality,p.city,"₹"+Number(p.askingPrice||0).toLocaleString("en-IN"),String(p.area||"")+" "+(p.areaUnit||""),"Video "+(p.videoDurationSeconds||0)+" sec"].join(" · ");
+   const proof=document.createElement("div");proof.className="notice";proof.textContent="Loading private proof document…";
+   const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px";
+   const approve=document.createElement("button");approve.textContent="Approve & Activate";
+   const reject=document.createElement("button");reject.textContent="Reject";reject.style.background="#a12b22";
+   approve.onclick=()=>reviewProperty(snap.id,p,"active","approved",approve,reject);
+   reject.onclick=()=>reviewProperty(snap.id,p,"rejected","rejected",approve,reject);
+   actions.append(approve,reject);card.append(h,detail,proof,actions);root.append(card);
+   try{
+    const priv=await getDoc(doc(db,"marketplacePrivate",p.proofDocumentId));
+    if(!priv.exists())throw new Error("Private verification record not found.");
+    const privateData=priv.data();const signed=await ownerProofPreview(privateData.proofFileId);
+    const img=document.createElement("img");img.src=signed;img.alt="Private property proof document";img.style.cssText="display:block;max-width:100%;max-height:480px;object-fit:contain;margin-top:10px;border:1px solid #ddd;border-radius:8px";
+    proof.textContent="Private proof document preview (short-lived Owner-only link): ";proof.append(img);
+    const meta=document.createElement("p");meta.className="hint";meta.textContent="File reference: "+privateData.proofFileId+" · Status: "+(privateData.proofStatus||"pending");proof.append(meta);
+   }catch(err){proof.textContent="Proof preview unavailable: "+err.message+" — do not approve until the document is reviewed.";}
+  }
+  for(const snap of pendingReqs){
+   const p=snap.data(),card=document.createElement("div");card.className="panel";
+   const h=document.createElement("h3");h.textContent="Buyer Requirement: "+(p.title||"Untitled");
+   const detail=document.createElement("p");detail.className="muted";detail.textContent=[p.propertyType,p.transactionType,p.locality,p.city,"Budget ₹"+Number(p.budgetMin||0).toLocaleString("en-IN")+"–₹"+Number(p.budgetMax||0).toLocaleString("en-IN"),"Radius "+p.preferredRadiusKm+" km"].join(" · ");
+   const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px";
+   const approve=document.createElement("button");approve.textContent="Approve Requirement";approve.onclick=async()=>{approve.disabled=true;try{await updateDoc(doc(db,"marketplaceRequirements",snap.id),{status:"active",approvedAt:serverTimestamp(),approvedBy:currentUser.uid});await loadOwnerQueue();}catch(e){say(e.message,"error");approve.disabled=false;}};
+   const reject=document.createElement("button");reject.textContent="Reject";reject.style.background="#a12b22";reject.onclick=async()=>{reject.disabled=true;try{await updateDoc(doc(db,"marketplaceRequirements",snap.id),{status:"rejected",rejectedAt:serverTimestamp(),rejectedBy:currentUser.uid});await loadOwnerQueue();}catch(e){say(e.message,"error");reject.disabled=false;}};
+   actions.append(approve,reject);card.append(h,detail,actions);root.append(card);
+  }
+ }catch(e){root.textContent="Could not load Owner queue: "+e.message;}
+}
+async function reviewProperty(id,p,nextStatus,proofStatus,approve,reject){
+ approve.disabled=true;reject.disabled=true;
+ try{
+  const privateRef=doc(db,"marketplacePrivate",p.proofDocumentId);
+  const privateSnap=await getDoc(privateRef);if(!privateSnap.exists())throw new Error("Private proof record is missing.");
+  await updateDoc(doc(db,"marketplaceProperties",id),{status:nextStatus,proofStatus,reviewedAt:serverTimestamp(),reviewedBy:currentUser.uid});
+  await updateDoc(privateRef,{proofStatus,reviewedAt:serverTimestamp(),reviewedBy:currentUser.uid});
+  say(nextStatus==="active"?"Property approved and activated.":"Property rejected.","success");await loadOwnerQueue();
+ }catch(e){say(e.message,"error");approve.disabled=false;reject.disabled=false;}
+}
 async function getUploadAuth(path){
  const res=await fetch(WORKER+path,{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()}});
  const data=await res.json();if(!res.ok)throw new Error(data.error||"Upload authentication failed.");return data;
