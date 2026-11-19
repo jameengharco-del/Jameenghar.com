@@ -119,7 +119,9 @@ export default {
     if (!ALLOWED_ORIGINS.has(origin)) {
       return json({ error: "Origin not allowed." }, 403, "");
     }
-    const uploadType = new URL(request.url).pathname;
+    const requestPath = new URL(request.url).pathname;
+    // Keep the legacy root endpoint working until both website clients use explicit routes.
+    const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
     if (uploadType !== "/property" && uploadType !== "/daybnb") {
       return json({ error: "Unknown upload service. Use /property or /daybnb." }, 404, origin);
     }
