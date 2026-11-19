@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JameenGhar Smart Matching</title>
+<style>
+:root{--g:#064d2b;--g2:#0b6840;--o:#ff5a0a;--ink:#17251d;--muted:#64736a;--bg:#f6f8f5;--line:#e4eae5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header img{width:190px;max-width:55vw;max-height:60px;object-fit:contain}.tag{color:var(--g);font-weight:700}
+main{max-width:980px;margin:28px auto;padding:0 16px 48px}.intro,.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:18px;box-shadow:0 8px 24px #12331b08}
+h1,h2{color:var(--g);margin:0 0 12px}.intro p,.muted{color:var(--muted);line-height:1.55}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tabs button,button{border:0;border-radius:9px;padding:12px 16px;background:var(--g);color:white;font-weight:700;cursor:pointer}.tabs button.active{background:var(--o)}button:disabled{opacity:.55;cursor:wait}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}label{font-size:13px;font-weight:700;color:var(--g)}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-radius:8px;background:#fff;color:var(--ink);font:inherit}textarea{min-height:90px;resize:vertical}.hint{font-size:12px;color:var(--muted);line-height:1.5}.notice{padding:12px;border-radius:9px;background:#f4f8f4;color:#34513d;font-size:13px;line-height:1.55}.hidden{display:none!important}#status{white-space:pre-wrap;margin-top:12px;font-size:14px}.success{color:#08783c}.error{color:#b42318}
+@media(max-width:640px){form{grid-template-columns:1fr}.full{grid-column:auto}.intro,.panel{padding:18px}}
+</style>
+</head>
+<body>
+<header><a href="index.html"><img src="jameenghar-logo.png" alt="JameenGhar"></a><div class="tag">REAL ESTATE SMART MATCHING</div></header>
+<main>
+<section class="intro">
+<h1>JameenGhar Smart Matching</h1>
+<p>Post buyer requirements or seller/broker properties. All posts remain private for Owner verification until approved. Exact map pins and proof documents are never displayed publicly.</p>
+<div id="authStatus" class="notice">Checking your CRM access…</div>
+</section>
+<section class="panel hidden" id="workspace">
+<div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
+<form id="buyerForm">
+<div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
+<div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
+<div class="field"><label>Property Type *</label><select name="propertyType" required><option value="">Select</option><option>Plot</option><option>Independent House</option><option>Flat / Apartment</option><option>Villa</option><option>Commercial</option><option>Agricultural Land</option><option>Other</option></select></div>
+<div class="field"><label>City *</label><input name="city" required value="Jaipur"></div>
+<div class="field"><label>Locality / Area *</label><input name="locality" required maxlength="120"></div>
+<div class="field full"><label>Google Maps Pin / Location Link (private to Owner) *</label><input name="mapPin" type="url" required placeholder="Paste Google Maps location link"></div>
+<div class="field"><label>Minimum Budget (₹) *</label><input name="budgetMin" type="number" min="0" required></div>
+<div class="field"><label>Maximum Budget (₹) *</label><input name="budgetMax" type="number" min="1" required></div>
+<div class="field"><label>Minimum Area *</label><input name="areaMin" type="number" min="1" required></div>
+<div class="field"><label>Maximum Area *</label><input name="areaMax" type="number" min="1" required></div>
+<div class="field"><label>Area Unit *</label><select name="areaUnit"><option>Gaj</option><option>Sq Ft</option><option>Sq Meter</option><option>Bigha</option></select></div>
+<div class="field"><label>Initial Search Radius *</label><select name="preferredRadiusKm"><option value="1">1 km</option><option value="2" selected>2 km</option><option value="5">5 km</option><option value="10">10 km</option></select></div>
+<div class="field"><label>Preferred Facing</label><input name="facing" placeholder="North / East / Any"></div>
+<div class="field"><label>Road Width</label><input name="roadWidth" placeholder="e.g. 30 ft"></div>
+<div class="field full"><label>Other Requirements</label><textarea name="additionalRequirements" maxlength="1000" placeholder="Mention important requirements"></textarea></div>
+<div class="full notice">Your exact map pin and CRM identity are stored separately for Owner use. Other CRM users will see only a privacy-safe requirement card after approval.</div>
+<div class="full"><button type="submit">Submit Buyer Requirement</button></div>
+</form>
+<form id="sellerForm" class="hidden">
+<div class="field full"><label>Property Title *</label><input name="title" required maxlength="120" placeholder="e.g. JDA North Facing Plot in Vaishali Nagar"></div>
+<div class="field"><label>Sale / Rent *</label><select name="transactionType"><option value="sale">For Sale</option><option value="rent">For Rent</option></select></div>
+<div class="field"><label>Property Type *</label><select name="propertyType" required><option value="">Select</option><option>Plot</option><option>Independent House</option><option>Flat / Apartment</option><option>Villa</option><option>Commercial</option><option>Agricultural Land</option><option>Other</option></select></div>
+<div class="field"><label>City *</label><input name="city" required value="Jaipur"></div>
+<div class="field"><label>Locality / Area *</label><input name="locality" required maxlength="120"></div>
+<div class="field full"><label>Google Maps Pin / Exact Location (Owner-only) *</label><input name="mapPin" type="url" required placeholder="Paste Google Maps location link"></div>
+<div class="field"><label>Asking Price (₹) *</label><input name="askingPrice" type="number" min="1" required></div>
+<div class="field"><label>Area / Plot Size *</label><input name="area" type="number" min="1" required></div>
+<div class="field"><label>Area Unit *</label><select name="areaUnit"><option>Gaj</option><option>Sq Ft</option><option>Sq Meter</option><option>Bigha</option></select></div>
+<div class="field"><label>Facing</label><input name="facing" placeholder="North / East"></div>
+<div class="field"><label>Road Width</label><input name="roadWidth" placeholder="e.g. 30 ft"></div>
+<div class="field full"><label>Property Photos — 1 minimum, 2 maximum *</label><input id="propertyPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required><span class="hint">JPG / PNG / WebP. Photos are resized and compressed before upload while preserving clear property details. Max 5 MB each before processing.</span></div>
+<div class="field full"><label>Property Video — 1 compulsory, maximum 60 seconds *</label><input id="propertyVideo" type="file" accept="video/mp4,video/webm,video/quicktime" required><span class="hint">MP4 / WebM / MOV. Maximum 60 seconds and 25 MB. Keep camera steady and show the property clearly.</span></div>
+<div class="field full"><label>Property Proof Document Photo — compulsory *</label><input id="proofDocument" type="file" accept="image/jpeg,image/png,image/webp" required><span class="hint">One clear photo/scan of ownership, allotment/possession proof or valid broker authorization/mandate. JPG / PNG / WebP, maximum 8 MB. This document is uploaded privately and visible only to Owner.</span></div>
+<div class="full notice">Owner approval is mandatory. Property will not be published or matched until proof-document verification. The document is private and must never be shared with buyers or other brokers.</div>
+<div class="full"><button type="submit">Submit Property for Owner Verification</button></div>
+</form>
+<div id="status" role="status" aria-live="polite"></div>
+</section>
+</main>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,addDoc,collection,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const WORKER="https://jameenghar-imagekit-auth.jameenghar-co.workers.dev";
+const $=id=>document.getElementById(id);
+let currentUser=null,userProfile=null,mode="buyer";
+function say(t,kind=""){ $("status").className=kind; $("status").textContent=t; }
+function formData(form){return Object.fromEntries(new FormData(form).entries());}
+function switchMode(next){mode=next;$("buyerForm").classList.toggle("hidden",next!=="buyer");$("sellerForm").classList.toggle("hidden",next!=="seller");$("buyerTab").classList.toggle("active",next==="buyer");$("sellerTab").classList.toggle("active",next==="seller");say("");}
+$("buyerTab").onclick=()=>switchMode("buyer");$("sellerTab").onclick=()=>switchMode("seller");
+onAuthStateChanged(auth,async user=>{
+ currentUser=user; userProfile=null; $("workspace").classList.add("hidden");
+ if(!user){$("authStatus").textContent="Please login through your approved JameenGhar CRM account first.";return;}
+ try{const s=await getDoc(doc(db,"users",user.uid));if(!s.exists())throw new Error("CRM profile not found.");userProfile=s.data();
+ if(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved")throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
+ $("authStatus").textContent="Signed in as an approved CRM user. New posts will remain pending Owner approval."; $("workspace").classList.remove("hidden");
+ }catch(e){$("authStatus").textContent=e.message;}
+});
+async function getUploadAuth(path){
+ const res=await fetch(WORKER+path,{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()}});
+ const data=await res.json();if(!res.ok)throw new Error(data.error||"Upload authentication failed.");return data;
+}
+function compressPhoto(file){
+ return new Promise((resolve,reject)=>{
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{try{const scale=Math.min(1,1800/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{URL.revokeObjectURL(url);if(!blob)return reject(new Error("Photo compression failed."));resolve(new File([blob],file.name.replace(/\.[^.]+$/,"")+".webp",{type:"image/webp"}));},"image/webp",0.84);}catch(e){URL.revokeObjectURL(url);reject(e);}};
+  img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Could not read one of the property photos."));};img.src=url;
+ });
+}
+async function uploadPublicFile(file,folder){
+ const authData=await getUploadAuth("/marketplace-media");
+ const body=new FormData();body.append("file",file);body.append("fileName",Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_"));body.append("folder",folder);body.append("useUniqueFileName","true");body.append("token",authData.token);body.append("expire",String(authData.expire));body.append("signature",authData.signature);body.append("publicKey",authData.publicKey);
+ const res=await fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body});const data=await res.json();if(!res.ok||!data.url)throw new Error(data.message||"Media upload failed.");return data;
+}
+async function uploadPrivateProof(file){
+ const fd=new FormData();fd.append("file",file);const res=await fetch(WORKER+"/smart-proof",{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()},body:fd});const data=await res.json();if(!res.ok||!data.fileId)throw new Error(data.error||"Private document upload failed.");if(data.isPrivateFile!==true)throw new Error("Private document protection could not be confirmed. Submission stopped.");return data;
+}
+$("buyerForm").onsubmit=async e=>{
+ e.preventDefault();const button=e.submitter;button.disabled=true;say("Submitting buyer requirement…");
+ try{const d=formData(e.currentTarget);if(Number(d.budgetMin)>Number(d.budgetMax)||Number(d.areaMin)>Number(d.areaMax))throw new Error("Minimum budget/area cannot exceed maximum.");
+ const ref=await addDoc(collection(db,"marketplaceRequirements"),{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),budgetMin:Number(d.budgetMin),budgetMax:Number(d.budgetMax),areaMin:Number(d.areaMin),areaMax:Number(d.areaMax),areaUnit:d.areaUnit,preferredRadiusKm:Number(d.preferredRadiusKm),facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),additionalRequirements:d.additionalRequirements.trim(),status:"pending_review",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(doc(db,"marketplacePrivate","requirement_"+ref.id),{recordType:"buyer_requirement",recordId:ref.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),createdAt:serverTimestamp()});
+ e.currentTarget.reset();say("Buyer requirement submitted. It will be reviewed by JameenGhar Owner before sharing with the CRM marketplace.","success");
+ }catch(err){say(err.message,"error");}finally{button.disabled=false;}
+};
+$("sellerForm").onsubmit=async e=>{
+ e.preventDefault();const button=e.submitter;button.disabled=true;
+ try{
+ const d=formData(e.currentTarget),photos=Array.from($("propertyPhotos").files),video=$("propertyVideo").files[0],proof=$("proofDocument").files[0];
+ if(photos.length<1||photos.length>2)throw new Error("Upload minimum 1 and maximum 2 property photos.");
+ if(!video||!proof)throw new Error("One property video and one proof document photo are compulsory.");
+ if(video.size>25*1024*1024)throw new Error("Video must be 25 MB or smaller.");
+ if(proof.size>8*1024*1024)throw new Error("Proof document must be 8 MB or smaller.");
+ if(photos.some(f=>f.size>5*1024*1024))throw new Error("Each property photo must be 5 MB or smaller.");
+ const duration=await new Promise((resolve,reject)=>{const el=document.createElement("video"),url=URL.createObjectURL(video);el.preload="metadata";el.onloadedmetadata=()=>{URL.revokeObjectURL(url);resolve(el.duration);};el.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Video file could not be read."));};el.src=url;});
+ if(!Number.isFinite(duration)||duration<=0||duration>60)throw new Error("Property video must be 60 seconds or shorter.");
+ say("Optimizing property photos…");const optimized=[];for(const photo of photos)optimized.push(await compressPhoto(photo));
+ say("Uploading property photos and video…");const photoResults=[];for(const photo of optimized)photoResults.push(await uploadPublicFile(photo,"/smart-matching/properties/photos"));
+ const videoResult=await uploadPublicFile(video,"/smart-matching/properties/videos");
+ say("Uploading proof document privately…");const proofResult=await uploadPrivateProof(proof);
+ const privateRef=doc(collection(db,"marketplacePrivate"));
+ await setDoc(privateRef,{recordType:"seller_property",createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
+ const publicRef=await addDoc(collection(db,"marketplaceProperties"),{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(doc(db,"marketplacePrivate",privateRef.id),{recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
+ e.currentTarget.reset();say("Property submitted for Owner verification. It is not public or match-eligible until Owner approves the proof document.","success");
+ }catch(err){say(err.message+" If media was uploaded before this error, please contact Owner so unused uploads can be cleaned up.","error");}finally{button.disabled=false;}
+};
+</script>
+</body>
+</html>
