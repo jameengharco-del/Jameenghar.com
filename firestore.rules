@@ -668,7 +668,10 @@ service cloud.firestore {
         && request.resource.data.videoDurationSeconds > 0
         && request.resource.data.videoDurationSeconds <= 60
         && request.resource.data.proofStatus == "pending"
-        && request.resource.data.proofDocumentId is string;
+        && request.resource.data.proofDocumentId is string
+        && exists(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId))
+        && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.createdBy == request.auth.uid
+        && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.proofStatus == "pending";
       allow update, delete: if isAdmin();
     }
 
