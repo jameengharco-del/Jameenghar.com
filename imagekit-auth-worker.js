@@ -71,7 +71,7 @@ async function verifyUploadUser(idToken, apiKey, uploadType) {
   const ownerAllowed = role === "owner" && (
     uploadType === "/property" ? status === "approved" : status !== "rejected"
   );
-  const approvedCrmAllowed = uploadType === "/smart-proof" && role === "crm" && status === "approved";
+  const approvedCrmAllowed = (uploadType === "/smart-proof" || uploadType === "/marketplace-media") && role === "crm" && status === "approved";
   if ((!isMainAdmin && !ownerAllowed && !approvedCrmAllowed) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
     throw new Error(uploadType === "/property"
@@ -123,8 +123,8 @@ export default {
     const requestPath = new URL(request.url).pathname;
     // Keep the legacy root endpoint working until both website clients use explicit routes.
     const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
-    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof") {
-      return json({ error: "Unknown upload service. Use /property, /daybnb or /smart-proof." }, 404, origin);
+    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof" && uploadType !== "/marketplace-media") {
+      return json({ error: "Unknown upload service. Use /property, /daybnb, /marketplace-media or /smart-proof." }, 404, origin);
     }
     if (request.method !== "POST") {
       return json({ error: "Method not allowed." }, 405, origin);
