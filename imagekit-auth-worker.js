@@ -6,9 +6,10 @@
  *   IMAGEKIT_PUBLIC_KEY    (Variable)
  *   FIREBASE_API_KEY       (Variable)
  *
- * Upload access is limited to Firebase users whose email is verified and
- * whose Firestore users/{uid} profile is an eligible Daybnb owner, or the
- * fixed JameenGhar main admin account (without changing its CRM admin role).
+ * Separate upload policies:
+ *   /property - email-verified approved owner, or fixed main admin.
+ *   /daybnb   - email-verified owner not rejected, or fixed main admin.
+ * The main admin is recognized by its fixed UID plus admin role.
  * Never put IMAGEKIT_PRIVATE_KEY in browser JavaScript or GitHub Pages.
  */
 const ALLOWED_ORIGINS = new Set([
@@ -38,7 +39,7 @@ function toHex(buffer) {
   return Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function verifyApprovedOwner(idToken, apiKey) {
+async function verifyUploadUser(idToken, apiKey, uploadType) {
   const identityResponse = await fetch(FIREBASE_LOOKUP_URL + "?key=" + encodeURIComponent(apiKey), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,9 +68,14 @@ async function verifyApprovedOwner(idToken, apiKey) {
   const profileEmail = fields.email && fields.email.stringValue;
 
   const isMainAdmin = user.localId === "P46WrdpzVWVHVC4t6vqIOYcZfxC3" && role === "admin";
-  if ((!isMainAdmin && (role !== "owner" || !["pending", "approved"].includes(status))) ||
+  const ownerAllowed = role === "owner" && (
+    uploadType === "/property" ? status === "approved" : status !== "rejected"
+  );
+  if ((!isMainAdmin && !ownerAllowed) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
-    throw new Error("Image uploads are available only to email-verified, approved JameenGhar owners.");
+    throw new Error(uploadType === "/property"
+      ? "Property photo uploads require an email-verified, approved JameenGhar owner."
+      : "Daybnb photo uploads require an email-verified owner account that is not rejected.");
   }
   return user;
 }
@@ -113,6 +119,12 @@ export default {
     if (!ALLOWED_ORIGINS.has(origin)) {
       return json({ error: "Origin not allowed." }, 403, "");
     }
+    const requestPath = new URL(request.url).pathname;
+    // Keep the legacy root endpoint working until both website clients use explicit routes.
+    const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
+    if (uploadType !== "/property" && uploadType !== "/daybnb") {
+      return json({ error: "Unknown upload service. Use /property or /daybnb." }, 404, origin);
+    }
     if (request.method !== "POST") {
       return json({ error: "Method not allowed." }, 405, origin);
     }
@@ -126,7 +138,7 @@ export default {
     }
 
     try {
-      await verifyApprovedOwner(match[1], env.FIREBASE_API_KEY);
+      await verifyUploadUser(match[1], env.FIREBASE_API_KEY, uploadType);
       const auth = await createImageKitAuth(env.IMAGEKIT_PRIVATE_KEY);
       return json({ ...auth, publicKey: env.IMAGEKIT_PUBLIC_KEY }, 200, origin);
     } catch (error) {
