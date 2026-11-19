@@ -249,8 +249,9 @@ async function uploadPrivateProof(file){
 $("buyerForm").onsubmit=async e=>{
  e.preventDefault();const button=e.submitter;button.disabled=true;say("Submitting buyer requirement…");
  try{const d=formData(e.currentTarget);if(Number(d.budgetMin)>Number(d.budgetMax)||Number(d.areaMin)>Number(d.areaMax))throw new Error("Minimum budget/area cannot exceed maximum.");
- const ref=await addDoc(collection(db,"marketplaceRequirements"),{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),budgetMin:Number(d.budgetMin),budgetMax:Number(d.budgetMax),areaMin:Number(d.areaMin),areaMax:Number(d.areaMax),areaUnit:d.areaUnit,preferredRadiusKm:Number(d.preferredRadiusKm),facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),additionalRequirements:d.additionalRequirements.trim(),status:"pending_review",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ const ref=doc(collection(db,"marketplaceRequirements"));
  await setDoc(doc(db,"marketplacePrivate","requirement_"+ref.id),{recordType:"buyer_requirement",recordId:ref.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),createdAt:serverTimestamp()});
+ await setDoc(ref,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),budgetMin:Number(d.budgetMin),budgetMax:Number(d.budgetMax),areaMin:Number(d.areaMin),areaMax:Number(d.areaMax),areaUnit:d.areaUnit,preferredRadiusKm:Number(d.preferredRadiusKm),facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),additionalRequirements:d.additionalRequirements.trim(),status:"pending_review",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
  e.currentTarget.reset();say("Buyer requirement submitted. It will be reviewed by JameenGhar Owner before sharing with the CRM marketplace.","success");
  }catch(err){say(err.message,"error");}finally{button.disabled=false;}
 };
