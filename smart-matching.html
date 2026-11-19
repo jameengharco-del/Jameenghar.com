@@ -27,7 +27,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -89,7 +89,7 @@ onAuthStateChanged(auth,async user=>{
  if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
  $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
  $("workspace").classList.remove("hidden");
- if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();}
+ if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();}
  }catch(e){$("authStatus").textContent=e.message;}
 });
 async function ownerProofPreview(fileId){
@@ -108,6 +108,8 @@ async function loadOwnerQueue(){
    const p=snap.data(),card=document.createElement("div");card.className="panel";
    const h=document.createElement("h3");h.textContent=p.title||"Property post";
    const detail=document.createElement("p");detail.className="muted";detail.textContent=[p.propertyType,p.transactionType,p.locality,p.city,"₹"+Number(p.askingPrice||0).toLocaleString("en-IN"),String(p.area||"")+" "+(p.areaUnit||""),"Video "+(p.videoDurationSeconds||0)+" sec"].join(" · ");
+   const privateDataSnap=await getDoc(doc(db,"marketplacePrivate",p.proofDocumentId));
+   if(privateDataSnap.exists()){const mapLink=document.createElement("a");mapLink.href=privateDataSnap.data().mapPin;mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="Open exact property pin (Owner only)";mapLink.style.cssText="display:block;margin:8px 0;color:#064d2b;font-weight:bold";card.append(mapLink);}
    const proof=document.createElement("div");proof.className="notice";proof.textContent="Loading private proof document…";
    const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px";
    const approve=document.createElement("button");approve.textContent="Approve & Activate";
@@ -128,13 +130,93 @@ async function loadOwnerQueue(){
    const p=snap.data(),card=document.createElement("div");card.className="panel";
    const h=document.createElement("h3");h.textContent="Buyer Requirement: "+(p.title||"Untitled");
    const detail=document.createElement("p");detail.className="muted";detail.textContent=[p.propertyType,p.transactionType,p.locality,p.city,"Budget ₹"+Number(p.budgetMin||0).toLocaleString("en-IN")+"–₹"+Number(p.budgetMax||0).toLocaleString("en-IN"),"Radius "+p.preferredRadiusKm+" km"].join(" · ");
+   const privateReq=await getDoc(doc(db,"marketplacePrivate","requirement_"+snap.id));if(privateReq.exists()){const mapLink=document.createElement("a");mapLink.href=privateReq.data().mapPin;mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="Open exact buyer search pin (Owner only)";mapLink.style.cssText="display:block;margin:8px 0;color:#064d2b;font-weight:bold";card.append(mapLink);}
    const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px";
-   const approve=document.createElement("button");approve.textContent="Approve Requirement";approve.onclick=async()=>{approve.disabled=true;try{await updateDoc(doc(db,"marketplaceRequirements",snap.id),{status:"active",approvedAt:serverTimestamp(),approvedBy:currentUser.uid});await loadOwnerQueue();}catch(e){say(e.message,"error");approve.disabled=false;}};
+   const approve=document.createElement("button");approve.textContent="Approve Requirement";approve.onclick=async()=>{approve.disabled=true;try{await updateDoc(doc(db,"marketplaceRequirements",snap.id),{status:"active",approvedAt:serverTimestamp(),approvedBy:currentUser.uid});await loadOwnerQueue();await runSmartMatching();}catch(e){say(e.message,"error");approve.disabled=false;}};
    const reject=document.createElement("button");reject.textContent="Reject";reject.style.background="#a12b22";reject.onclick=async()=>{reject.disabled=true;try{await updateDoc(doc(db,"marketplaceRequirements",snap.id),{status:"rejected",rejectedAt:serverTimestamp(),rejectedBy:currentUser.uid});await loadOwnerQueue();}catch(e){say(e.message,"error");reject.disabled=false;}};
    actions.append(approve,reject);card.append(h,detail,actions);root.append(card);
   }
  }catch(e){root.textContent="Could not load Owner queue: "+e.message;}
 }
+function coordinatesFromMapPin(value){
+ try{
+  const s=decodeURIComponent(String(value||""));
+  let m=s.match(/@(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)/);
+  if(!m)m=s.match(/!3d(-?\\d{1,2}\\.\\d+)!4d(-?\\d{1,3}\\.\\d+)/);
+  if(!m)m=s.match(/[?&](?:q|query|ll)=(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)/);
+  if(!m)return null;const lat=Number(m[1]),lng=Number(m[2]);
+  return Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180?{lat,lng}:null;
+ }catch(_){return null;}
+}
+function distanceKm(a,b){
+ const rad=x=>x*Math.PI/180,R=6371,dLat=rad(b.lat-a.lat),dLng=rad(b.lng-a.lng);
+ const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLng/2)**2;
+ return 2*R*Math.asin(Math.sqrt(x));
+}
+function scorePair(req,prop,km){
+ const checks=[];
+ const add=(name,ok,weight,detail)=>{checks.push({name,matched:!!ok,weight,detail});};
+ const reqType=String(req.propertyType||"").toLowerCase(),propType=String(prop.propertyType||"").toLowerCase();
+ add("Property type",reqType===propType||reqType==="other"||propType==="other",25,req.propertyType+" / "+prop.propertyType);
+ const price=Number(prop.askingPrice||0),bmin=Number(req.budgetMin||0),bmax=Number(req.budgetMax||0);
+ add("Budget",price>=bmin&&price<=bmax,20,"Asking ₹"+price.toLocaleString("en-IN")+" · Buyer ₹"+bmin.toLocaleString("en-IN")+"–₹"+bmax.toLocaleString("en-IN"));
+ const area=Number(prop.area||0),amin=Number(req.areaMin||0),amax=Number(req.areaMax||0);
+ const units=String(req.areaUnit||"").toLowerCase()===String(prop.areaUnit||"").toLowerCase();
+ add("Area",units&&area>=amin&&area<=amax,15,String(prop.area)+" "+prop.areaUnit);
+ const facing=String(req.facing||"").trim().toLowerCase(),pf=String(prop.facing||"").trim().toLowerCase();
+ add("Facing",!facing||facing==="any"||facing===pf,10,pf||"Not specified");
+ const road=String(req.roadWidth||"").trim().toLowerCase(),pr=String(prop.roadWidth||"").trim().toLowerCase();
+ add("Road width",!road||road===pr,10,pr||"Not specified");
+ const radius=Number(req.preferredRadiusKm||2);
+ add("Distance",km<=radius,20,km.toFixed(2)+" km · Initial radius "+radius+" km");
+ const score=Math.round(checks.reduce((n,x)=>n+(x.matched?x.weight:0),0));
+ return {score,checks};
+}
+async function runSmartMatching(){
+ const root=$("matchesQueue");root.textContent="Scanning approved requirements and properties…";
+ try{
+  const [reqSnap,propSnap]=await Promise.all([getDocs(collection(db,"marketplaceRequirements")),getDocs(collection(db,"marketplaceProperties"))]);
+  const reqs=reqSnap.docs.filter(x=>x.data().status==="active"),props=propSnap.docs.filter(x=>x.data().status==="active");
+  let created=0,needsPin=0;
+  for(const reqDoc of reqs){
+   const req=reqDoc.data(),privateReq=await getDoc(doc(db,"marketplacePrivate","requirement_"+reqDoc.id));
+   const buyerPin=privateReq.exists()?coordinatesFromMapPin(privateReq.data().mapPin):null;
+   if(!buyerPin){needsPin++;continue;}
+   const candidates=[];
+   for(const propDoc of props){
+    const prop=propDoc.data(),privateProp=await getDoc(doc(db,"marketplacePrivate",prop.proofDocumentId));
+    const sellerPin=privateProp.exists()?coordinatesFromMapPin(privateProp.data().mapPin):null;
+    if(!sellerPin)continue;
+    const km=distanceKm(buyerPin,sellerPin),sc=scorePair(req,prop,km);
+    if(sc.score>=50)candidates.push({propDoc,prop,km,...sc});
+   }
+   candidates.sort((a,b)=>a.km-b.km||b.score-a.score);
+   const initial=Number(req.preferredRadiusKm||2);
+   let finalRadius=initial,inside=candidates.filter(x=>x.km<=initial);
+   if(inside.length<3){for(const radius of [5,10,25,50]){finalRadius=radius;inside=candidates.filter(x=>x.km<=radius);if(inside.length>=3)break;}}
+   for(const match of inside){
+    const id=reqDoc.id+"_"+match.propDoc.id;
+    await setDoc(doc(db,"smartMatches",id),{requirementId:reqDoc.id,propertyId:match.propDoc.id,score:match.score,distanceKm:Number(match.km.toFixed(3)),initialRadiusKm:initial,searchRadiusKm:finalRadius,criteria:match.checks,status:"owner_review",updatedAt:serverTimestamp()},{merge:true});
+    created++;
+   }
+  }
+  await loadMatchesQueue();
+  say("Matching scan complete. "+created+" candidate pair(s) saved; "+needsPin+" requirement(s) need Owner location review.","success");
+ }catch(e){root.textContent="Matching scan failed: "+e.message;}
+}
+async function loadMatchesQueue(){
+ const root=$("matchesQueue");const snap=await getDocs(collection(db,"smartMatches"));const items=snap.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>(b.score||0)-(a.score||0)||(a.distanceKm||0)-(b.distanceKm||0));
+ root.innerHTML="";
+ if(!items.length){root.textContent="No match pairs saved yet. Approve complete Buyer and Property posts, then run matching.";return;}
+ for(const m of items){
+  const box=document.createElement("div");box.style.cssText="padding:12px;border:1px solid #e4eae5;border-radius:10px;margin:8px 0;background:#fff";
+  const h=document.createElement("strong");h.textContent=m.score+"% match · "+m.distanceKm+" km · searched "+m.searchRadiusKm+" km";
+  const p=document.createElement("p");p.className="hint";p.textContent="Buyer requirement "+m.requirementId+" ↔ Property "+m.propertyId;
+  const criteria=document.createElement("p");criteria.className="hint";criteria.textContent=(m.criteria||[]).map(x=>x.name+": "+(x.matched?"Match":"Mismatch")).join(" · ");
+  box.append(h,p,criteria);root.append(box);
+ }
+}
+$("runMatching").onclick=runSmartMatching;
 async function reviewProperty(id,p,nextStatus,proofStatus,approve,reject){
  approve.disabled=true;reject.disabled=true;
  try{
@@ -142,7 +224,7 @@ async function reviewProperty(id,p,nextStatus,proofStatus,approve,reject){
   const privateSnap=await getDoc(privateRef);if(!privateSnap.exists())throw new Error("Private proof record is missing.");
   await updateDoc(doc(db,"marketplaceProperties",id),{status:nextStatus,proofStatus,reviewedAt:serverTimestamp(),reviewedBy:currentUser.uid});
   await updateDoc(privateRef,{proofStatus,reviewedAt:serverTimestamp(),reviewedBy:currentUser.uid});
-  say(nextStatus==="active"?"Property approved and activated.":"Property rejected.","success");await loadOwnerQueue();
+  say(nextStatus==="active"?"Property approved and activated.":"Property rejected.","success");await loadOwnerQueue();await runSmartMatching();
  }catch(e){say(e.message,"error");approve.disabled=false;reject.disabled=false;}
 }
 async function getUploadAuth(path){
