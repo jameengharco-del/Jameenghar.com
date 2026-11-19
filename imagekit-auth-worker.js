@@ -133,7 +133,7 @@ export default {
     if (requestPath === "/smart-proof-view") {
       if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, origin);
       const authorization = request.headers.get("Authorization") || "";
-      const authMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+      const authMatch = authorization.match(/^Bearer\s+(.+)$/i);
       if (!authMatch) return json({ error: "Firebase sign-in is required." }, 401, origin);
       if (!env.IMAGEKIT_PRIVATE_KEY || !env.FIREBASE_API_KEY) {
         return json({ error: "Private proof viewer is not configured." }, 503, origin);
