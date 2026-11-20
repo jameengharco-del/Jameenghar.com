@@ -24,6 +24,15 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 <h1>JameenGhar Smart Matching</h1>
 <p>Post buyer requirements or seller/broker properties. All posts remain private for Owner verification until approved. Exact map pins and proof documents are never displayed publicly.</p>
 <div id="authStatus" class="notice">Checking your CRM access…</div>
+<section id="loginPanel" class="panel hidden" aria-labelledby="loginHeading">
+  <h2 id="loginHeading">CRM Login</h2>
+  <p class="muted">Sign in with your JameenGhar Owner account or an email-verified, Owner-approved CRM consultant account.</p>
+  <div class="field" style="margin:12px 0"><label for="loginEmail">CRM Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Enter your registered CRM email" required></div>
+  <div class="field" style="margin:12px 0"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your CRM password" required></div>
+  <button type="button" id="loginBtn">Login to Smart Matching</button>
+  <p id="loginMessage" class="notice" role="status" aria-live="polite" style="margin-top:12px">Use the same credentials as your JameenGhar CRM.</p>
+  <p class="hint"><a href="crm.html" style="color:var(--g);font-weight:700">Open main JameenGhar CRM</a></p>
+</section>
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
@@ -71,27 +80,47 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 </main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
 const WORKER="https://jameenghar-imagekit-auth.jameenghar-co.workers.dev";
 const $=id=>document.getElementById(id);
 let currentUser=null,userProfile=null,mode="buyer",isOwner=false;
 function say(t,kind=""){ $("status").className=kind; $("status").textContent=t; }
 function formData(form){return Object.fromEntries(new FormData(form).entries());}
+$("loginBtn").onclick=async()=>{
+ const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
+ const message=$("loginMessage");
+ if(!email||!password){message.textContent="Please enter your CRM email and password.";return;}
+ $("loginBtn").disabled=true;message.textContent="Signing in and checking your CRM approval…";
+ try{await signInWithEmailAndPassword(auth,email,password);}
+ catch(error){message.textContent=error.code==="auth/invalid-credential"?"Email or password is incorrect. Please try again.":(error.message||"CRM login failed.");}
+ finally{$("loginBtn").disabled=false;}
+};
 function switchMode(next){mode=next;$("buyerForm").classList.toggle("hidden",next!=="buyer");$("sellerForm").classList.toggle("hidden",next!=="seller");$("buyerTab").classList.toggle("active",next==="buyer");$("sellerTab").classList.toggle("active",next==="seller");say("");}
 $("buyerTab").onclick=()=>switchMode("buyer");$("sellerTab").onclick=()=>switchMode("seller");
 onAuthStateChanged(auth,async user=>{
- currentUser=user; userProfile=null; $("workspace").classList.add("hidden");
- if(!user){$("authStatus").textContent="Please login through your approved JameenGhar CRM account first.";return;}
- try{const s=await getDoc(doc(db,"users",user.uid));if(!s.exists())throw new Error("CRM profile not found.");userProfile=s.data();
- isOwner=user.uid==="P46WrdzpVWVHVC4t6vqIOYcZfxC3"&&userProfile.role==="admin";
- if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
- $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
- $("workspace").classList.remove("hidden");
- if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
- }catch(e){$("authStatus").textContent=e.message;}
+ currentUser=user; userProfile=null; isOwner=false; $("workspace").classList.add("hidden");
+ $("loginPanel").classList.toggle("hidden",!!user);
+ if(!user){$("authStatus").textContent="Please sign in with your approved JameenGhar CRM account.";return;}
+ try{
+  const s=await getDoc(doc(db,"users",user.uid));
+  if(!s.exists())throw new Error("CRM profile not found. Please use your registered JameenGhar CRM account.");
+  userProfile=s.data();
+  // Match the main CRM Owner rule: the fixed Owner Firebase UID is authoritative.
+  isOwner=user.uid===OWNER_UID;
+  if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("This account is not email-verified and Owner-approved for Smart Matching. Please sign in with the Owner account or an approved CRM consultant account.");
+  $("loginPanel").classList.add("hidden");
+  $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
+  $("workspace").classList.remove("hidden");
+  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+ }catch(e){
+  $("authStatus").textContent=e.message;
+  $("loginPanel").classList.remove("hidden");
+  $("loginMessage").textContent="Current session could not be approved. Sign in with the correct JameenGhar CRM account.";
+ }
 });
 async function loadMarketplaceFeed(){
  await loadMyMatchInvitations();
