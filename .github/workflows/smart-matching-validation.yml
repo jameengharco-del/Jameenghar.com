@@ -24,3 +24,5 @@ jobs:
         run: firebase emulators:exec --only firestore --project demo-jameenghar "node -e \"console.log('Firestore rules compiled')\""
       - name: Run authenticated Firestore permission tests
         run: firebase emulators:exec --only firestore --project demo-jameenghar "node scripts/test-smart-matching-rules.mjs"
+      - name: Run CRM ownership and private-record security tests
+        run: firebase emulators:exec --only firestore --project demo-jameenghar "node scripts/test-crm-access-rules.mjs"
