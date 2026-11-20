@@ -60,8 +60,10 @@ function buyerPublic() {
   return {
     title: "Jaipur residential plot", transactionType: "buy",
     propertyType: "residential", city: "Jaipur", locality: "Vaishali Nagar",
-    preferredRadiusKm: 5, status: "pending_review",
-    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    approxArea: "Vaishali Nagar, Jaipur", budgetMin: 5000000, budgetMax: 10000000,
+    areaMin: 100, areaMax: 200, areaUnit: "Gaj", preferredRadiusKm: 5,
+    facing: "Any", roadWidth: "", additionalRequirements: "",
+    status: "pending_review", createdAt: serverTimestamp(), updatedAt: serverTimestamp()
   };
 }
 function sellerPrivate(id, uid = crmUid) {
