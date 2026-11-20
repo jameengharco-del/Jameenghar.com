@@ -37,7 +37,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -116,7 +116,7 @@ onAuthStateChanged(auth,async user=>{
   $("loginPanel").classList.add("hidden");
   $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
   $("workspace").classList.remove("hidden");
-  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){
   $("authStatus").textContent=e.message;
   $("loginPanel").classList.remove("hidden");
@@ -283,6 +283,86 @@ async function loadLegacyReviewQueue(){
   }
  }catch(e){root.textContent="Could not load legacy correction queue: "+e.message;}
 }
+
+async function runDemoLegacyBuyerCorrections(){
+ const status=$("demoSeedStatus");
+ const jobRef=doc(db,"marketplaceMigrationJobs","demoBuyerCorrectionV1");
+ const demoByPhone={
+  "9079769751":{title:"DEMO ONLY — 2 BHK Flat required in Vaishali Nagar",propertyType:"Flat / Apartment",budgetMin:6000000,budgetMax:8500000,areaMin:950,areaMax:1300,lat:26.9124,lng:75.7397,locality:"Vaishali Nagar",radius:5},
+  "6377489703":{title:"DEMO ONLY — 2 BHK Flat required in Vaishali Nagar",propertyType:"Flat / Apartment",budgetMin:5500000,budgetMax:8000000,areaMin:900,areaMax:1250,lat:26.9142,lng:75.7415,locality:"Vaishali Nagar",radius:5},
+  "9664354256":{title:"DEMO ONLY — 3 BHK Apartment required in Mansarovar",propertyType:"Flat / Apartment",budgetMin:18000000,budgetMax:22000000,areaMin:1400,areaMax:1800,lat:26.8507,lng:75.7646,locality:"Mansarovar",radius:5},
+  "9024180067":{title:"DEMO ONLY — 2 BHK Flat required in Vaishali Nagar",propertyType:"Flat / Apartment",budgetMin:7000000,budgetMax:9500000,areaMin:1000,areaMax:1400,lat:26.9161,lng:75.7372,locality:"Vaishali Nagar",radius:5},
+  "9982133606":{title:"DEMO ONLY — 3 BHK Apartment required in Jagatpura",propertyType:"Flat / Apartment",budgetMin:23000000,budgetMax:25000000,areaMin:1500,areaMax:1900,lat:26.8213,lng:75.8630,locality:"Jagatpura",radius:10},
+  "9999999999":{title:"DEMO ONLY — 2 BHK Flat required in Jaipur",propertyType:"Flat / Apartment",budgetMin:4500000,budgetMax:6500000,areaMin:900,areaMax:1200,lat:26.9124,lng:75.7873,locality:"Jaipur",radius:5}
+ };
+ try{
+  const prior=await getDoc(jobRef);
+  if(prior.exists()&&prior.data().status==="completed"){
+   status.textContent="DEMO TEST DATA already created once · "+(prior.data().createdCount||6)+" sample Buyer requirements are in Owner Verification Queue. No duplicates were created.";
+   return;
+  }
+  status.textContent="Creating six DEMO TEST buyer requirements with synthetic Jaipur map pins and sample ranges…";
+  const [privateSnap,userSnap]=await Promise.all([getDocs(collection(db,"marketplacePrivate")),getDocs(collection(db,"users"))]);
+  const rows=privateSnap.docs.filter(x=>{
+   const d=x.data();return d.recordType==="legacy_data_completion"&&demoByPhone[String(d.phone||"").replace(/\\D/g,"")]&&(d.status==="needs_owner_review"||d.status==="converted_to_requirement");
+  });
+  const byPhone=new Map(rows.map(x=>[String(x.data().phone||"").replace(/\\D/g,""),x]));
+  const missing=Object.keys(demoByPhone).filter(phone=>!byPhone.has(phone));
+  if(missing.length){status.textContent="DEMO setup waiting: found "+byPhone.size+"/6 expected test Buyer records. Missing test records: "+missing.join(", ")+". No data was changed.";return;}
+  const consultants=userSnap.docs.filter(x=>x.data().role==="crm"&&x.data().status==="approved")
+   .map(x=>({id:x.id,...x.data()})).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
+  if(!consultants.length){status.textContent="DEMO setup paused: no approved CRM consultants were found. No requirements were created.";return;}
+  await setDoc(jobRef,{status:"running",expectedCount:6,syntheticDemoData:true,startedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+  let completed=0,created=0;
+  const phones=Object.keys(demoByPhone);
+  for(let index=0;index<phones.length;index++){
+   const phone=phones[index],row=byPhone.get(phone),d=row.data(),cfg=demoByPhone[phone];
+   const requirementId="legacy_"+String(d.sourceLeadId||row.id).replace(/[^A-Za-z0-9]/g,"");
+   const privateId="requirement_"+requirementId;
+   const assigned=consultants[index%consultants.length];
+   const alreadyConverted=d.status==="converted_to_requirement"&&d.convertedRequirementId===requirementId;
+   if(!alreadyConverted){
+    const privateData={
+     recordType:"buyer_requirement",recordId:requirementId,createdBy:assigned.id,
+     createdByName:assigned.name||assigned.email||"Approved CRM consultant",contactEmail:assigned.email||"",
+     mapPin:"https://www.google.com/maps?q="+cfg.lat+","+cfg.lng,
+     mapPinLabel:"SYNTHETIC DEMO COORDINATE — approximate locality pin, not a real property location",
+     sourceLeadId:d.sourceLeadId||"",customerName:d.customerName||"",customerPhone:d.phone||"",
+     customerEmail:d.email||"",isDemoData:true,createdAt:serverTimestamp()
+    };
+    const publicData={
+     title:cfg.title,transactionType:"buy",propertyType:cfg.propertyType,city:"Jaipur",
+     locality:cfg.locality,approxArea:cfg.locality+", Jaipur",
+     budgetMin:cfg.budgetMin,budgetMax:cfg.budgetMax,areaMin:cfg.areaMin,areaMax:cfg.areaMax,
+     areaUnit:"Sq Ft",preferredRadiusKm:cfg.radius,facing:"Any",roadWidth:"",
+     additionalRequirements:"DEMO TEST DATA ONLY — synthetic sample requirement for Smart Matching QA. This is not a real buyer enquiry; do not contact as a live customer.",
+     status:"pending_review",createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+    };
+    await setDoc(doc(db,"marketplacePrivate",privateId),privateData,{merge:true});
+    await setDoc(doc(db,"marketplaceRequirements",requirementId),publicData,{merge:true});
+    await updateDoc(doc(db,"marketplacePrivate",row.id),{
+     status:"converted_to_requirement",missingFields:[],convertedRequirementId:requirementId,
+     assignedConsultantUid:assigned.id,assignedConsultantName:assigned.name||assigned.email||"",
+     correctionCompletedAt:serverTimestamp(),correctionCompletedBy:currentUser.uid,
+     correctionSummary:{title:cfg.title,propertyType:cfg.propertyType,city:"Jaipur",locality:cfg.locality,
+      budgetMin:cfg.budgetMin,budgetMax:cfg.budgetMax,areaMin:cfg.areaMin,areaMax:cfg.areaMax,
+      areaUnit:"Sq Ft",preferredSearchRadiusKm:cfg.radius,demoData:true}
+    });
+    created++;
+   }
+   completed++;
+  }
+  await setDoc(jobRef,{status:"completed",expectedCount:6,createdCount:completed,createdNewCount:created,
+   syntheticDemoData:true,assignedConsultants:consultants.map(x=>x.id),completedBy:currentUser.uid,
+   completedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+  status.textContent="DEMO TEST DATA ready · "+completed+" of 6 Buyer requirements created/confirmed as Pending Review · "+created+" newly created · synthetic Jaipur pins · sample budgets and areas · original CRM leads unchanged. Review them in Owner Verification Queue.";
+ }catch(error){
+  status.textContent="DEMO setup error: "+(error.message||String(error))+". It is safe to reload and retry; deterministic IDs prevent duplicate requirements.";
+  say("Demo buyer test setup needs attention: "+(error.message||String(error)),"error");
+  try{await setDoc(jobRef,{status:"failed",error:String(error.message||error),updatedAt:serverTimestamp()},{merge:true});}catch(_){}
+ }
+}
+
 $("migrateLegacy").onclick=migrateLegacyLeads;
 $("refreshMyInvitations").onclick=loadMyMatchInvitations;
 async function loadMyMatchInvitations(){
