@@ -71,7 +71,7 @@ async function verifyUploadUser(idToken, apiKey, uploadType) {
   const ownerAllowed = role === "owner" && (
     uploadType === "/property" ? status === "approved" : status !== "rejected"
   );
-  const approvedCrmAllowed = (uploadType === "/smart-proof" || uploadType === "/marketplace-media") && role === "crm" && status === "approved";
+  const approvedCrmAllowed = (uploadType === "/smart-proof" || uploadType === "/marketplace-media" || uploadType === "/smart-media-scan") && role === "crm" && status === "approved";
   if ((!isMainAdmin && !ownerAllowed && !approvedCrmAllowed) ||
       !profileEmail || profileEmail.toLowerCase() !== user.email.toLowerCase()) {
     throw new Error(uploadType === "/property"
