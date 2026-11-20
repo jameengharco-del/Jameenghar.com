@@ -191,6 +191,39 @@ export default {
       // Proof documents are uploaded through this Worker, not directly from the browser.
       // The Worker forces ImageKit isPrivateFile=true so a client cannot accidentally
       // publish a deed/authorization image by changing a browser upload parameter.
+      if (uploadType === "/marketplace-media") {
+        const user = await verifyUploadUser(authMatch ? authMatch[1] : authorization.replace(/^Bearer\\s+/i, ""), env.FIREBASE_API_KEY, uploadType);
+        const incoming = await request.formData();
+        const file = incoming.get("file");
+        const folder = String(incoming.get("folder") || "");
+        const isVideo = folder === "/smart-matching/properties/videos";
+        const isPhoto = folder === "/smart-matching/properties/photos";
+        if (!isVideo && !isPhoto) return json({ error: "Invalid property media folder." }, 400, origin);
+        if (!(file instanceof File) || !file.size) return json({ error: "Please select a property media file." }, 400, origin);
+        const allowed = isVideo
+          ? new Set(["video/mp4", "video/webm", "video/quicktime"])
+          : new Set(["image/webp", "image/jpeg", "image/png"]);
+        if (!allowed.has(file.type)) return json({ error: isVideo ? "Video must be MP4, WebM or MOV." : "Photo must be WebP, JPG or PNG." }, 415, origin);
+        const maxBytes = isVideo ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+        if (file.size > maxBytes) return json({ error: isVideo ? "Video must be 10 MB or smaller." : "Each optimized photo must be 5 MB or smaller." }, 413, origin);
+        const safeName = (file.name || (isVideo ? "property-video" : "property-photo")).replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+        const uploadForm = new FormData();
+        uploadForm.append("file", file, safeName);
+        uploadForm.append("fileName", (isVideo ? "video_" : "photo_") + crypto.randomUUID() + "_" + safeName);
+        uploadForm.append("folder", folder);
+        uploadForm.append("useUniqueFileName", "true");
+        const imageKitResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+          method: "POST",
+          headers: { "Authorization": "Basic " + btoa(env.IMAGEKIT_PRIVATE_KEY + ":") },
+          body: uploadForm
+        });
+        const imageKitData = await imageKitResponse.json();
+        if (!imageKitResponse.ok || !imageKitData.url || !imageKitData.fileId) {
+          return json({ error: "Property media upload failed. Please retry." }, 502, origin);
+        }
+        return json({ url: imageKitData.url, fileId: imageKitData.fileId, filePath: imageKitData.filePath, fileSize: file.size, fileType: file.type }, 200, origin);
+      }
+
       if (uploadType === "/smart-proof") {
         const incoming = await request.formData();
         const file = incoming.get("file");
