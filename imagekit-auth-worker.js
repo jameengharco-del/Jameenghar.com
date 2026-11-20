@@ -123,11 +123,31 @@ export default {
     const requestPath = new URL(request.url).pathname;
     // Keep the legacy root endpoint working until both website clients use explicit routes.
     const uploadType = requestPath === "/" ? "/daybnb" : requestPath;
-    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof" && uploadType !== "/marketplace-media" && requestPath !== "/smart-proof-view") {
+    if (uploadType !== "/property" && uploadType !== "/daybnb" && uploadType !== "/smart-proof" && uploadType !== "/marketplace-media" && requestPath !== "/smart-proof-view" && requestPath !== "/smart-media-scan") {
       return json({ error: "Unknown upload service. Use /property, /daybnb, /marketplace-media or /smart-proof." }, 404, origin);
     }
     if (request.method !== "POST") {
       return json({ error: "Method not allowed." }, 405, origin);
+    }
+
+    if (requestPath === "/smart-media-scan") {
+      const authorization = request.headers.get("Authorization") || "";
+      const tokenMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+      if (!tokenMatch) return json({ error: "Firebase sign-in is required for audio screening." }, 401, origin);
+      if (!env.FIREBASE_API_KEY || !env.AI) return json({ error: "Audio transcription is not configured. Owner must enable the Cloudflare Workers AI binding before seller videos can be accepted." }, 503, origin);
+      try {
+        await verifyUploadUser(tokenMatch[1], env.FIREBASE_API_KEY, "/smart-media-scan");
+        const incoming = await request.formData();
+        const audio = incoming.get("audio");
+        if (!(audio instanceof File) || !audio.size) return json({ error: "Audio track is missing; the video cannot pass audio screening." }, 400, origin);
+        if (audio.size > 15 * 1024 * 1024) return json({ error: "Extracted audio exceeds the screening size limit." }, 413, origin);
+        const bytes = new Uint8Array(await audio.arrayBuffer());
+        const result = await env.AI.run("@cf/openai/whisper-large-v3-turbo", { audio: Array.from(bytes) });
+        const transcript = String(result.text || "").trim();
+        return json({ transcript, screened: true, model: "whisper-large-v3-turbo" }, 200, origin);
+      } catch (error) {
+        return json({ error: error.message || "Video audio screening failed." }, 502, origin);
+      }
     }
 
     if (requestPath === "/smart-proof-view") {
