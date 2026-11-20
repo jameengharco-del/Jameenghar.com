@@ -103,6 +103,28 @@ try {
     await assertSucceeds(setDoc(privateRef("requirement_reqBuyerA"), buyerPrivate("reqBuyerA")));
   });
 
+  await test("Owner can create a private correction record attributed to an approved consultant", async () => {
+    await assertSucceeds(setDoc(doc(owner, "marketplacePrivate", "requirement_legacy_oldLead01"), {
+      recordType: "buyer_requirement", recordId: "legacy_oldLead01",
+      createdBy: crmUid, createdByName: "Test Consultant",
+      contactEmail: "crm-smart-test@example.com", mapPin: "https://maps.google.com/@26.9124,75.7873,16z",
+      sourceLeadId: "oldLead01", customerName: "Legacy Buyer",
+      customerPhone: "9999999999", customerEmail: "legacy@example.com",
+      createdAt: serverTimestamp()
+    }));
+  });
+
+  await test("Owner can create a corrected pending buyer requirement for the assigned consultant", async () => {
+    await assertSucceeds(setDoc(doc(owner, "marketplaceRequirements", "legacy_oldLead01"), {
+      title: "Corrected Jaipur buyer requirement", transactionType: "buy",
+      propertyType: "Flat / Apartment", city: "Jaipur", locality: "Vaishali Nagar",
+      approxArea: "Vaishali Nagar, Jaipur", budgetMin: 5000000, budgetMax: 10000000,
+      areaMin: 100, areaMax: 200, areaUnit: "Gaj", preferredRadiusKm: 5,
+      facing: "Any", roadWidth: "", additionalRequirements: "",
+      status: "pending_review", createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    }));
+  });
+
   await test("buyer public requirement is rejected without its matching private record", async () => {
     await assertFails(setDoc(publicRequirementRef("reqNoPrivate"), buyerPublic()));
   });
