@@ -625,6 +625,20 @@ service cloud.firestore {
     match /marketplaceRequirements/{requirementId} {
       allow read: if isAdmin()
         || (isApprovedCRM() && resource.data.status == "active");
+      allow create: if (
+        isApprovedCRM()
+        && request.resource.data.status == "pending_review"
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid
+      ) || (
+        isAdmin()
+        && request.resource.data.status == "pending_review"
+        && exists(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId))
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordType == "buyer_requirement"
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy is string
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy.size() > 0
+      );
+      /*
       allow create: if isApprovedCRM()
         && request.resource.data.status == "pending_review"
         && request.resource.data.keys().hasOnly([
@@ -644,6 +658,7 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordType == "buyer_requirement"
         && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId
         && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid;
+      */
       allow update, delete: if isAdmin();
     }
 
