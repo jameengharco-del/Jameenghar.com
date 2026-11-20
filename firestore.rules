@@ -626,13 +626,12 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (isApprovedCRM() && resource.data.status == "active");
       allow create: if isApprovedCRM()
-        && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == "pending_review"
         && request.resource.data.keys().hasOnly([
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "budgetMin", "budgetMax", "areaMin", "areaMax",
           "areaUnit", "preferredRadiusKm", "facing", "roadWidth",
-          "additionalRequirements", "status", "createdBy", "createdAt",
+          "additionalRequirements", "status", "createdAt",
           "updatedAt"
         ])
         && request.resource.data.title is string
@@ -640,7 +639,9 @@ service cloud.firestore {
         && request.resource.data.title.size() <= 120
         && request.resource.data.city is string
         && request.resource.data.locality is string
-        && request.resource.data.preferredRadiusKm in [1, 2, 5, 10];
+        && request.resource.data.preferredRadiusKm in [1, 2, 5, 10]
+        && exists(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId))
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
@@ -648,13 +649,12 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (isApprovedCRM() && resource.data.status == "active");
       allow create: if isApprovedCRM()
-        && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == "pending_verification"
         && request.resource.data.keys().hasOnly([
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "askingPrice", "area", "areaUnit", "facing",
           "roadWidth", "photoUrls", "videoUrl", "videoDurationSeconds",
-          "photoCount", "videoFileSize", "proofStatus", "proofDocumentId", "status", "createdBy", "createdAt",
+          "photoCount", "videoFileSize", "proofStatus", "proofDocumentId", "status", "createdAt",
           "updatedAt"
         ])
         && request.resource.data.title is string
@@ -691,6 +691,26 @@ service cloud.firestore {
     }
 
     match /marketplaceInterests/{interestId} {
+      allow read: if isAdmin();
+      allow create: if isApprovedCRM()
+        && request.resource.data.interestByUid == request.auth.uid
+        && request.resource.data.side in ["buyer", "seller"]
+        && request.resource.data.response in ["interested", "declined"]
+        && request.resource.data.matchId is string
+        && get(/databases/$(database)/documents/smartMatches/$(request.resource.data.matchId)).data.status == "invited";
+      allow update, delete: if isAdmin();
+    }
+
+    match /marketplaceNotifications/{notificationId} {
+      allow read: if isAdmin() || (isApprovedCRM() && resource.data.toUid == request.auth.uid);
+      allow create: if isAdmin();
+      allow update: if isApprovedCRM()
+        && resource.data.toUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
+      allow delete: if isAdmin();
+    }
+
+    match /marketplaceDeals/{dealId} {
       allow read, write: if isAdmin();
     }
 
