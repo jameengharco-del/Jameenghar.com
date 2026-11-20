@@ -59,7 +59,8 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 <div class="field"><label>Area Unit *</label><select name="areaUnit"><option>Gaj</option><option>Sq Ft</option><option>Sq Meter</option><option>Bigha</option></select></div>
 <div class="field"><label>Facing</label><input name="facing" placeholder="North / East"></div>
 <div class="field"><label>Road Width</label><input name="roadWidth" placeholder="e.g. 30 ft"></div>
-<div class="field full"><label>Property Photos — 1 minimum, 2 maximum *</label><input id="propertyPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required><span class="hint">JPG / PNG / WebP. Photos are resized and compressed before upload while preserving clear property details. Max 5 MB each before processing.</span></div>
+<div class="field full"><label>1. Property Front View Photo *</label><input id="propertyFrontPhoto" type="file" accept="image/jpeg,image/png,image/webp" required><span class="hint">One clear exterior/front-view photo. JPG / PNG / WebP, maximum 5 MB before processing. Visible to buyers after Owner approval.</span></div>
+<div class="field full"><label>2. Property Interior Photo *</label><input id="propertyInteriorPhoto" type="file" accept="image/jpeg,image/png,image/webp" required><span class="hint">One clear interior photo. JPG / PNG / WebP, maximum 5 MB before processing. Visible to buyers after Owner approval.</span></div>
 <div class="field full"><label>Property Video — 1 compulsory, maximum 60 seconds *</label><input id="propertyVideo" type="file" accept="video/mp4,video/webm,video/quicktime" required><span class="hint">MP4 / WebM / MOV. Maximum 60 seconds and 10 MB. Keep camera steady and show the property clearly.</span></div>
 <div class="field full"><label>Property Proof Document Photo — compulsory *</label><input id="proofDocument" type="file" accept="image/jpeg,image/png,image/webp" required><span class="hint">One clear photo/scan of ownership, allotment/possession proof or valid broker authorization/mandate. JPG / PNG / WebP, maximum 8 MB. This document is uploaded privately and visible only to Owner.</span></div>
 <div class="full notice">Owner approval is mandatory. Property will not be published or matched until proof-document verification. The document is private and must never be shared with buyers or other brokers.</div>
@@ -498,11 +499,11 @@ $("buyerForm").onsubmit=async e=>{
 $("sellerForm").onsubmit=async e=>{
  e.preventDefault();const button=e.submitter;button.disabled=true;
  try{
- const d=formData(e.currentTarget),photos=Array.from($("propertyPhotos").files),video=$("propertyVideo").files[0],proof=$("proofDocument").files[0];
+ const d=formData(e.currentTarget),frontPhoto=$("propertyFrontPhoto").files[0],interiorPhoto=$("propertyInteriorPhoto").files[0],photos=[frontPhoto,interiorPhoto].filter(Boolean),video=$("propertyVideo").files[0],proof=$("proofDocument").files[0];
  const sellerText=[d.title,d.city,d.locality,d.facing,d.roadWidth,d.additionalRequirements,...photos.map(x=>x.name),video?.name].filter(Boolean).join(" ");
  if(findContactLeak(sellerText))throw new Error("Contact information, phone numbers, links or social IDs are not allowed in property text or file names.");
- if(photos.length<1||photos.length>2)throw new Error("Upload minimum 1 and maximum 2 property photos.");
- if(!video||!proof)throw new Error("One property video and one proof document photo are compulsory.");
+ if(!frontPhoto||!interiorPhoto||photos.length!==2)throw new Error("Upload exactly 2 property photos: 1 front view and 1 interior photo.");
+ if(!video||!proof)throw new Error("One property video and one private proof document photo are compulsory.");
  if(video.size>10*1024*1024)throw new Error("Video must be 10 MB or smaller.");
  if(proof.size>8*1024*1024)throw new Error("Proof document must be 8 MB or smaller.");
  if(photos.some(f=>f.size>5*1024*1024))throw new Error("Each property photo must be 5 MB or smaller.");
@@ -516,7 +517,7 @@ $("sellerForm").onsubmit=async e=>{
  const privateRef=doc(collection(db,"marketplacePrivate"));
  const publicRef=doc(collection(db,"marketplaceProperties"));
  await setDoc(privateRef,{recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
- await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,videoFileSize:videoResult.fileSize,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),photoTypes:["front","interior"],videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,videoFileSize:videoResult.fileSize,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
 
  e.currentTarget.reset();say("Property submitted for Owner verification. It is not public or match-eligible until Owner approves the proof document.","success");
  }catch(err){say(err.message+" If media was uploaded before this error, please contact Owner so unused uploads can be cleaned up.","error");}finally{button.disabled=false;}
