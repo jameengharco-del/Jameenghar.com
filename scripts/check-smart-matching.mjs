@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 const html=fs.readFileSync("smart-matching.html","utf8");
-const blocks=[...html.matchAll(/<script\\s+type=["']module["'][^>]*>([\\s\\S]*?)<\\/script>/gi)];
+const blocks=[...html.matchAll(/<script\s+type=["']module["'][^>]*>([\s\S]*?)<\/script>/gi)];
 if(!blocks.length)throw new Error("No module script found in smart-matching.html");
 for(let i=0;i<blocks.length;i++){
  const file=path.join(os.tmpdir(),`jameenghar-smart-matching-${i}.mjs`);
