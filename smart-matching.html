@@ -499,6 +499,8 @@ $("sellerForm").onsubmit=async e=>{
  e.preventDefault();const button=e.submitter;button.disabled=true;
  try{
  const d=formData(e.currentTarget),photos=Array.from($("propertyPhotos").files),video=$("propertyVideo").files[0],proof=$("proofDocument").files[0];
+ const sellerText=[d.title,d.city,d.locality,d.facing,d.roadWidth,d.additionalRequirements,...photos.map(x=>x.name),video?.name].filter(Boolean).join(" ");
+ if(findContactLeak(sellerText))throw new Error("Contact information, phone numbers, links or social IDs are not allowed in property text or file names.");
  if(photos.length<1||photos.length>2)throw new Error("Upload minimum 1 and maximum 2 property photos.");
  if(!video||!proof)throw new Error("One property video and one proof document photo are compulsory.");
  if(video.size>10*1024*1024)throw new Error("Video must be 10 MB or smaller.");
