@@ -357,7 +357,9 @@ async function loadMatchesQueue(){
   const h=document.createElement("strong");h.textContent=m.score+"% match · "+m.distanceKm+" km · searched "+m.searchRadiusKm+" km";
   const p=document.createElement("p");p.className="hint";p.textContent="Buyer requirement "+m.requirementId+" ↔ Property "+m.propertyId;
   const criteria=document.createElement("p");criteria.className="hint";criteria.textContent=(m.criteria||[]).map(x=>x.name+": "+(x.matched?"Match":"Mismatch")).join(" · ");
-  box.append(h,p,criteria);root.append(box);
+  const invite=document.createElement("button");invite.textContent="Send Match Invitation to Both Parties";invite.style.marginTop="8px";
+  invite.onclick=async()=>{invite.disabled=true;try{await sendMatchInvitation(m);invite.textContent="Invitation Sent to Buyer & Seller";await loadOwnerInterests();}catch(e){say(e.message,"error");invite.disabled=false;}};
+  box.append(h,p,criteria,invite);root.append(box);
  }
 }
 $("runMatching").onclick=runSmartMatching;
