@@ -33,7 +33,7 @@ const proof = (overrides = {}) => ({
   createdAt: serverTimestamp(), ...overrides
 });
 try {
-  await env.withSecurityRulesDisabled(async ({ firestore: db }) => {
+  await env.withSecurityRulesDisabled(async (context) => {\n    const db = context.firestore();
     await setDoc(doc(db, "users", crmUid), { uid: crmUid, email: "crm-access@example.com", role: "crm", status: "approved", emailVerificationRequired: true });
     await setDoc(doc(db, "users", otherUid), { uid: otherUid, email: "crm-other@example.com", role: "crm", status: "approved", emailVerificationRequired: true });
     await setDoc(doc(db, "leads", "lead_assigned"), lead(crmUid, crmUid));
