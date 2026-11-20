@@ -7,10 +7,10 @@ const html=fs.readFileSync("smart-matching.html","utf8");
 const rules=fs.readFileSync("firestore.rules","utf8");
 const worker=fs.readFileSync("imagekit-auth-worker.js","utf8");
 
-const blocks=[...html.matchAll(/<script\\s+type=["']module["'][^>]*>([\\s\\S]*?)<\\/script>/gi)];
+const blocks=[...html.matchAll(/<script\s+type=["']module["'][^>]*>([\s\S]*?)<\/script>/gi)];
 if(!blocks.length)throw new Error("No module script found in smart-matching.html");
 for(let i=0;i<blocks.length;i++){
- const file=path.join(os.tmpdir(),`jameenghar-smart-matching-${i}.mjs`);
+ const file=path.join(os.tmpdir(),\`jameenghar-smart-matching-\${i}.mjs\`);
  fs.writeFileSync(file,blocks[i][1]);
  const result=spawnSync(process.execPath,["--check",file],{encoding:"utf8"});
  fs.unlinkSync(file);
@@ -32,9 +32,9 @@ const checks=[
  ["marketplace rules require exactly two public photos",rules.includes("request.resource.data.photoUrls.size() == 2")],
  ["marketplace rules require front/interior types",rules.includes('request.resource.data.photoTypes == ["front", "interior"]')],
  ["marketplace private records restricted by type",rules.includes("validMarketplacePrivateCreate(recordId)")],
- ["private records readable only by Owner",rules.includes("match /marketplacePrivate/{recordId} {\\n      allow read: if isAdmin();")]
+ ["private records readable only by Owner",rules.includes("match /marketplacePrivate/{recordId} {\n      allow read: if isAdmin();")]
 ];
 const failed=checks.filter(([,ok])=>!ok);
 for(const [label,ok] of checks)console.log((ok?"PASS ":"FAIL ")+label);
-if(failed.length){console.error(`\\n${failed.length} Smart Matching check(s) failed.`);process.exit(1);}
-console.log(`JavaScript syntax OK (${blocks.length} module script block(s)); all ${checks.length} Smart Matching checks passed.`);
+if(failed.length){console.error(\`\n\${failed.length} Smart Matching check(s) failed.\`);process.exit(1);}
+console.log(\`JavaScript syntax OK (\${blocks.length} module script block(s)); all \${checks.length} Smart Matching checks passed.\`);
