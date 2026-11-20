@@ -27,7 +27,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -65,7 +65,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #cdd8cf;border-ra
 <div class="full notice">Owner approval is mandatory. Property will not be published or matched until proof-document verification. The document is private and must never be shared with buyers or other brokers.</div>
 <div class="full"><button type="submit">Submit Property for Owner Verification</button></div>
 </form>
-<section id="marketplaceFeed" class="panel hidden"><h2>Shared CRM Marketplace</h2><p class="muted">Only Owner-approved privacy-safe cards appear here. Names, phone numbers, contact details and exact pins are hidden.</p><div id="requirementsFeed"></div><div id="propertiesFeed"></div></section><div id="status" role="status" aria-live="polite"></div>
+<section id="marketplaceFeed" class="panel hidden"><h2>My Match Invitations & Responses</h2><div id="myMatchInvitations" class="notice">Checking new match invitations…</div><h2 style="margin-top:20px">Shared CRM Marketplace</h2><p class="muted">Only Owner-approved privacy-safe cards appear here. Names, phone numbers, contact details and exact pins are hidden.</p><div id="requirementsFeed"></div><div id="propertiesFeed"></div></section><div id="status" role="status" aria-live="polite"></div>
 </section>
 </main>
 <script type="module">
@@ -89,10 +89,11 @@ onAuthStateChanged(auth,async user=>{
  if(!isOwner&&(user.emailVerified!==true||userProfile.role!=="crm"||userProfile.status!=="approved"))throw new Error("Only email-verified, Owner-approved CRM accounts can post here.");
  $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
  $("workspace").classList.remove("hidden");
- if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+ if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){$("authStatus").textContent=e.message;}
 });
 async function loadMarketplaceFeed(){
+ await loadMyMatchInvitations();
  const reqRoot=$("requirementsFeed"),propRoot=$("propertiesFeed");reqRoot.innerHTML="<h3>Buyer Requirements</h3>";propRoot.innerHTML="<h3>Verified Properties</h3>";
  try{
   const [reqSnap,propSnap]=await Promise.all([
@@ -164,6 +165,69 @@ async function loadLegacyReviewQueue(){
  }catch(e){root.textContent="Could not load legacy correction queue: "+e.message;}
 }
 $("migrateLegacy").onclick=migrateLegacyLeads;
+async function loadMyMatchInvitations(){
+ const root=$("myMatchInvitations");
+ try{
+  const snap=await getDocs(query(collection(db,"marketplaceNotifications"),where("toUid","==",currentUser.uid)));
+  const items=snap.docs.filter(x=>["match_invitation","deal_update"].includes(x.data().type)&&!x.data().read);
+  root.innerHTML="";
+  if(!items.length){root.textContent="No new match invitations.";return;}
+  for(const item of items){
+   const d=item.data(),box=document.createElement("div");box.style.cssText="padding:12px;border:1px solid #dce8de;border-radius:10px;margin:8px 0;background:#fff";
+   const h=document.createElement("strong");h.textContent=d.type==="deal_update"?"JameenGhar Deal Update":"JameenGhar Match Invitation · "+(d.matchScore||"")+"% match";
+   const p=document.createElement("p");p.textContent=[d.propertyTitle,d.requirementTitle,d.approxArea,d.priceLabel,"Approx. distance "+(d.distanceKm||"")+" km",d.summary].filter(Boolean).join(" · ");box.append(h,p);
+   if(d.type==="match_invitation"){
+    const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px";
+    for(const [response,label] of [["interested","I am Interested"],["declined","Not Interested"]]){
+     const b=document.createElement("button");b.textContent=label;b.onclick=async()=>{b.disabled=true;try{
+      await setDoc(doc(db,"marketplaceInterests",d.matchId+"_"+currentUser.uid),{matchId:d.matchId,interestByUid:currentUser.uid,side:d.side,response,status:"responded",respondedAt:serverTimestamp()});
+      await updateDoc(doc(db,"marketplaceNotifications",item.id),{read:true,readAt:serverTimestamp()});b.textContent="Response Sent";await loadMyMatchInvitations();
+     }catch(e){say(e.message,"error");b.disabled=false;}};actions.append(b);
+    }box.append(actions);
+   }root.append(box);
+  }
+ }catch(e){root.textContent="Could not load match invitations: "+e.message;}
+}
+async function sendMatchInvitation(match){
+ const reqPrivate=await getDoc(doc(db,"marketplacePrivate","requirement_"+match.requirementId));
+ const prop=await getDoc(doc(db,"marketplaceProperties",match.propertyId));
+ if(!reqPrivate.exists()||!prop.exists())throw new Error("Buyer or property private owner record is missing.");
+ const propData=prop.data(),sellerPrivate=await getDoc(doc(db,"marketplacePrivate",propData.proofDocumentId));
+ if(!sellerPrivate.exists())throw new Error("Seller private owner record is missing.");
+ const buyerUid=reqPrivate.data().createdBy,sellerUid=sellerPrivate.data().createdBy;
+ if(!buyerUid||!sellerUid||buyerUid===sellerUid)throw new Error("Buyer and Seller must be different approved CRM users.");
+ const safe={matchId:match.id,matchScore:match.score,approxArea:propData.approxArea,propertyTitle:propData.title,requirementTitle:"Buyer requirement",priceLabel:"Asking ₹"+Number(propData.askingPrice||0).toLocaleString("en-IN"),distanceKm:match.distanceKm,summary:"JameenGhar is coordinating this match. Contact details and exact location remain private."};
+ await Promise.all([
+  setDoc(doc(db,"marketplaceNotifications",match.id+"_buyer"),{...safe,toUid:buyerUid,side:"buyer",type:"match_invitation",read:false,createdAt:serverTimestamp()}),
+  setDoc(doc(db,"marketplaceNotifications",match.id+"_seller"),{...safe,toUid:sellerUid,side:"seller",type:"match_invitation",read:false,createdAt:serverTimestamp()})
+ ]);
+}
+async function loadOwnerInterests(){
+ const root=$("ownerInterestQueue"),snap=await getDocs(collection(db,"marketplaceInterests"));root.innerHTML="";
+ if(!snap.size){root.textContent="No Buyer/Seller interest responses yet.";return;}
+ const groups={};for(const d of snap.docs){const x=d.data();(groups[x.matchId]??=[]).push({id:d.id,...x});}
+ for(const [matchId,rows] of Object.entries(groups)){
+  const box=document.createElement("div");box.style.cssText="padding:12px;border:1px solid #e4eae5;border-radius:10px;margin:8px 0;background:#fff";
+  const h=document.createElement("strong");h.textContent="Match "+matchId;
+  const p=document.createElement("p");p.textContent=rows.map(x=>x.side+": "+x.response+" ("+x.interestByUid+")").join(" · ");box.append(h,p);
+  const buyer=rows.find(x=>x.side==="buyer"&&x.response==="interested"),seller=rows.find(x=>x.side==="seller"&&x.response==="interested");
+  if(buyer&&seller){
+   const b=document.createElement("button");b.textContent="Owner Approve & Start Managed Deal";b.onclick=async()=>{b.disabled=true;try{
+    const m=await getDoc(doc(db,"smartMatches",matchId));if(!m.exists())throw new Error("Match record missing.");
+    const md=m.data(),reqPrivate=await getDoc(doc(db,"marketplacePrivate","requirement_"+md.requirementId)),prop=await getDoc(doc(db,"marketplaceProperties",md.propertyId));
+    if(!reqPrivate.exists()||!prop.exists())throw new Error("Private party records missing.");
+    const sellerPrivate=await getDoc(doc(db,"marketplacePrivate",prop.data().proofDocumentId));if(!sellerPrivate.exists())throw new Error("Seller record missing.");
+    const buyerUid=reqPrivate.data().createdBy,sellerUid=sellerPrivate.data().createdBy;
+    await setDoc(doc(db,"marketplaceDeals",matchId),{matchId,requirementId:md.requirementId,propertyId:md.propertyId,buyerUid,sellerUid,buyerInterestId:buyer.id,sellerInterestId:seller.id,status:"owner_approved_managed",stage:"owner_contact_and_coordination",approvedBy:currentUser.uid,approvedAt:serverTimestamp(),createdAt:serverTimestamp()});
+    await updateDoc(doc(db,"smartMatches",matchId),{status:"owner_approved_managed",approvedAt:serverTimestamp()});
+    const safe={matchId,type:"deal_update",read:false,summary:"Both parties expressed interest. JameenGhar Owner approved the match and will coordinate the next steps. Private contact details remain protected.",createdAt:serverTimestamp()};
+    await Promise.all([setDoc(doc(db,"marketplaceNotifications",matchId+"_deal_buyer"),{...safe,toUid:buyerUid}),setDoc(doc(db,"marketplaceNotifications",matchId+"_deal_seller"),{...safe,toUid:sellerUid})]);
+    b.textContent="Managed Deal Started";await loadOwnerInterests();await loadMatchesQueue();
+   }catch(e){say(e.message,"error");b.disabled=false;}};box.append(b);
+  }else{const wait=document.createElement("p");wait.className="hint";wait.textContent="Deal cannot progress until both Buyer and Seller express interest.";box.append(wait);}
+  root.append(box);
+ }
+}
 async function ownerProofPreview(fileId){
  const response=await fetch(WORKER+"/smart-proof-view",{method:"POST",headers:{"Authorization":"Bearer "+await currentUser.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({fileId})});
  const data=await response.json();if(!response.ok||!data.signedUrl)throw new Error(data.error||"Could not open private proof document.");return data.signedUrl;
@@ -331,7 +395,7 @@ $("buyerForm").onsubmit=async e=>{
  try{const d=formData(e.currentTarget);if(Number(d.budgetMin)>Number(d.budgetMax)||Number(d.areaMin)>Number(d.areaMax))throw new Error("Minimum budget/area cannot exceed maximum.");
  const ref=doc(collection(db,"marketplaceRequirements"));
  await setDoc(doc(db,"marketplacePrivate","requirement_"+ref.id),{recordType:"buyer_requirement",recordId:ref.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),createdAt:serverTimestamp()});
- await setDoc(ref,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),budgetMin:Number(d.budgetMin),budgetMax:Number(d.budgetMax),areaMin:Number(d.areaMin),areaMax:Number(d.areaMax),areaUnit:d.areaUnit,preferredRadiusKm:Number(d.preferredRadiusKm),facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),additionalRequirements:d.additionalRequirements.trim(),status:"pending_review",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(ref,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),budgetMin:Number(d.budgetMin),budgetMax:Number(d.budgetMax),areaMin:Number(d.areaMin),areaMax:Number(d.areaMax),areaUnit:d.areaUnit,preferredRadiusKm:Number(d.preferredRadiusKm),facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),additionalRequirements:d.additionalRequirements.trim(),status:"pending_review",createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
  e.currentTarget.reset();say("Buyer requirement submitted. It will be reviewed by JameenGhar Owner before sharing with the CRM marketplace.","success");
  }catch(err){say(err.message,"error");}finally{button.disabled=false;}
 };
@@ -353,7 +417,7 @@ $("sellerForm").onsubmit=async e=>{
  const privateRef=doc(collection(db,"marketplacePrivate"));
  const publicRef=doc(collection(db,"marketplaceProperties"));
  await setDoc(privateRef,{recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
- await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,videoFileSize:videoResult.fileSize,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,videoFileSize:videoResult.fileSize,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
 
  e.currentTarget.reset();say("Property submitted for Owner verification. It is not public or match-eligible until Owner approves the proof document.","success");
  }catch(err){say(err.message+" If media was uploaded before this error, please contact Owner so unused uploads can be cleaned up.","error");}finally{button.disabled=false;}
