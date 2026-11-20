@@ -1,0 +1,22 @@
+name: Smart Matching validation
+on:
+  push:
+    branches: [real-estate-smart-matching-phase1]
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Cloudflare Worker JavaScript
+        run: node --check imagekit-auth-worker.js
+      - name: Check Smart Matching page JavaScript
+        run: node scripts/check-smart-matching.mjs
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+      - name: Compile Firestore rules in emulator
+        run: firebase emulators:exec --only firestore --project demo-jameenghar "node -e \"console.log('Firestore rules compiled')\""
