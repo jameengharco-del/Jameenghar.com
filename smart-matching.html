@@ -319,9 +319,9 @@ function compressPhoto(file){
  });
 }
 async function uploadPublicFile(file,folder){
- const authData=await getUploadAuth("/marketplace-media");
- const body=new FormData();body.append("file",file);body.append("fileName",Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_"));body.append("folder",folder);body.append("useUniqueFileName","true");body.append("token",authData.token);body.append("expire",String(authData.expire));body.append("signature",authData.signature);body.append("publicKey",authData.publicKey);
- const res=await fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body});const data=await res.json();if(!res.ok||!data.url)throw new Error(data.message||"Media upload failed.");return data;
+ const body=new FormData();body.append("file",file);body.append("folder",folder);
+ const res=await fetch(WORKER+"/marketplace-media",{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()},body});
+ const data=await res.json();if(!res.ok||!data.url)throw new Error(data.error||"Secure media upload failed.");return data;
 }
 async function uploadPrivateProof(file){
  const fd=new FormData();fd.append("file",file);const res=await fetch(WORKER+"/smart-proof",{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()},body:fd});const data=await res.json();if(!res.ok||!data.fileId)throw new Error(data.error||"Private document upload failed.");if(data.isPrivateFile!==true)throw new Error("Private document protection could not be confirmed. Submission stopped.");return data;
@@ -341,7 +341,7 @@ $("sellerForm").onsubmit=async e=>{
  const d=formData(e.currentTarget),photos=Array.from($("propertyPhotos").files),video=$("propertyVideo").files[0],proof=$("proofDocument").files[0];
  if(photos.length<1||photos.length>2)throw new Error("Upload minimum 1 and maximum 2 property photos.");
  if(!video||!proof)throw new Error("One property video and one proof document photo are compulsory.");
- if(video.size>25*1024*1024)throw new Error("Video must be 25 MB or smaller.");
+ if(video.size>10*1024*1024)throw new Error("Video must be 10 MB or smaller.");
  if(proof.size>8*1024*1024)throw new Error("Proof document must be 8 MB or smaller.");
  if(photos.some(f=>f.size>5*1024*1024))throw new Error("Each property photo must be 5 MB or smaller.");
  const duration=await new Promise((resolve,reject)=>{const el=document.createElement("video"),url=URL.createObjectURL(video);el.preload="metadata";el.onloadedmetadata=()=>{URL.revokeObjectURL(url);resolve(el.duration);};el.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Video file could not be read."));};el.src=url;});
@@ -353,7 +353,7 @@ $("sellerForm").onsubmit=async e=>{
  const privateRef=doc(collection(db,"marketplacePrivate"));
  const publicRef=doc(collection(db,"marketplaceProperties"));
  await setDoc(privateRef,{recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,createdByName:userProfile.name||"",contactEmail:currentUser.email||"",mapPin:d.mapPin.trim(),proofFileId:proofResult.fileId,proofFilePath:proofResult.filePath,proofFileSize:proofResult.fileSize,proofMimeType:proofResult.fileType,proofStatus:"pending",createdAt:serverTimestamp()});
- await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+ await setDoc(publicRef,{title:d.title.trim(),transactionType:d.transactionType,propertyType:d.propertyType,city:d.city.trim(),locality:d.locality.trim(),approxArea:d.locality.trim()+", "+d.city.trim(),askingPrice:Number(d.askingPrice),area:Number(d.area),areaUnit:d.areaUnit,facing:d.facing.trim(),roadWidth:d.roadWidth.trim(),photoUrls:photoResults.map(x=>x.url),videoUrl:videoResult.url,videoDurationSeconds:Math.round(duration*10)/10,videoFileSize:videoResult.fileSize,photoCount:photoResults.length,proofDocumentId:privateRef.id,proofStatus:"pending",status:"pending_verification",createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
 
  e.currentTarget.reset();say("Property submitted for Owner verification. It is not public or match-eligible until Owner approves the proof document.","success");
  }catch(err){say(err.message+" If media was uploaded before this error, please contact Owner so unused uploads can be cleaned up.","error");}finally{button.disabled=false;}
