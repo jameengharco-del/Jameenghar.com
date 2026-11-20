@@ -142,7 +142,12 @@ export default {
         if (!(audio instanceof File) || !audio.size) return json({ error: "Audio track is missing; the video cannot pass audio screening." }, 400, origin);
         if (audio.size > 15 * 1024 * 1024) return json({ error: "Extracted audio exceeds the screening size limit." }, 413, origin);
         const bytes = new Uint8Array(await audio.arrayBuffer());
-        const result = await env.AI.run("@cf/openai/whisper-large-v3-turbo", { audio: Array.from(bytes) });
+        let binary = "";
+        for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+        }
+        const audioBase64 = btoa(binary);
+        const result = await env.AI.run("@cf/openai/whisper-large-v3-turbo", { audio: audioBase64 });
         const transcript = String(result.text || "").trim();
         return json({ transcript, screened: true, model: "whisper-large-v3-turbo" }, 200, origin);
       } catch (error) {
