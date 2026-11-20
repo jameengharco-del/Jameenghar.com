@@ -197,6 +197,7 @@ async function sendMatchInvitation(match){
  const buyerUid=reqPrivate.data().createdBy,sellerUid=sellerPrivate.data().createdBy;
  if(!buyerUid||!sellerUid||buyerUid===sellerUid)throw new Error("Buyer and Seller must be different approved CRM users.");
  const safe={matchId:match.id,matchScore:match.score,approxArea:propData.approxArea,propertyTitle:propData.title,requirementTitle:"Buyer requirement",priceLabel:"Asking ₹"+Number(propData.askingPrice||0).toLocaleString("en-IN"),distanceKm:match.distanceKm,summary:"JameenGhar is coordinating this match. Contact details and exact location remain private."};
+ await updateDoc(doc(db,"smartMatches",match.id),{status:"invited",invitedAt:serverTimestamp(),invitedBy:currentUser.uid});
  await Promise.all([
   setDoc(doc(db,"marketplaceNotifications",match.id+"_buyer"),{...safe,toUid:buyerUid,side:"buyer",type:"match_invitation",read:false,createdAt:serverTimestamp()}),
   setDoc(doc(db,"marketplaceNotifications",match.id+"_seller"),{...safe,toUid:sellerUid,side:"seller",type:"match_invitation",read:false,createdAt:serverTimestamp()})
