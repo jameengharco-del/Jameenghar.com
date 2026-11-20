@@ -192,7 +192,6 @@ export default {
       // The Worker forces ImageKit isPrivateFile=true so a client cannot accidentally
       // publish a deed/authorization image by changing a browser upload parameter.
       if (uploadType === "/marketplace-media") {
-        const user = await verifyUploadUser(authMatch ? authMatch[1] : authorization.replace(/^Bearer\\s+/i, ""), env.FIREBASE_API_KEY, uploadType);
         const incoming = await request.formData();
         const file = incoming.get("file");
         const folder = String(incoming.get("folder") || "");
