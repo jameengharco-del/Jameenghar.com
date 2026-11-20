@@ -67,7 +67,7 @@ async function verifyUploadUser(idToken, apiKey, uploadType) {
   const status = fields.status && fields.status.stringValue;
   const profileEmail = fields.email && fields.email.stringValue;
 
-  const isMainAdmin = user.localId === "P46WrdpzVWVHVC4t6vqIOYcZfxC3" && role === "admin";
+  const isMainAdmin = user.localId === "P46WrdzpVWVHVC4t6vqIOYcZfxC3";
   const ownerAllowed = role === "owner" && (
     uploadType === "/property" ? status === "approved" : status !== "rejected"
   );
