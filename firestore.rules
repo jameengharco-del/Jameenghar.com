@@ -622,43 +622,46 @@ service cloud.firestore {
 
     // SMART MATCHING — public-safe marketplace cards only.
     // Existing private /leads access rules above remain unchanged.
-    match /marketplaceRequirements/{requirementId} {
-      allow read: if isAdmin()
-        || (isApprovedCRM() && resource.data.status == "active");
-      allow create: if (
-        isApprovedCRM()
-        && request.resource.data.status == "pending_review"
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid
-      ) || (
-        isAdmin()
-        && request.resource.data.status == "pending_review"
-        && exists(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId))
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordType == "buyer_requirement"
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy is string
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy.size() > 0
-      );
-      /*
-      allow create: if isApprovedCRM()
-        && request.resource.data.status == "pending_review"
+    function validMarketplaceRequirement(requirementId) {
+      return request.resource.data.status == "pending_review"
         && request.resource.data.keys().hasOnly([
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "budgetMin", "budgetMax", "areaMin", "areaMax",
           "areaUnit", "preferredRadiusKm", "facing", "roadWidth",
-          "additionalRequirements", "status", "createdAt",
-          "updatedAt"
+          "additionalRequirements", "status", "createdAt", "updatedAt"
         ])
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.title.size() <= 120
         && request.resource.data.city is string
         && request.resource.data.locality is string
+        && request.resource.data.budgetMin is number
+        && request.resource.data.budgetMax is number
+        && request.resource.data.budgetMin > 0
+        && request.resource.data.budgetMax >= request.resource.data.budgetMin
+        && request.resource.data.areaMin is number
+        && request.resource.data.areaMax is number
+        && request.resource.data.areaMin > 0
+        && request.resource.data.areaMax >= request.resource.data.areaMin
         && request.resource.data.preferredRadiusKm in [1, 2, 5, 10]
         && exists(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId))
         && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordType == "buyer_requirement"
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId
-        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid;
-      */
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId;
+    }
+
+    match /marketplaceRequirements/{requirementId} {
+      allow read: if isAdmin()
+        || (isApprovedCRM() && resource.data.status == "active");
+      allow create: if (
+        isApprovedCRM()
+        && validMarketplaceRequirement(requirementId)
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid
+      ) || (
+        isAdmin()
+        && validMarketplaceRequirement(requirementId)
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy is string
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy.size() > 0
+      );
       allow update, delete: if isAdmin();
     }
 
