@@ -189,16 +189,97 @@ async function migrateLegacyLeads(){
 async function loadLegacyReviewQueue(){
  const root=$("legacyReviewQueue");root.textContent="Loading Owner correction queue…";
  try{
-  const snap=await getDocs(collection(db,"marketplacePrivate"));const rows=snap.docs.filter(x=>x.data().recordType==="legacy_data_completion"&&x.data().status==="needs_owner_review");
+  const [snap,users]=await Promise.all([getDocs(collection(db,"marketplacePrivate")),getDocs(collection(db,"users"))]);
+  const rows=snap.docs.filter(x=>x.data().recordType==="legacy_data_completion"&&x.data().status==="needs_owner_review");
+  const consultants=users.docs.filter(x=>x.data().role==="crm"&&x.data().status==="approved").map(x=>({id:x.id,...x.data()})).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
   root.innerHTML="";
-  if(!rows.length){root.textContent="No legacy leads need correction. Run the migration scan to check existing active leads.";return;}
+  if(!rows.length){root.textContent="No legacy leads need correction. All migrated leads have been converted or are awaiting a new migration scan.";return;}
   for(const item of rows){
-   const d=item.data(),box=document.createElement("div");box.className="notice";box.style.margin="8px 0";
-   const h=document.createElement("strong");h.textContent=(d.enquiryType||"Lead").toUpperCase()+" · "+(d.propertyTitle||d.customerName||"Untitled legacy lead");
-   const p=document.createElement("p");p.textContent=[d.customerName,d.phone,d.email,d.propertyLocation,d.budget].filter(Boolean).join(" · ");
-   const m=document.createElement("p");m.className="hint";m.textContent="Missing: "+(d.missingFields||[]).join(", ");
-   const n=document.createElement("p");n.className="hint";n.textContent="Original private CRM Lead ID: "+(d.sourceLeadId||"");
-   box.append(h,p,m,n);root.append(box);
+   const d=item.data(),box=document.createElement("section");box.className="panel";box.style.margin="10px 0";
+   const h=document.createElement("h3");h.textContent=(d.enquiryType||"Lead").toUpperCase()+" · "+(d.propertyTitle||d.customerName||"Untitled legacy lead");
+   const contact=document.createElement("p");contact.className="muted";contact.textContent=[d.customerName,d.phone,d.email,d.propertyLocation,d.budget].filter(Boolean).join(" · ");
+   const missing=document.createElement("p");missing.className="hint";missing.textContent="Missing in original CRM lead: "+(d.missingFields||[]).join(", ");
+   const source=document.createElement("p");source.className="hint";source.textContent="Original private CRM Lead ID: "+(d.sourceLeadId||"")+" · Original CRM lead will remain unchanged.";
+   box.append(h,contact,missing,source);
+   if(d.enquiryType!=="buyer"){
+    const note=document.createElement("p");note.className="notice";note.textContent="This is a "+d.enquiryType+" lead. It remains safely in the Owner queue; property conversion needs the seller media and private proof verification workflow.";box.append(note);root.append(box);continue;
+   }
+   const form=document.createElement("form");form.style.marginTop="14px";
+   const field=(label,name,type,value,required=true,placeholder="")=>{
+    const wrap=document.createElement("div");wrap.className="field";
+    const lab=document.createElement("label");lab.textContent=label+(required?" *":"");
+    const input=document.createElement("input");input.name=name;input.type=type;input.value=value??"";input.required=required;if(placeholder)input.placeholder=placeholder;
+    if(type==="number"){input.min="0";input.step="any";}
+    wrap.append(lab,input);return wrap;
+   };
+   const selectField=(label,name,options,selected)=>{
+    const wrap=document.createElement("div");wrap.className="field";const lab=document.createElement("label");lab.textContent=label+" *";
+    const sel=document.createElement("select");sel.name=name;sel.required=true;
+    if(selected===""){const empty=document.createElement("option");empty.value="";empty.textContent="Select";empty.selected=true;sel.append(empty);}
+    for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;if(value===selected)opt.selected=true;sel.append(opt);}
+    wrap.append(lab,sel);return wrap;
+   };
+   form.append(field("Requirement Title","title","text",d.propertyTitle||d.customerName,true,"e.g. 2 BHK apartment required"));
+   form.append(selectField("Buy / Rent","transactionType",[["buy","Buy"],["rent","Rent"]],"buy"));
+   form.append(selectField("Property Type","propertyType",[["Plot","Plot"],["Independent House","Independent House"],["Flat / Apartment","Flat / Apartment"],["Villa","Villa"],["Commercial","Commercial"],["Agricultural Land","Agricultural Land"],["Other","Other"]],""));
+   const rawLocation=String(d.propertyLocation||"").trim(),localityValue=rawLocation.replace(/,\\s*jaipur$/i,"").trim()||rawLocation;
+   const rawBudget=String(d.budget||"").toLowerCase().replace(/,/g,"").trim();
+   let parsedBudget="";
+   let moneyMatch=rawBudget.match(/([0-9]+(?:\\.[0-9]+)?)\\s*(?:cr|crore)\\b/);
+   if(moneyMatch)parsedBudget=String(Math.round(Number(moneyMatch[1])*10000000));
+   else{moneyMatch=rawBudget.match(/([0-9]+(?:\\.[0-9]+)?)\\s*(?:lakh|lac|l)\\b/);if(moneyMatch)parsedBudget=String(Math.round(Number(moneyMatch[1])*100000));else if(/^[0-9]+(?:\\.[0-9]+)?$/.test(rawBudget))parsedBudget=String(Math.round(Number(rawBudget)));}
+   form.append(field("City","city","text","Jaipur"));
+   form.append(field("Locality / Area","locality","text",localityValue));
+   form.append(field("Google Maps link with exact coordinates (Owner-only)","mapPin","url","",true,"Paste a full Google Maps link containing the map pin"));
+   form.append(field("Minimum Budget (₹)","budgetMin","number",parsedBudget,true,d.budget?"Original CRM budget: "+d.budget:"e.g. 5000000"));
+   form.append(field("Maximum Budget (₹)","budgetMax","number",parsedBudget,true,d.budget?"Original CRM budget: "+d.budget:"e.g. 10000000"));
+   form.append(field("Minimum Area","areaMin","number","",true,"Area minimum"));
+   form.append(field("Maximum Area","areaMax","number","",true,"Area maximum"));
+   form.append(selectField("Area Unit","areaUnit",[["Gaj","Gaj"],["Sq Ft","Sq Ft"],["Sq Meter","Sq Meter"],["Bigha","Bigha"]],"Gaj"));
+   form.append(selectField("Preferred Search Radius","preferredRadiusKm",[["1","1 km"],["2","2 km"],["5","5 km"],["10","10 km"]],"5"));
+   form.append(field("Preferred Facing","facing","text","Any",false,"North / East / Any"));
+   form.append(field("Road Width","roadWidth","text","",false,"e.g. 30 ft"));
+   const remarks=document.createElement("div");remarks.className="field full";const remarksLabel=document.createElement("label");remarksLabel.textContent="Additional Requirements";const remarksInput=document.createElement("textarea");remarksInput.name="additionalRequirements";remarksInput.maxLength=1000;remarksInput.value=d.message||"";remarks.append(remarksLabel,remarksInput);form.append(remarks);
+   const consultant=selectField("Assign Buyer-side CRM Consultant", "consultantUid", [["","Select approved consultant"],...consultants.map(c=>[c.id,(c.name||c.email||c.id)+" · "+(c.email||"")])],"");consultant.classList.add("full");form.append(consultant);
+   const privateNote=document.createElement("p");privateNote.className="hint full";privateNote.textContent="Customer name, mobile, email and exact map pin stay in Owner-only private records. The selected approved consultant receives any match invitation; these details are never shown on the shared marketplace.";form.append(privateNote);
+   const submitWrap=document.createElement("div");submitWrap.className="full";const submit=document.createElement("button");submit.type="submit";submit.textContent="Save Corrections & Create Pending Buyer Requirement";submit.disabled=!consultants.length;submitWrap.append(submit);form.append(submitWrap);
+   if(!consultants.length){const warn=document.createElement("p");warn.className="error";warn.textContent="No approved CRM consultants found. Approve a consultant account first.";form.append(warn);}
+   form.addEventListener("submit",async e=>{
+    e.preventDefault();submit.disabled=true;
+    try{
+     const v=formData(form),minBudget=Number(v.budgetMin),maxBudget=Number(v.budgetMax),minArea=Number(v.areaMin),maxArea=Number(v.areaMax);
+     if(minBudget<=0||maxBudget<minBudget||minArea<=0||maxArea<minArea)throw new Error("Please check the budget and area ranges.");
+     if(!coordinatesFromMapPin(v.mapPin))throw new Error("The Google Maps link must contain exact latitude and longitude. Open the pin in Google Maps and copy the full URL.");
+     const assigned=consultants.find(c=>c.id===v.consultantUid);if(!assigned)throw new Error("Select an approved CRM consultant.");
+     const requirementId="legacy_"+String(d.sourceLeadId||item.id).replace(/[^A-Za-z0-9]/g,"");
+     const privateId="requirement_"+requirementId;
+     const privateData={
+      recordType:"buyer_requirement",recordId:requirementId,createdBy:assigned.id,
+      createdByName:assigned.name||assigned.email||"CRM consultant",contactEmail:assigned.email||"",
+      mapPin:v.mapPin.trim(),sourceLeadId:d.sourceLeadId||"",customerName:d.customerName||"",
+      customerPhone:d.phone||"",customerEmail:d.email||"",createdAt:serverTimestamp()
+     };
+     const publicData={
+      title:v.title.trim(),transactionType:v.transactionType,propertyType:v.propertyType,
+      city:v.city.trim(),locality:v.locality.trim(),approxArea:v.locality.trim()+", "+v.city.trim(),
+      budgetMin:minBudget,budgetMax:maxBudget,areaMin:minArea,areaMax:maxArea,areaUnit:v.areaUnit,
+      preferredRadiusKm:Number(v.preferredRadiusKm),facing:(v.facing||"Any").trim(),
+      roadWidth:(v.roadWidth||"").trim(),additionalRequirements:(v.additionalRequirements||"").trim(),
+      status:"pending_review",createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+     };
+     await setDoc(doc(db,"marketplacePrivate",privateId),privateData);
+     await setDoc(doc(db,"marketplaceRequirements",requirementId),publicData);
+     await updateDoc(doc(db,"marketplacePrivate",item.id),{
+      status:"converted_to_requirement",missingFields:[],convertedRequirementId:requirementId,
+      assignedConsultantUid:assigned.id,assignedConsultantName:assigned.name||assigned.email||"",
+      correctionCompletedAt:serverTimestamp(),correctionCompletedBy:currentUser.uid,
+      correctionSummary:{title:publicData.title,propertyType:publicData.propertyType,city:publicData.city,locality:publicData.locality,budgetMin:minBudget,budgetMax:maxBudget,areaMin:minArea,areaMax:maxArea,areaUnit:publicData.areaUnit,preferredRadiusKm:publicData.preferredRadiusKm}
+     });
+     say("Corrections saved. Buyer requirement is now in Owner Verification Queue as Pending Review. Original CRM lead remains unchanged.","success");
+     await loadLegacyReviewQueue();await loadOwnerQueue();
+    }catch(err){say(err.message,"error");submit.disabled=false;}
+   });
+   box.append(form);root.append(box);
   }
  }catch(e){root.textContent="Could not load legacy correction queue: "+e.message;}
 }
