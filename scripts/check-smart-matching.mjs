@@ -47,6 +47,10 @@ checks.push(
  ["Demo seller remains pending verification",html.includes('status:"pending_verification"')&&html.includes('proofStatus:"pending"')],
  ["Owner demo seller is explicitly marked in Firestore rules",rules.includes("request.resource.data.demoTestOnly == true")&&rules.includes('title.matches("^DEMO ONLY.*")')]
 );
+checks.push(
+ ["private proof upload requests ImageKit isPrivateFile response field",worker.includes('uploadForm.append("responseFields", JSON.stringify(["isPrivateFile"]))')],
+ ["private proof upload enforces confirmed private flag",worker.includes("imageKitData.isPrivateFile === true")]
+);
 const failed=checks.filter(([,ok])=>!ok);
 for(const [label,ok] of checks)console.log((ok?"PASS ":"FAIL ")+label);
 if(failed.length){console.error("\n"+failed.length+" Smart Matching check(s) failed.");process.exit(1);}
