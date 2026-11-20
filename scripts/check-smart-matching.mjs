@@ -39,6 +39,14 @@ const checks=[
  ["Owner-only corrected requirement creation is guarded",rules.includes("isAdmin()")&&rules.includes("validMarketplaceRequirement(requirementId)")],
  ["original legacy record is retained after conversion",html.includes('status:"converted_to_requirement"')]
 ];
+checks.push(
+ ["Owner-only Demo Seller creation control",html.includes('id="createDemoSeller"')],
+ ["Synthetic demo front/interior artwork generation",html.includes("demo-front-view.webp")&&html.includes("demo-interior-view.webp")],
+ ["Synthetic demo tour video generation",html.includes("createDemoTourVideo")],
+ ["Private demo proof upload is confirmed",html.includes("uploadPrivateProof(proofFile)")&&html.includes("proof.isPrivateFile!==true")],
+ ["Demo seller remains pending verification",html.includes('status:"pending_verification"')&&html.includes('proofStatus:"pending"')],
+ ["Owner demo seller is explicitly marked in Firestore rules",rules.includes("request.resource.data.demoTestOnly == true")&&rules.includes('title.matches("^DEMO ONLY.*")')]
+);
 const failed=checks.filter(([,ok])=>!ok);
 for(const [label,ok] of checks)console.log((ok?"PASS ":"FAIL ")+label);
 if(failed.length){console.error("\n"+failed.length+" Smart Matching check(s) failed.");process.exit(1);}
