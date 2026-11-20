@@ -32,7 +32,12 @@ Do not run `firebase deploy --only hosting`; the site uses GitHub Pages.
 ## 3. Browser and end-to-end checks
 
 - Open `https://jameenghar.com/smart-matching.html` while signed in through the approved CRM.
-- Try a property with 1 photo, a video ≤60 seconds and ≤10 MB, and one proof-document image.
+- Try a property with exactly 2 public photos (1 front view + 1 interior), one video ≤60 seconds and ≤10 MB, and one private proof-document image ≤8 MB.
+- Confirm the proof document is stored under `/private/property-proofs/`, is flagged private in ImageKit, appears only in the Owner Dashboard, and cannot be viewed by a non-Owner.
+- Confirm the public listing contains only the front/interior photo URLs and video URL; no proof image URL or private file path is exposed.
+- Verify the Owner Dashboard can preview both public photos, the video, and the short-lived private proof preview.
+- Verify the shared CRM marketplace shows the two approved public photos and playable video, but never the proof document.
+- Verify a property with only 1 public photo or with more than the 2 designated public photos is rejected by the form / Firestore rules.
 - Verify a photo/video frame with a phone number, URL, social handle or QR contact card is blocked.
 - Verify spoken contact details are blocked (requires Workers AI binding `AI`).
 - Verify Owner can preview the private proof document; a non-Owner must receive 403.
