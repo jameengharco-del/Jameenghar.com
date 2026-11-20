@@ -654,7 +654,7 @@ service cloud.firestore {
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "askingPrice", "area", "areaUnit", "facing",
           "roadWidth", "photoUrls", "videoUrl", "videoDurationSeconds",
-          "photoCount", "proofStatus", "proofDocumentId", "status", "createdBy", "createdAt",
+          "photoCount", "videoFileSize", "proofStatus", "proofDocumentId", "status", "createdBy", "createdAt",
           "updatedAt"
         ])
         && request.resource.data.title is string
@@ -667,6 +667,9 @@ service cloud.firestore {
         && request.resource.data.videoDurationSeconds is number
         && request.resource.data.videoDurationSeconds > 0
         && request.resource.data.videoDurationSeconds <= 60
+        && request.resource.data.videoFileSize is number
+        && request.resource.data.videoFileSize > 0
+        && request.resource.data.videoFileSize <= 10 * 1024 * 1024
         && request.resource.data.proofStatus == "pending"
         && request.resource.data.proofDocumentId is string
         && exists(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId))
