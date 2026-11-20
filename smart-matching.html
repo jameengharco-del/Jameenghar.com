@@ -37,7 +37,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Demo Seller Property</h2><p class="muted">Create one clearly labelled synthetic Seller listing with generated demo photos, a silent demo video and a private test-proof image. This is not a real property or legal proof; it stays pending until Owner approval.</p><button type="button" id="createDemoSeller">Create Demo Seller Property</button><div id="demoSellerStatus" class="notice" style="margin-top:10px">No demo seller property created yet.</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -116,7 +116,7 @@ onAuthStateChanged(auth,async user=>{
   $("loginPanel").classList.add("hidden");
   $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
   $("workspace").classList.remove("hidden");
-  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadDemoSellerStatus();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){
   $("authStatus").textContent=e.message;
   $("loginPanel").classList.remove("hidden");
@@ -572,6 +572,125 @@ async function loadMatchesQueue(){
   box.append(h,p,criteria,invite);root.append(box);
  }
 }
+
+async function loadDemoSellerStatus(){
+ const button=$("createDemoSeller"),status=$("demoSellerStatus");
+ try{
+  const snap=await getDoc(doc(db,"marketplaceMigrationJobs","demoSellerPropertyV1"));
+  if(snap.exists()&&snap.data().status==="completed"){
+   button.disabled=true;button.textContent="Demo Seller Property Already Created";
+   status.textContent="DEMO Seller Property created · "+(snap.data().title||"DEMO ONLY — Jaipur sample flat")+" · Pending Owner verification. No duplicate will be created.";
+  }else if(snap.exists()&&snap.data().status==="running"){
+   status.textContent="A demo seller creation is already running. Refresh this page after it completes before retrying.";
+  }
+ }catch(e){status.textContent="Could not read demo seller status: "+e.message;}
+}
+function makeDemoCanvas(label,subline){
+ const canvas=document.createElement("canvas");canvas.width=1280;canvas.height=800;
+ const ctx=canvas.getContext("2d");
+ const paint=()=>{
+  const grad=ctx.createLinearGradient(0,0,1280,800);grad.addColorStop(0,"#064d2b");grad.addColorStop(1,"#ff5a0a");
+  ctx.fillStyle=grad;ctx.fillRect(0,0,1280,800);
+  ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(70,70,1140,660);
+  ctx.strokeStyle="rgba(255,255,255,.55)";ctx.lineWidth=5;ctx.strokeRect(70,70,1140,660);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 68px Arial";ctx.fillText("JAMEENGHAR",640,245);
+  ctx.font="bold 82px Arial";ctx.fillText("DEMO ONLY",640,380);
+  ctx.font="bold 42px Arial";ctx.fillText(label,640,475);
+  ctx.font="30px Arial";ctx.fillText(subline,640,555);
+  ctx.font="bold 26px Arial";ctx.fillText("SYNTHETIC TEST MEDIA · NOT A REAL PROPERTY",640,650);
+ };
+ paint();return {canvas,paint};
+}
+function canvasToDemoFile(canvas,name){
+ return new Promise((resolve,reject)=>canvas.toBlob(blob=>{
+  if(!blob)return reject(new Error("Could not generate demo image."));
+  resolve(new File([blob],name,{type:"image/webp"}));
+ },"image/webp",0.9));
+}
+async function createDemoTourVideo(){
+ const {canvas,paint}=makeDemoCanvas("SILENT PROPERTY TOUR","Short synthetic video for matching workflow QA");
+ if(typeof canvas.captureStream!=="function"||typeof MediaRecorder==="undefined")throw new Error("Demo video generation requires the latest Chrome browser.");
+ const stream=canvas.captureStream(8);
+ const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(x=>MediaRecorder.isTypeSupported(x))||"";
+ if(!mime)throw new Error("This browser cannot create the demo WebM video.");
+ const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks=[];
+ const finished=new Promise((resolve,reject)=>{
+  recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  recorder.onerror=()=>reject(new Error("Could not record the demo property video."));
+  recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||mime}));
+ });
+ recorder.start();
+ for(let frame=0;frame<12;frame++){
+  paint();
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="bold 32px Arial";ctx.textAlign="center";
+  ctx.fillText("DEMO TOUR FRAME "+(frame+1),640,710);
+  await new Promise(resolve=>setTimeout(resolve,180));
+ }
+ recorder.stop();const blob=await finished;stream.getTracks().forEach(track=>track.stop());
+ if(!blob.size)throw new Error("Generated demo video is empty.");
+ return new File([blob],"jameenghar-demo-silent-tour.webm",{type:"video/webm"});
+}
+async function createDemoSellerProperty(){
+ const button=$("createDemoSeller"),status=$("demoSellerStatus");
+ button.disabled=true;status.textContent="Preparing clearly marked demo photos, silent video and private test-proof image…";
+ const jobRef=doc(db,"marketplaceMigrationJobs","demoSellerPropertyV1");
+ try{
+  const prior=await getDoc(jobRef);
+  if(prior.exists()&&prior.data().status==="completed"){
+   status.textContent="Demo seller property already exists. No duplicate was created.";button.textContent="Demo Seller Property Already Created";return;
+  }
+  await setDoc(jobRef,{status:"running",syntheticDemoData:true,startedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+  const frontCanvas=makeDemoCanvas("FRONT VIEW MOCKUP","Illustrative artwork — not a property photograph");
+  const interiorCanvas=makeDemoCanvas("INTERIOR VIEW MOCKUP","Illustrative artwork — not a property photograph");
+  const proofCanvas=makeDemoCanvas("TEST PROOF DOCUMENT","NOT LEGAL EVIDENCE · DEMO ONLY");
+  const frontFile=await canvasToDemoFile(frontCanvas.canvas,"demo-front-view.webp");
+  const interiorFile=await canvasToDemoFile(interiorCanvas.canvas,"demo-interior-view.webp");
+  const proofFile=await canvasToDemoFile(proofCanvas.canvas,"demo-test-proof.webp");
+  const videoFile=await createDemoTourVideo();
+  status.textContent="Uploading demo photos and silent tour through the secured ImageKit Worker…";
+  const front=await uploadPublicFile(await compressPhoto(frontFile),"/smart-matching/properties/photos");
+  const interior=await uploadPublicFile(await compressPhoto(interiorFile),"/smart-matching/properties/photos");
+  const video=await uploadPublicFile(videoFile,"/smart-matching/properties/videos");
+  status.textContent="Uploading the synthetic test-proof image privately…";
+  const proof=await uploadPrivateProof(proofFile);
+  if(proof.isPrivateFile!==true)throw new Error("The demo proof upload was not confirmed private.");
+  const privateRef=doc(collection(db,"marketplacePrivate"));
+  const publicRef=doc(collection(db,"marketplaceProperties"));
+  const pin="https://www.google.com/maps?q=26.9124,75.7397";
+  await setDoc(privateRef,{
+   recordType:"seller_property",recordId:publicRef.id,createdBy:currentUser.uid,
+   createdByName:"JameenGhar Owner — Demo Seller",contactEmail:currentUser.email||"",
+   mapPin:pin,proofFileId:proof.fileId,proofFilePath:proof.filePath,
+   proofFileSize:proof.fileSize,proofMimeType:proof.fileType,proofStatus:"pending",
+   isDemoData:true,createdAt:serverTimestamp()
+  });
+  await setDoc(publicRef,{
+   title:"DEMO ONLY — 2 BHK Sample Flat in Vaishali Nagar",
+   transactionType:"sale",propertyType:"Flat / Apartment",city:"Jaipur",
+   locality:"Vaishali Nagar",approxArea:"Vaishali Nagar, Jaipur",
+   askingPrice:7500000,area:1100,areaUnit:"Sq Ft",facing:"Any",roadWidth:"30 ft",
+   photoUrls:[front.url,interior.url],photoTypes:["front","interior"],
+   videoUrl:video.url,videoDurationSeconds:2.7,videoFileSize:video.fileSize,
+   photoCount:2,proofStatus:"pending",proofDocumentId:privateRef.id,
+   status:"pending_verification",demoTestOnly:true,
+   createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+  });
+  await setDoc(jobRef,{status:"completed",syntheticDemoData:true,propertyId:publicRef.id,
+   proofDocumentId:privateRef.id,title:"DEMO ONLY — 2 BHK Sample Flat in Vaishali Nagar",
+   completedBy:currentUser.uid,completedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+  status.textContent="DEMO Seller Property created successfully · 2 synthetic images · silent demo video · private test-proof image · asking price ₹75 lakh · 1,100 Sq Ft · Pending Owner Verification. This is test data only.";
+  button.textContent="Demo Seller Property Created";
+  await loadOwnerQueue();
+ }catch(error){
+  status.textContent="Demo Seller creation failed: "+(error.message||String(error))+". No real property was created. Please retry only after reviewing this message.";
+  say("Demo Seller creation failed: "+(error.message||String(error)),"error");
+  button.disabled=false;
+  try{await setDoc(jobRef,{status:"failed",error:String(error.message||error),updatedAt:serverTimestamp()},{merge:true});}catch(_){}
+ }
+}
+$("createDemoSeller").onclick=createDemoSellerProperty;
+
 $("runMatching").onclick=runSmartMatching;
 async function reviewProperty(id,p,nextStatus,proofStatus,approve,reject){
  approve.disabled=true;reject.disabled=true;

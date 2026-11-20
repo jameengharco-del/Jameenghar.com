@@ -668,14 +668,20 @@ service cloud.firestore {
     match /marketplaceProperties/{propertyId} {
       allow read: if isAdmin()
         || (isApprovedCRM() && resource.data.status == "active");
-      allow create: if isApprovedCRM()
+      allow create: if (
+        (isApprovedCRM() && !request.resource.data.keys().hasAny(["demoTestOnly"]))
+        || (isAdmin()
+          && request.resource.data.demoTestOnly == true
+          && request.resource.data.title is string
+          && request.resource.data.title.matches("^DEMO ONLY.*"))
+      )
         && request.resource.data.status == "pending_verification"
         && request.resource.data.keys().hasOnly([
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "askingPrice", "area", "areaUnit", "facing",
           "roadWidth", "photoUrls", "photoTypes", "videoUrl", "videoDurationSeconds",
           "photoCount", "videoFileSize", "proofStatus", "proofDocumentId", "status", "createdAt",
-          "updatedAt"
+          "updatedAt", "demoTestOnly"
         ])
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0

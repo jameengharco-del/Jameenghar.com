@@ -169,6 +169,36 @@ try {
     await assertSucceeds(setDoc(publicPropertyRef("property_valid"), sellerPublic("property_valid")));
   });
 
+  await test("Owner can create an explicitly marked DEMO seller property with private proof", async () => {
+    await assertSucceeds(setDoc(doc(owner, "marketplacePrivate", "owner_demo_seller_proof"), {
+      recordType: "seller_property", recordId: "owner_demo_seller",
+      createdBy: "P46WrdzpVWVHVC4t6vqIOYcZfxC3", createdByName: "JameenGhar Owner — Demo Seller",
+      contactEmail: "jameenghar.co@gmail.com", mapPin: "https://www.google.com/maps?q=26.9124,75.7397",
+      proofFileId: "demoProof0001", proofFilePath: "/private/property-proofs/demo-proof.webp",
+      proofFileSize: 1024, proofMimeType: "image/webp", proofStatus: "pending",
+      isDemoData: true, createdAt: serverTimestamp()
+    }));
+    const demo = sellerPublic("owner_demo_seller_proof");
+    demo.title = "DEMO ONLY — Jaipur sample flat";
+    demo.demoTestOnly = true;
+    await assertSucceeds(setDoc(doc(owner, "marketplaceProperties", "owner_demo_seller"), demo));
+  });
+
+  await test("Owner cannot create a seller property without explicit DEMO marker", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "marketplacePrivate", "owner_regular_seller_proof"), {
+        recordType: "seller_property", recordId: "owner_regular_seller",
+        createdBy: "P46WrdzpVWVHVC4t6vqIOYcZfxC3", createdByName: "JameenGhar Owner",
+        contactEmail: "jameenghar.co@gmail.com", mapPin: "https://www.google.com/maps?q=26.9124,75.7397",
+        proofFileId: "demoProof0002", proofFilePath: "/private/property-proofs/regular-proof.webp",
+        proofFileSize: 1024, proofMimeType: "image/webp", proofStatus: "pending",
+        createdAt: new Date()
+      });
+    });
+    const regular = sellerPublic("owner_regular_seller_proof");
+    await assertFails(setDoc(doc(owner, "marketplaceProperties", "owner_regular_seller"), regular));
+  });
+
   await test("seller public listing is rejected when private proof is missing", async () => {
     await assertFails(setDoc(publicPropertyRef("property_missing_proof"), sellerPublic("missing_proof")));
   });
