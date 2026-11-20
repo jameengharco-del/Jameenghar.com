@@ -132,7 +132,7 @@ export default {
 
     if (requestPath === "/smart-media-scan") {
       const authorization = request.headers.get("Authorization") || "";
-      const tokenMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+      const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
       if (!tokenMatch) return json({ error: "Firebase sign-in is required for audio screening." }, 401, origin);
       if (!env.FIREBASE_API_KEY || !env.AI) return json({ error: "Audio transcription is not configured. Owner must enable the Cloudflare Workers AI binding before seller videos can be accepted." }, 503, origin);
       try {
