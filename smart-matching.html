@@ -304,9 +304,9 @@ async function runDemoLegacyBuyerCorrections(){
   status.textContent="Creating six DEMO TEST buyer requirements with synthetic Jaipur map pins and sample ranges…";
   const [privateSnap,userSnap]=await Promise.all([getDocs(collection(db,"marketplacePrivate")),getDocs(collection(db,"users"))]);
   const rows=privateSnap.docs.filter(x=>{
-   const d=x.data();return d.recordType==="legacy_data_completion"&&demoByPhone[String(d.phone||"").replace(/\\D/g,"")]&&(d.status==="needs_owner_review"||d.status==="converted_to_requirement");
+   const d=x.data();return d.recordType==="legacy_data_completion"&&demoByPhone[String(d.phone||"").replace(/\D/g,"")]&&(d.status==="needs_owner_review"||d.status==="converted_to_requirement");
   });
-  const byPhone=new Map(rows.map(x=>[String(x.data().phone||"").replace(/\\D/g,""),x]));
+  const byPhone=new Map(rows.map(x=>[String(x.data().phone||"").replace(/\D/g,""),x]));
   const missing=Object.keys(demoByPhone).filter(phone=>!byPhone.has(phone));
   if(missing.length){status.textContent="DEMO setup waiting: found "+byPhone.size+"/6 expected test Buyer records. Missing test records: "+missing.join(", ")+". No data was changed.";return;}
   const consultants=userSnap.docs.filter(x=>x.data().role==="crm"&&x.data().status==="approved")
