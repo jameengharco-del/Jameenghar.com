@@ -693,11 +693,16 @@ service cloud.firestore {
     match /marketplaceInterests/{interestId} {
       allow read: if isAdmin();
       allow create: if isApprovedCRM()
+        && request.resource.data.keys().hasOnly(["matchId", "interestByUid", "side", "response", "status", "respondedAt"])
         && request.resource.data.interestByUid == request.auth.uid
         && request.resource.data.side in ["buyer", "seller"]
         && request.resource.data.response in ["interested", "declined"]
+        && request.resource.data.status == "responded"
         && request.resource.data.matchId is string
-        && get(/databases/$(database)/documents/smartMatches/$(request.resource.data.matchId)).data.status == "invited";
+        && get(/databases/$(database)/documents/smartMatches/$(request.resource.data.matchId)).data.status == "invited"
+        && exists(/databases/$(database)/documents/marketplaceNotifications/$(request.resource.data.matchId + "_" + request.resource.data.side))
+        && get(/databases/$(database)/documents/marketplaceNotifications/$(request.resource.data.matchId + "_" + request.resource.data.side)).data.toUid == request.auth.uid
+        && get(/databases/$(database)/documents/marketplaceNotifications/$(request.resource.data.matchId + "_" + request.resource.data.side)).data.type == "match_invitation";
       allow update, delete: if isAdmin();
     }
 
