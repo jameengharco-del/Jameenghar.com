@@ -384,6 +384,95 @@ function compressPhoto(file){
   img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Could not read one of the property photos."));};img.src=url;
  });
 }
+function loadExternalScript(src,globalName){
+ return new Promise((resolve,reject)=>{
+  if(window[globalName])return resolve();
+  const s=document.createElement("script");s.src=src;s.async=true;
+  s.onload=()=>window[globalName]?resolve():reject(new Error("Media safety scanner did not initialize."));
+  s.onerror=()=>reject(new Error("Could not load the required media safety scanner. Please retry."));
+  document.head.appendChild(s);
+ });
+}
+const CONTACT_PATTERN=[
+ /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i,
+ /(?:https?:\\/\\/|www\\.)\\S+/i,
+ /(?:\\+?91[\\s-]?)?[6-9]\\d{4}[\\s-]?\\d{5}/,
+ /(?:whats?app|call|phone|mobile|contact|telegram|instagram|facebook|dm|text me|call me|number|reach me)\\s*(?:me|us|at|on|:|-)?/i,
+ /@[a-z0-9._]{3,}/i
+];
+function findContactLeak(text){
+ const t=String(text||"").replace(/\\s+/g," ").trim();
+ return CONTACT_PATTERN.some(rx=>rx.test(t))?t.slice(0,500):"";
+}
+async function ensureMediaScanLibraries(){
+ await loadExternalScript("https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","jsQR");
+ await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js","Tesseract");
+}
+async function scanCanvasForContact(canvas,worker,label){
+ const ctx=canvas.getContext("2d",{willReadFrequently:true}),frame=ctx.getImageData(0,0,canvas.width,canvas.height);
+ const qr=window.jsQR(frame.data,frame.width,frame.height,{inversionAttempts:"attemptBoth"});
+ if(qr&&findContactLeak(qr.data))throw new Error("Contact details or a QR code with contact information were detected in "+label+". Please remove them.");
+ const result=await worker.recognize(canvas),leak=findContactLeak(result.data.text);
+ if(leak)throw new Error("Possible contact details detected by OCR in "+label+". Please remove them before posting.");
+}
+async function scanImageForContact(file,worker){
+ const url=URL.createObjectURL(file);
+ try{
+  const img=await new Promise((resolve,reject)=>{const x=new Image();x.onload=()=>resolve(x);x.onerror=()=>reject(new Error("Could not inspect property photo."));x.src=url;});
+  const canvas=document.createElement("canvas"),scale=Math.min(1,1400/Math.max(img.width,img.height));
+  canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+  canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+  await scanCanvasForContact(canvas,worker,"a property photo");
+ }finally{URL.revokeObjectURL(url);}
+}
+async function scanVideoFramesForContact(file,worker){
+ const url=URL.createObjectURL(file),video=document.createElement("video");
+ try{
+  video.preload="auto";video.src=url;
+  await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error("Could not inspect video frames."));});
+  const canvas=document.createElement("canvas"),scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
+  canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+  for(const fraction of [0.05,0.25,0.5,0.75,0.95]){
+   video.currentTime=Math.min(Math.max(0,video.duration-0.05),video.duration*fraction);
+   await new Promise(resolve=>{video.onseeked=resolve;});
+   canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+   await scanCanvasForContact(canvas,worker,"the property video");
+  }
+ }finally{video.pause();URL.revokeObjectURL(url);}
+}
+async function transcribeVideoAudioForContact(file){
+ const url=URL.createObjectURL(file),video=document.createElement("video");
+ try{
+  video.src=url;video.preload="auto";
+  await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error("Could not inspect video audio."));});
+  if(typeof video.captureStream!=="function")throw new Error("This browser cannot safely inspect video audio. Please use the latest Chrome browser.");
+  const stream=video.captureStream(),tracks=stream.getAudioTracks();
+  if(!tracks.length){stream.getTracks().forEach(t=>t.stop());return;}
+  const audioStream=new MediaStream(tracks),mime=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";
+  const recorder=new MediaRecorder(audioStream,{mimeType:mime}),chunks=[];
+  const finished=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onerror=()=>reject(new Error("Video audio capture failed."));recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||"audio/webm"}));});
+  video.volume=0;recorder.start();await video.play();
+  await new Promise(resolve=>{video.onended=resolve;video.onerror=resolve;});
+  recorder.stop();const audio=await finished;stream.getTracks().forEach(t=>t.stop());
+  if(!audio.size)return;
+  const body=new FormData();body.append("audio",audio,"property-audio.webm");
+  const response=await fetch(WORKER+"/smart-media-scan",{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()},body});
+  const data=await response.json();if(!response.ok||data.screened!==true)throw new Error(data.error||"Audio screening is unavailable. The property cannot be submitted until audio screening is complete.");
+  const leak=findContactLeak(data.transcript);
+  if(leak)throw new Error("Possible phone number, email or contact instructions were detected in the video audio. Please remove them before posting.");
+ }finally{video.pause();URL.revokeObjectURL(url);}
+}
+async function screenPropertyMedia(photos,video){
+ say("Checking photos and video for phone numbers, links and QR codes…");
+ await ensureMediaScanLibraries();
+ const worker=await window.Tesseract.createWorker("eng");
+ try{
+  for(const photo of photos)await scanImageForContact(photo,worker);
+  await scanVideoFramesForContact(video,worker);
+ }finally{await worker.terminate();}
+ say("Checking spoken audio for contact details…");
+ await transcribeVideoAudioForContact(video);
+}
 async function uploadPublicFile(file,folder){
  const body=new FormData();body.append("file",file);body.append("folder",folder);
  const res=await fetch(WORKER+"/marketplace-media",{method:"POST",headers:{Authorization:"Bearer "+await currentUser.getIdToken()},body});
@@ -412,6 +501,7 @@ $("sellerForm").onsubmit=async e=>{
  if(photos.some(f=>f.size>5*1024*1024))throw new Error("Each property photo must be 5 MB or smaller.");
  const duration=await new Promise((resolve,reject)=>{const el=document.createElement("video"),url=URL.createObjectURL(video);el.preload="metadata";el.onloadedmetadata=()=>{URL.revokeObjectURL(url);resolve(el.duration);};el.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Video file could not be read."));};el.src=url;});
  if(!Number.isFinite(duration)||duration<=0||duration>60)throw new Error("Property video must be 60 seconds or shorter.");
+ say("Checking property media for contact details…");await screenPropertyMedia(photos,video);
  say("Optimizing property photos…");const optimized=[];for(const photo of photos)optimized.push(await compressPhoto(photo));
  say("Uploading property photos and video…");const photoResults=[];for(const photo of optimized)photoResults.push(await uploadPublicFile(photo,"/smart-matching/properties/photos"));
  const videoResult=await uploadPublicFile(video,"/smart-matching/properties/videos");
