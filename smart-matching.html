@@ -467,7 +467,7 @@ async function transcribeVideoAudioForContact(file){
 async function screenPropertyMedia(photos,video){
  say("Checking photos and video for phone numbers, links and QR codes…");
  await ensureMediaScanLibraries();
- const worker=await window.Tesseract.createWorker("eng");
+ const worker=await window.Tesseract.createWorker("eng+hin");
  try{
   for(const photo of photos)await scanImageForContact(photo,worker);
   await scanVideoFramesForContact(video,worker);
