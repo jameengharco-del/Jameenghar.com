@@ -190,13 +190,14 @@ async function loadMyMatchInvitations(){
 }
 async function sendMatchInvitation(match){
  const reqPrivate=await getDoc(doc(db,"marketplacePrivate","requirement_"+match.requirementId));
+ const req=await getDoc(doc(db,"marketplaceRequirements",match.requirementId));
  const prop=await getDoc(doc(db,"marketplaceProperties",match.propertyId));
- if(!reqPrivate.exists()||!prop.exists())throw new Error("Buyer or property private owner record is missing.");
- const propData=prop.data(),sellerPrivate=await getDoc(doc(db,"marketplacePrivate",propData.proofDocumentId));
+ if(!reqPrivate.exists()||!req.exists()||!prop.exists())throw new Error("Buyer or property private owner record is missing.");
+ const reqData=req.data(),propData=prop.data(),sellerPrivate=await getDoc(doc(db,"marketplacePrivate",propData.proofDocumentId));
  if(!sellerPrivate.exists())throw new Error("Seller private owner record is missing.");
  const buyerUid=reqPrivate.data().createdBy,sellerUid=sellerPrivate.data().createdBy;
  if(!buyerUid||!sellerUid||buyerUid===sellerUid)throw new Error("Buyer and Seller must be different approved CRM users.");
- const safe={matchId:match.id,matchScore:match.score,approxArea:propData.approxArea,propertyTitle:propData.title,requirementTitle:"Buyer requirement",priceLabel:"Asking ₹"+Number(propData.askingPrice||0).toLocaleString("en-IN"),distanceKm:match.distanceKm,summary:"JameenGhar is coordinating this match. Contact details and exact location remain private."};
+ const safe={matchId:match.id,matchScore:match.score,approxArea:propData.approxArea,propertyTitle:propData.title,requirementTitle:reqData.title,priceLabel:"Asking ₹"+Number(propData.askingPrice||0).toLocaleString("en-IN")+" · Buyer budget ₹"+Number(reqData.budgetMin||0).toLocaleString("en-IN")+"–₹"+Number(reqData.budgetMax||0).toLocaleString("en-IN"),distanceKm:match.distanceKm,summary:"JameenGhar is coordinating this match. Contact details and exact location remain private."};
  await updateDoc(doc(db,"smartMatches",match.id),{status:"invited",invitedAt:serverTimestamp(),invitedBy:currentUser.uid});
  await Promise.all([
   setDoc(doc(db,"marketplaceNotifications",match.id+"_buyer"),{...safe,toUid:buyerUid,side:"buyer",type:"match_invitation",read:false,createdAt:serverTimestamp()}),
@@ -358,7 +359,7 @@ async function loadMatchesQueue(){
   const h=document.createElement("strong");h.textContent=m.score+"% match · "+m.distanceKm+" km · searched "+m.searchRadiusKm+" km";
   const p=document.createElement("p");p.className="hint";p.textContent="Buyer requirement "+m.requirementId+" ↔ Property "+m.propertyId;
   const criteria=document.createElement("p");criteria.className="hint";criteria.textContent=(m.criteria||[]).map(x=>x.name+": "+(x.matched?"Match":"Mismatch")).join(" · ");
-  const invite=document.createElement("button");invite.textContent="Send Match Invitation to Both Parties";invite.style.marginTop="8px";
+  const invite=document.createElement("button");invite.textContent=m.status==="invited"?"Invitation Already Sent":m.status==="owner_approved_managed"?"Owner-Managed Deal Started":"Send Match Invitation to Both Parties";invite.style.marginTop="8px";invite.disabled=["invited","owner_approved_managed"].includes(m.status);
   invite.onclick=async()=>{invite.disabled=true;try{await sendMatchInvitation(m);invite.textContent="Invitation Sent to Buyer & Seller";await loadOwnerInterests();}catch(e){say(e.message,"error");invite.disabled=false;}};
   box.append(h,p,criteria,invite);root.append(box);
  }
