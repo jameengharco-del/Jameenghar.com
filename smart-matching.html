@@ -394,14 +394,14 @@ function loadExternalScript(src,globalName){
  });
 }
 const CONTACT_PATTERN=[
- /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i,
- /(?:https?:\\/\\/|www\\.)\\S+/i,
- /(?:\\+?91[\\s-]?)?[6-9]\\d{4}[\\s-]?\\d{5}/,
- /(?:whats?app|call|phone|mobile|contact|telegram|instagram|facebook|dm|text me|call me|number|reach me)\\s*(?:me|us|at|on|:|-)?/i,
+ /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i,
+ /(?:https?:\/\/|www\.)\S+/i,
+ /(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}/,
+ /(?:whats?app|call|phone|mobile|contact|telegram|instagram|facebook|dm|text me|call me|number|reach me)\s*(?:me|us|at|on|:|-)?/i,
  /@[a-z0-9._]{3,}/i
 ];
 function findContactLeak(text){
- const t=String(text||"").replace(/\\s+/g," ").trim();
+ const t=String(text||"").replace(/\s+/g," ").trim();
  return CONTACT_PATTERN.some(rx=>rx.test(t))?t.slice(0,500):"";
 }
 async function ensureMediaScanLibraries(){
