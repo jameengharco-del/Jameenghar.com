@@ -641,6 +641,8 @@ service cloud.firestore {
         && request.resource.data.locality is string
         && request.resource.data.preferredRadiusKm in [1, 2, 5, 10]
         && exists(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId))
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordType == "buyer_requirement"
+        && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.recordId == requirementId
         && get(/databases/$(database)/documents/marketplacePrivate/$("requirement_" + requirementId)).data.createdBy == request.auth.uid;
       allow update, delete: if isAdmin();
     }
@@ -653,15 +655,17 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           "title", "transactionType", "propertyType", "city", "locality",
           "approxArea", "askingPrice", "area", "areaUnit", "facing",
-          "roadWidth", "photoUrls", "videoUrl", "videoDurationSeconds",
+          "roadWidth", "photoUrls", "photoTypes", "videoUrl", "videoDurationSeconds",
           "photoCount", "videoFileSize", "proofStatus", "proofDocumentId", "status", "createdAt",
           "updatedAt"
         ])
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.photoUrls is list
-        && request.resource.data.photoUrls.size() >= 1
-        && request.resource.data.photoUrls.size() <= 2
+        && request.resource.data.photoUrls.size() == 2
+        && request.resource.data.photoTypes is list
+        && request.resource.data.photoTypes == ["front", "interior"]
+        && request.resource.data.photoCount == 2
         && request.resource.data.videoUrl is string
         && request.resource.data.videoUrl.size() > 0
         && request.resource.data.videoDurationSeconds is number
@@ -673,16 +677,85 @@ service cloud.firestore {
         && request.resource.data.proofStatus == "pending"
         && request.resource.data.proofDocumentId is string
         && exists(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId))
+        && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.recordType == "seller_property"
+        && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.recordId == propertyId
         && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.createdBy == request.auth.uid
         && get(/databases/$(database)/documents/marketplacePrivate/$(request.resource.data.proofDocumentId)).data.proofStatus == "pending";
       allow update, delete: if isAdmin();
     }
 
-    // Owner-only private data. CRM may create its own private record but cannot read it back.
+    // Owner-only private data. CRM may create only the three documented record types.
+    function validMarketplacePrivateCreate(recordId) {
+      return request.resource.data.createdBy == request.auth.uid
+        && (
+          (
+            request.resource.data.recordType == "buyer_requirement"
+            && recordId.matches("^requirement_[A-Za-z0-9]+$")
+            && request.resource.data.keys().hasOnly([
+              "recordType", "recordId", "createdBy", "createdByName",
+              "contactEmail", "mapPin", "createdAt"
+            ])
+            && request.resource.data.keys().hasAll([
+              "recordType", "recordId", "createdBy", "createdByName",
+              "contactEmail", "mapPin", "createdAt"
+            ])
+            && request.resource.data.recordId is string
+            && request.resource.data.mapPin is string
+            && request.resource.data.mapPin.size() > 0
+            && request.resource.data.mapPin.size() <= 2000
+            && request.resource.data.createdAt == request.time
+          )
+          || (
+            request.resource.data.recordType == "seller_property"
+            && request.resource.data.keys().hasOnly([
+              "recordType", "recordId", "createdBy", "createdByName",
+              "contactEmail", "mapPin", "proofFileId", "proofFilePath",
+              "proofFileSize", "proofMimeType", "proofStatus", "createdAt"
+            ])
+            && request.resource.data.keys().hasAll([
+              "recordType", "recordId", "createdBy", "createdByName",
+              "contactEmail", "mapPin", "proofFileId", "proofFilePath",
+              "proofFileSize", "proofMimeType", "proofStatus", "createdAt"
+            ])
+            && request.resource.data.recordId is string
+            && request.resource.data.recordId.size() > 0
+            && request.resource.data.mapPin is string
+            && request.resource.data.mapPin.size() > 0
+            && request.resource.data.mapPin.size() <= 2000
+            && request.resource.data.proofFileId is string
+            && request.resource.data.proofFileId.size() > 0
+            && request.resource.data.proofFilePath is string
+            && request.resource.data.proofFilePath.matches("^/private/property-proofs/.+")
+            && request.resource.data.proofFileSize is number
+            && request.resource.data.proofFileSize > 0
+            && request.resource.data.proofFileSize <= 8 * 1024 * 1024
+            && request.resource.data.proofMimeType in ["image/jpeg", "image/png", "image/webp"]
+            && request.resource.data.proofStatus == "pending"
+            && request.resource.data.createdAt == request.time
+          )
+          || (
+            request.resource.data.recordType == "connect_request"
+            && request.resource.data.keys().hasOnly([
+              "recordType", "requirementId", "createdBy",
+              "createdByName", "status", "createdAt"
+            ])
+            && request.resource.data.keys().hasAll([
+              "recordType", "requirementId", "createdBy",
+              "createdByName", "status", "createdAt"
+            ])
+            && request.resource.data.requirementId is string
+            && exists(/databases/$(database)/documents/marketplaceRequirements/$(request.resource.data.requirementId))
+            && get(/databases/$(database)/documents/marketplaceRequirements/$(request.resource.data.requirementId)).data.status == "active"
+            && request.resource.data.status == "new"
+            && request.resource.data.createdAt == request.time
+          )
+        );
+    }
+
     match /marketplacePrivate/{recordId} {
       allow read: if isAdmin();
-      allow create: if isAdmin() || (isApprovedCRM()
-        && request.resource.data.createdBy == request.auth.uid);
+      allow create: if isAdmin()
+        || (isApprovedCRM() && validMarketplacePrivateCreate(recordId));
       allow update, delete: if isAdmin();
     }
 
