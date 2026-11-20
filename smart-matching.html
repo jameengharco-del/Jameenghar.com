@@ -215,17 +215,24 @@ async function loadLegacyReviewQueue(){
    const selectField=(label,name,options,selected)=>{
     const wrap=document.createElement("div");wrap.className="field";const lab=document.createElement("label");lab.textContent=label+" *";
     const sel=document.createElement("select");sel.name=name;sel.required=true;
+    if(selected===""){const empty=document.createElement("option");empty.value="";empty.textContent="Select";empty.selected=true;sel.append(empty);}
     for(const [value,text] of options){const opt=document.createElement("option");opt.value=value;opt.textContent=text;if(value===selected)opt.selected=true;sel.append(opt);}
     wrap.append(lab,sel);return wrap;
    };
    form.append(field("Requirement Title","title","text",d.propertyTitle||d.customerName,true,"e.g. 2 BHK apartment required"));
    form.append(selectField("Buy / Rent","transactionType",[["buy","Buy"],["rent","Rent"]],"buy"));
    form.append(selectField("Property Type","propertyType",[["Plot","Plot"],["Independent House","Independent House"],["Flat / Apartment","Flat / Apartment"],["Villa","Villa"],["Commercial","Commercial"],["Agricultural Land","Agricultural Land"],["Other","Other"]],""));
+   const rawLocation=String(d.propertyLocation||"").trim(),localityValue=rawLocation.replace(/,\\s*jaipur$/i,"").trim()||rawLocation;
+   const rawBudget=String(d.budget||"").toLowerCase().replace(/,/g,"").trim();
+   let parsedBudget="";
+   let moneyMatch=rawBudget.match(/([0-9]+(?:\\.[0-9]+)?)\\s*(?:cr|crore)\\b/);
+   if(moneyMatch)parsedBudget=String(Math.round(Number(moneyMatch[1])*10000000));
+   else{moneyMatch=rawBudget.match(/([0-9]+(?:\\.[0-9]+)?)\\s*(?:lakh|lac|l)\\b/);if(moneyMatch)parsedBudget=String(Math.round(Number(moneyMatch[1])*100000));else if(/^[0-9]+(?:\\.[0-9]+)?$/.test(rawBudget))parsedBudget=String(Math.round(Number(rawBudget)));}
    form.append(field("City","city","text","Jaipur"));
-   form.append(field("Locality / Area","locality","text",d.propertyLocation||""));
+   form.append(field("Locality / Area","locality","text",localityValue));
    form.append(field("Google Maps link with exact coordinates (Owner-only)","mapPin","url","",true,"Paste a full Google Maps link containing the map pin"));
-   form.append(field("Minimum Budget (₹)","budgetMin","number","",true,"e.g. 5000000"));
-   form.append(field("Maximum Budget (₹)","budgetMax","number","",true,"e.g. 10000000"));
+   form.append(field("Minimum Budget (₹)","budgetMin","number",parsedBudget,true,d.budget?"Original CRM budget: "+d.budget:"e.g. 5000000"));
+   form.append(field("Maximum Budget (₹)","budgetMax","number",parsedBudget,true,d.budget?"Original CRM budget: "+d.budget:"e.g. 10000000"));
    form.append(field("Minimum Area","areaMin","number","",true,"Area minimum"));
    form.append(field("Maximum Area","areaMax","number","",true,"Area maximum"));
    form.append(selectField("Area Unit","areaUnit",[["Gaj","Gaj"],["Sq Ft","Sq Ft"],["Sq Meter","Sq Meter"],["Bigha","Bigha"]],"Gaj"));
