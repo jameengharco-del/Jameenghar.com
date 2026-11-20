@@ -32,7 +32,12 @@ const checks=[
  ["marketplace rules require exactly two public photos",rules.includes("request.resource.data.photoUrls.size() == 2")],
  ["marketplace rules require front/interior types",rules.includes('request.resource.data.photoTypes == ["front", "interior"]')],
  ["marketplace private records restricted by type",rules.includes("validMarketplacePrivateCreate(recordId)")],
- ["private records readable only by Owner",rules.includes("match /marketplacePrivate/{recordId} {\n      allow read: if isAdmin();")]
+ ["private records readable only by Owner",rules.includes("match /marketplacePrivate/{recordId} {\n      allow read: if isAdmin();")],
+ ["Owner correction form is available",html.includes("Save Corrections & Create Pending Buyer Requirement")],
+ ["Owner assigns an approved consultant",html.includes("Assign Buyer-side CRM Consultant")],
+ ["legacy buyer private contacts remain private",html.includes("customerPhone:d.phone||")&&html.includes("customerEmail:d.email||")],
+ ["Owner-only corrected requirement creation is guarded",rules.includes("isAdmin()")&&rules.includes("validMarketplaceRequirement(requirementId)")],
+ ["original legacy record is retained after conversion",html.includes('status:"converted_to_requirement"')]
 ];
 const failed=checks.filter(([,ok])=>!ok);
 for(const [label,ok] of checks)console.log((ok?"PASS ":"FAIL ")+label);
