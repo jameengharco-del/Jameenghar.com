@@ -204,6 +204,7 @@ async function routeRequest(request, env) {
             const captured = (payments.items || []).find(item => item.status === "captured");
             paymentId = captured?.id || "";
           }
+          if (!paymentId) return json({ error: "Captured payment is not available yet; webhook can be retried." }, 503, corsHeaders(request));
           const result = await doJson(calendarStub(env, propertyId), "/webhook-confirm", { eventId, bookingId, orderId, paymentId, amountPaise: Number(order.amount || 0) });
           if (result.needsRefund && paymentId) {
             const refund = await razorpayRequest("/payments/" + encodeURIComponent(paymentId) + "/refund", env, { method: "POST", body: { amount: Number(order.amount || 0), notes: { reason: "Booking slot hold expired before payment confirmation", bookingId, propertyId } } });
