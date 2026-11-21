@@ -19,7 +19,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </style>
 </head>
 <body>
-<header><a href="index.html"><img src="jameenghar-logo.png" alt="JameenGhar"></a><div class="tag">REAL ESTATE SMART MATCHING</div></header>
+<header><a href="index.html"><img src="jameenghar-logo.png" alt="JameenGhar"></a><div class="tag">REAL ESTATE SMART MATCHING</div><button type="button" id="smartLogout" class="hidden" style="background:var(--g)">Logout</button></header>
 <main>
 <section class="intro">
 <h1>JameenGhar Smart Matching</h1>
@@ -81,7 +81,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
@@ -91,6 +91,7 @@ const $=id=>document.getElementById(id);
 let currentUser=null,userProfile=null,mode="buyer",isOwner=false;
 function say(t,kind=""){ $("status").className=kind; $("status").textContent=t; }
 function formData(form){return Object.fromEntries(new FormData(form).entries());}
+$("smartLogout").onclick=async()=>{const button=$("smartLogout");button.disabled=true;try{await signOut(auth);say("You have been logged out.","success");}catch(error){say(error.message||"Logout failed.","error");}finally{button.disabled=false;}};
 $("loginBtn").onclick=async()=>{
  const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
  const message=$("loginMessage");
@@ -103,7 +104,7 @@ $("loginBtn").onclick=async()=>{
 function switchMode(next){mode=next;$("buyerForm").classList.toggle("hidden",next!=="buyer");$("sellerForm").classList.toggle("hidden",next!=="seller");$("buyerTab").classList.toggle("active",next==="buyer");$("sellerTab").classList.toggle("active",next==="seller");say("");}
 $("buyerTab").onclick=()=>switchMode("buyer");$("sellerTab").onclick=()=>switchMode("seller");
 onAuthStateChanged(auth,async user=>{
- currentUser=user; userProfile=null; isOwner=false; $("workspace").classList.add("hidden");
+ currentUser=user; userProfile=null; isOwner=false; $("smartLogout").classList.toggle("hidden",!user); $("workspace").classList.add("hidden");
  $("loginPanel").classList.toggle("hidden",!!user);
  if(!user){$("authStatus").textContent="Please sign in with your approved JameenGhar CRM account.";return;}
  try{
