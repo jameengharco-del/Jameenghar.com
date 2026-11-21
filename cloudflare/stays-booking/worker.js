@@ -118,9 +118,12 @@ function bookingWindow(body, property) {
     startLabel = checkInDate + " " + startTime;
     endLabel = checkInDate + " " + endTime;
   } else if (type === "day") {
-    startMs = localDateTimeMs(checkInDate, "00:00");
-    endDate = addDays(checkInDate, 1);
-    endMs = localDateTimeMs(endDate, "00:00");
+    const checkIn = property.checkInTime || "10:00";
+    const checkOut = property.checkOutTime || "18:00";
+    startMs = localDateTimeMs(checkInDate, checkIn);
+    endDate = checkInDate;
+    endMs = localDateTimeMs(checkInDate, checkOut);
+    if (endMs <= startMs || startMs <= Date.now() + 15 * 60000) throw new Response("Day-use check-in must be in the future and before checkout.", { status: 400 });
     units = 1;
     rate = Number(property.dayRate || 0);
     startLabel = checkInDate + " (Day Use)";
@@ -196,7 +199,11 @@ async function routeRequest(request, env) {
         const propertyId = String(notes.propertyId || ""), bookingId = String(notes.bookingId || "");
         if (propertyId && bookingId) {
           const paymentId = payment?.id || "";
-          await doJson(calendarStub(env, propertyId), "/webhook-confirm", { eventId, bookingId, orderId, paymentId, amountPaise: Number(order.amount || 0) });
+          const result = await doJson(calendarStub(env, propertyId), "/webhook-confirm", { eventId, bookingId, orderId, paymentId, amountPaise: Number(order.amount || 0) });
+          if (result.needsRefund && paymentId) {
+            const refund = await razorpayRequest("/payments/" + encodeURIComponent(paymentId) + "/refund", env, { method: "POST", body: { amount: Number(order.amount || 0), notes: { reason: "Booking slot hold expired before payment confirmation", bookingId, propertyId } } });
+            await doJson(calendarStub(env, propertyId), "/refund-result", { bookingId, refundId: refund.id, status: refund.status || "pending" });
+          }
         }
       }
     } else if (event.event === "payment.failed") {
@@ -302,7 +309,8 @@ export default {
       return await routeRequest(request, env);
     } catch (error) {
       if (error instanceof Response) {
-        return new Response(error.status >= 500 ? error.statusText : (error.statusText || "Request failed."), { status: error.status, headers: { ...corsHeaders(request), "content-type": "text/plain; charset=utf-8" } });
+        const detail = await error.text().catch(() => "");
+        return new Response(detail || "Request failed.", { status: error.status, headers: { ...corsHeaders(request), "content-type": "text/plain; charset=utf-8" } });
       }
       console.error("Stays booking API error:", error);
       return json({ error: "The booking service is temporarily unavailable. Please try again." }, 500, corsHeaders(request));
@@ -364,8 +372,11 @@ export class PropertyCalendar {
       const body = await request.json(), row = this.sql.exec("SELECT * FROM stays_bookings WHERE id=?", body.bookingId).toArray()[0];
       if (!row || row.order_id !== body.orderId || Number(row.amount_paise) !== Number(body.amountPaise)) return json({ error: "Booking and payment do not match." }, 409);
       if (row.status === "confirmed") return json({ confirmed: true, status: "confirmed" });
-      if (row.status !== "hold" || Number(row.hold_expires_at || 0) <= now) return json({ confirmed: false, needsRefund: true, status: row.status });
-      if (this.conflict(row.property_id, row.start_ms, row.end_ms, now, row.id)) return json({ confirmed: false, needsRefund: true, status: "slot_taken" });
+      if (row.status === "refund_pending" || row.status === "refunded") return json({ confirmed: false, refunded: row.status === "refunded", status: row.status });
+      if (row.status !== "hold" || Number(row.hold_expires_at || 0) <= now || this.conflict(row.property_id, row.start_ms, row.end_ms, now, row.id)) {
+        this.sql.exec("UPDATE stays_bookings SET status='refund_pending',payment_id=?,updated_at=? WHERE id=?", body.paymentId, now, row.id);
+        return json({ confirmed: false, needsRefund: true, status: "refund_pending" });
+      }
       this.sql.exec("UPDATE stays_bookings SET status='confirmed',payment_id=?,updated_at=? WHERE id=?", body.paymentId, now, row.id);
       return json({ confirmed: true, status: "confirmed" });
     }
@@ -377,9 +388,14 @@ export class PropertyCalendar {
         this.sql.exec("INSERT INTO stays_webhook_events(event_id,created_at) VALUES(?,?)", body.eventId, now);
         if (row.status === "hold" && Number(row.hold_expires_at || 0) > now && !this.conflict(row.property_id, row.start_ms, row.end_ms, now, row.id)) {
           this.sql.exec("UPDATE stays_bookings SET status='confirmed',payment_id=?,updated_at=? WHERE id=?", body.paymentId, now, row.id);
-        } else if (row.status !== "confirmed") {
+          this.sql.exec("INSERT INTO stays_webhook_events(event_id,created_at) VALUES(?,?)", body.eventId, now);
+          return json({ received: true, confirmed: true });
+        } else if (row.status !== "confirmed" && row.status !== "refund_pending" && row.status !== "refunded") {
           this.sql.exec("UPDATE stays_bookings SET status='refund_pending',payment_id=?,updated_at=? WHERE id=?", body.paymentId, now, row.id);
+          this.sql.exec("INSERT INTO stays_webhook_events(event_id,created_at) VALUES(?,?)", body.eventId, now);
+          return json({ received: true, needsRefund: true, bookingId: row.id, paymentId: body.paymentId, amountPaise: row.amount_paise });
         }
+        this.sql.exec("INSERT INTO stays_webhook_events(event_id,created_at) VALUES(?,?)", body.eventId, now);
       }
       return json({ received: true });
     }
