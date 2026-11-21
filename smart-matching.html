@@ -457,6 +457,24 @@ function formatManagedDealDate(value){
  const date=value.toDate?value.toDate():new Date(value);
  return Number.isNaN(date.getTime())?"":date.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
 }
+function setManagedDealSaveFeedback(node,message,state){
+ if(!node)return;
+ node.textContent=message;
+ node.style.display="block";
+ if(state==="success"){
+  node.style.background="#e9f7ee";
+  node.style.color="#176534";
+  node.style.border="1px solid #a8d9b8";
+ }else if(state==="error"){
+  node.style.background="#fff0f0";
+  node.style.color="#a12626";
+  node.style.border="1px solid #e5b4b4";
+ }else{
+  node.style.background="#eef5ff";
+  node.style.color="#174a7e";
+  node.style.border="1px solid #b8d0ef";
+ }
+}
 function compactManagedDealHistory(history){
  const seen=new Set();
  return (Array.isArray(history)?history:[]).filter(item=>{
@@ -544,10 +562,16 @@ async function loadManagedDeals(){
    const save=document.createElement("button");
    save.type="button";save.textContent="Save Deal Update";
    save.style.marginTop="10px";
+   const saveStatus=document.createElement("p");
+   saveStatus.dataset.managedDealSaveStatus=deal.id;
+   saveStatus.setAttribute("role","status");
+   saveStatus.setAttribute("aria-live","polite");
+   saveStatus.style.cssText="display:none;margin:10px 0 0;padding:10px 12px;border-radius:8px;font-weight:700";
    save.onclick=async()=>{
     const nextStage=stageSelect.value;
     if(!MANAGED_DEAL_STAGES.some(([value])=>value===nextStage)){say("Please select a valid deal stage.","error");return;}
-    save.disabled=true;save.textContent="Checking…";
+    save.disabled=true;save.textContent="Saving…";
+    setManagedDealSaveFeedback(saveStatus,"Saving your update… Please do not click Save again.","pending");
     try{
      const note=noteInput.value.trim(),followDate=followInput.value;
      const dealRef=doc(db,"marketplaceDeals",deal.id);
@@ -558,7 +582,9 @@ async function loadManagedDeals(){
      const currentNote=String(latest.ownerRemarks||"").trim();
      const currentFollow=latest.nextFollowUpDate||"";
      if(nextStage===currentStage&&note===currentNote&&followDate===currentFollow){
-      say("No changes detected. Nothing was saved and Activity History was not changed.","success");
+      const unchangedMessage="Already saved. No changes detected, so Activity History was not changed. You do not need to save again.";
+      setManagedDealSaveFeedback(saveStatus,unchangedMessage,"success");
+      say(unchangedMessage,"success");
       save.disabled=false;save.textContent="Save Deal Update";
       return;
      }
@@ -580,10 +606,16 @@ async function loadManagedDeals(){
       updatedBy:currentUser.uid,
       stageHistory:[...cleanedHistory,historyEntry]
      });
-     say("Managed deal updated: "+managedDealStageLabel(nextStage)+".","success");
+     const savedMessage="Saved successfully at "+formatManagedDealDate(new Date())+". Stage: "+managedDealStageLabel(nextStage)+". No need to press Save again.";
+     setManagedDealSaveFeedback(saveStatus,savedMessage,"success");
+     say(savedMessage,"success");
      await loadManagedDeals();
+     const refreshedStatus=[...$("managedDealsQueue").querySelectorAll("[data-managed-deal-save-status]")].find(node=>node.dataset.managedDealSaveStatus===deal.id);
+     if(refreshedStatus)setManagedDealSaveFeedback(refreshedStatus,savedMessage,"success");
     }catch(error){
-     say("Could not save managed deal update: "+(error.message||String(error)),"error");
+     const failureMessage="Save failed: "+(error.message||String(error))+". Please check the details and try again.";
+     setManagedDealSaveFeedback(saveStatus,failureMessage,"error");
+     say(failureMessage,"error");
      save.disabled=false;save.textContent="Save Deal Update";
     }
    };
@@ -610,7 +642,7 @@ async function loadManagedDeals(){
     }
    }
    historyBox.append(historyList);
-   card.append(form,noteWrap,save,historyBox);
+   card.append(form,noteWrap,save,saveStatus,historyBox);
    root.append(card);
   }
  }catch(error){
