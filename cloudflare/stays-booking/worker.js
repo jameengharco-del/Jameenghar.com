@@ -410,7 +410,7 @@ export class PropertyCalendar {
       const body = await request.json();
       if (!this.sql.exec("SELECT event_id FROM stays_webhook_events WHERE event_id=?", body.eventId).toArray()[0]) {
         this.sql.exec("INSERT INTO stays_webhook_events(event_id,created_at) VALUES(?,?)", body.eventId, now);
-        this.sql.exec("UPDATE stays_bookings SET status='payment_failed',hold_expires_at=?,updated_at=? WHERE id=? AND order_id=? AND status='hold'", now, now, body.bookingId, body.orderId);
+        this.sql.exec("UPDATE stays_bookings SET updated_at=? WHERE id=? AND order_id=? AND status='hold'", now, body.bookingId, body.orderId);
       }
       return json({ received: true });
     }
