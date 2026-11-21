@@ -198,7 +198,12 @@ async function routeRequest(request, env) {
         const order = await razorpayRequest("/orders/" + encodeURIComponent(orderId), env), notes = order.notes || {};
         const propertyId = String(notes.propertyId || ""), bookingId = String(notes.bookingId || "");
         if (propertyId && bookingId) {
-          const paymentId = payment?.id || "";
+          let paymentId = payment?.id || "";
+          if (!paymentId) {
+            const payments = await razorpayRequest("/orders/" + encodeURIComponent(orderId) + "/payments", env);
+            const captured = (payments.items || []).find(item => item.status === "captured");
+            paymentId = captured?.id || "";
+          }
           const result = await doJson(calendarStub(env, propertyId), "/webhook-confirm", { eventId, bookingId, orderId, paymentId, amountPaise: Number(order.amount || 0) });
           if (result.needsRefund && paymentId) {
             const refund = await razorpayRequest("/payments/" + encodeURIComponent(paymentId) + "/refund", env, { method: "POST", body: { amount: Number(order.amount || 0), notes: { reason: "Booking slot hold expired before payment confirmation", bookingId, propertyId } } });
@@ -295,7 +300,9 @@ async function routeRequest(request, env) {
     const body = await request.json(), propertyId = String(body.propertyId || ""), bookingId = String(body.bookingId || "");
     await readProperty(propertyId, token, env);
     const booking = await doJson(calendarStub(env, propertyId), "/get?bookingId=" + encodeURIComponent(bookingId));
-    if (!booking.paymentId || !["confirmed", "refund_pending"].includes(booking.status)) throw new Response("This booking is not eligible for a refund.", { status: 409 });
+    if (!booking.paymentId || booking.status !== "confirmed") throw new Response("This booking is not eligible for a new refund. Check its current refund status.", { status: 409 });
+    const begun = await doJson(calendarStub(env, propertyId), "/begin-refund", { bookingId });
+    if (!begun.started) throw new Response("A refund has already been started or this booking is no longer confirmed.", { status: 409 });
     const refund = await razorpayRequest("/payments/" + encodeURIComponent(booking.paymentId) + "/refund", env, { method: "POST", body: { amount: booking.amountPaise, notes: { bookingId, propertyId, reason: "Owner-approved booking cancellation" } } });
     await doJson(calendarStub(env, propertyId), "/refund-result", { bookingId, refundId: refund.id, status: refund.status || "pending" });
     return json({ ok: true, refundId: refund.id, status: refund.status || "pending" }, 200, corsHeaders(request));
@@ -406,6 +413,11 @@ export class PropertyCalendar {
         this.sql.exec("UPDATE stays_bookings SET status='payment_failed',hold_expires_at=?,updated_at=? WHERE id=? AND order_id=? AND status='hold'", now, now, body.bookingId, body.orderId);
       }
       return json({ received: true });
+    }
+    if (url.pathname === "/begin-refund" && request.method === "POST") {
+      const body = await request.json();
+      const result = this.sql.exec("UPDATE stays_bookings SET status='refund_pending',updated_at=? WHERE id=? AND status='confirmed'", now, body.bookingId);
+      return json({ started: result.rowsWritten === 1 });
     }
     if (url.pathname === "/refund-result" && request.method === "POST") {
       const body = await request.json(), status = body.status === "processed" ? "refunded" : "refund_pending";
