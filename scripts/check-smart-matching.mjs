@@ -48,7 +48,7 @@ checks.push(
  ["Owner demo seller is explicitly marked in Firestore rules",rules.includes("request.resource.data.demoTestOnly == true")&&rules.includes('title.matches("^DEMO ONLY.*")')]
 );
 checks.push(
- ["private proof upload requests ImageKit isPrivateFile response field",worker.includes('uploadForm.append("responseFields", JSON.stringify(["isPrivateFile"]))')],
+ ["private proof upload requests ImageKit isPrivateFile response field",worker.includes('uploadForm.append("responseFields", "isPrivateFile")')],
  ["private proof upload enforces confirmed private flag",worker.includes("imageKitData.isPrivateFile === true")]
 );
 const failed=checks.filter(([,ok])=>!ok);
