@@ -222,7 +222,7 @@ async function routeRequest(request, env) {
     const propertyId = url.searchParams.get("propertyId") || "", month = url.searchParams.get("month") || "";
     if (!/^\d{4}-\d{2}$/.test(month)) throw new Response("Choose a valid calendar month.", { status: 400 });
     await readProperty(propertyId, token, env);
-    return doJson(calendarStub(env, propertyId), "/availability?month=" + encodeURIComponent(month));
+    return json(await doJson(calendarStub(env, propertyId), "/availability?month=" + encodeURIComponent(month)), 200, corsHeaders(request));
   }
   if (url.pathname === "/api/booking/create-order" && request.method === "POST") {
     const body = await request.json(), propertyId = String(body.propertyId || "");
@@ -274,7 +274,7 @@ async function routeRequest(request, env) {
     if (claims.sub !== env.OWNER_UID) throw new Response("Owner access required.", { status: 403 });
     const propertyId = url.searchParams.get("propertyId") || "";
     await readProperty(propertyId, token, env);
-    return doJson(calendarStub(env, propertyId), "/owner-bookings");
+    return json(await doJson(calendarStub(env, propertyId), "/owner-bookings"), 200, corsHeaders(request));
   }
   if (url.pathname === "/api/owner/block" && request.method === "POST") {
     if (claims.sub !== env.OWNER_UID) throw new Response("Owner access required.", { status: 403 });
@@ -310,7 +310,7 @@ export default {
     } catch (error) {
       if (error instanceof Response) {
         const detail = await error.text().catch(() => "");
-        return new Response(detail || "Request failed.", { status: error.status, headers: { ...corsHeaders(request), "content-type": "text/plain; charset=utf-8" } });
+        return json({ error: detail || "Request failed." }, error.status, corsHeaders(request));
       }
       console.error("Stays booking API error:", error);
       return json({ error: "The booking service is temporarily unavailable. Please try again." }, 500, corsHeaders(request));
