@@ -296,6 +296,37 @@ try {
     }));
   });
 
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "marketplaceDeals", "managed_deal_test"), {
+      matchId: "managed_deal_test", buyerUid: crmUid, sellerUid: "seller_test",
+      status: "owner_approved_managed", stage: "owner_contact_and_coordination",
+      stageHistory: []
+    });
+  });
+
+  await test("Owner can read a managed deal", async () => {
+    await assertSucceeds(getDoc(doc(owner, "marketplaceDeals", "managed_deal_test")));
+  });
+
+  await test("Owner can update managed deal stage, notes and follow-up", async () => {
+    await assertSucceeds(updateDoc(doc(owner, "marketplaceDeals", "managed_deal_test"), {
+      stage: "site_visit_scheduled", status: "owner_approved_managed",
+      ownerRemarks: "Site visit confirmed with both parties.",
+      nextFollowUpDate: "2026-11-24", updatedBy: "P46WrdzpVWVHVC4t6vqIOYcZfxC3",
+      updatedAt: serverTimestamp()
+    }));
+  });
+
+  await test("Approved CRM user cannot read private managed deal records", async () => {
+    await assertFails(getDoc(doc(crm, "marketplaceDeals", "managed_deal_test")));
+  });
+
+  await test("Approved CRM user cannot update managed deal stages", async () => {
+    await assertFails(updateDoc(doc(crm, "marketplaceDeals", "managed_deal_test"), {
+      stage: "registry_completed"
+    }));
+  });
+
   console.log("\nAll " + passed + " Smart Matching Firestore rules tests passed.");
 } finally {
   await env.cleanup();
