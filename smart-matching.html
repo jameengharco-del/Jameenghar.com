@@ -37,7 +37,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Demo Seller Property</h2><p class="muted">Create one clearly labelled synthetic Seller listing with generated demo photos, a silent demo video and a private test-proof image. This is not a real property or legal proof; it stays pending until Owner approval.</p><button type="button" id="createDemoSeller">Create Demo Seller Property</button><div id="demoSellerStatus" class="notice" style="margin-top:10px">No demo seller property created yet.</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Demo Seller Property</h2><p class="muted">Create one clearly labelled synthetic Seller listing with generated demo photos, a silent demo video and a private test-proof image. This is not a real property or legal proof; it stays pending until Owner approval.</p><button type="button" id="createDemoSeller">Create Demo Seller Property</button><div id="demoSellerStatus" class="notice" style="margin-top:10px">No demo seller property created yet.</div><h2 style="margin-top:22px">Owner Demo Seller Invitations</h2><button type="button" id="refreshOwnerInvitations">Refresh Seller Invitations</button><div id="ownerMatchInvitations" class="notice">Checking Owner seller invitations…</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -116,7 +116,7 @@ onAuthStateChanged(auth,async user=>{
   $("loginPanel").classList.add("hidden");
   $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
   $("workspace").classList.remove("hidden");
-  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadDemoSellerStatus();await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadDemoSellerStatus();await loadMyMatchInvitations("ownerMatchInvitations");await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){
   $("authStatus").textContent=e.message;
   $("loginPanel").classList.remove("hidden");
@@ -124,7 +124,7 @@ onAuthStateChanged(auth,async user=>{
  }
 });
 async function loadMarketplaceFeed(){
- await loadMyMatchInvitations();
+ await loadMyMatchInvitations(rootId);
  const reqRoot=$("requirementsFeed"),propRoot=$("propertiesFeed");reqRoot.innerHTML="<h3>Buyer Requirements</h3>";propRoot.innerHTML="<h3>Verified Properties</h3>";
  try{
   const [reqSnap,propSnap]=await Promise.all([
@@ -365,8 +365,9 @@ async function runDemoLegacyBuyerCorrections(){
 
 $("migrateLegacy").onclick=migrateLegacyLeads;
 $("refreshMyInvitations").onclick=loadMyMatchInvitations;
-async function loadMyMatchInvitations(){
- const root=$("myMatchInvitations");
+$("refreshOwnerInvitations").onclick=()=>loadMyMatchInvitations("ownerMatchInvitations");
+async function loadMyMatchInvitations(rootId="myMatchInvitations"){
+ const root=$(rootId);
  try{
   const snap=await getDocs(query(collection(db,"marketplaceNotifications"),where("toUid","==",currentUser.uid)));
   const items=snap.docs.filter(x=>["match_invitation","deal_update"].includes(x.data().type)&&!x.data().read);
@@ -381,7 +382,7 @@ async function loadMyMatchInvitations(){
     for(const [response,label] of [["interested","I am Interested"],["declined","Not Interested"]]){
      const b=document.createElement("button");b.textContent=label;b.onclick=async()=>{b.disabled=true;try{
       await setDoc(doc(db,"marketplaceInterests",d.matchId+"_"+currentUser.uid),{matchId:d.matchId,interestByUid:currentUser.uid,side:d.side,response,status:"responded",respondedAt:serverTimestamp()});
-      await updateDoc(doc(db,"marketplaceNotifications",item.id),{read:true,readAt:serverTimestamp()});b.textContent="Response Sent";await loadMyMatchInvitations();
+      await updateDoc(doc(db,"marketplaceNotifications",item.id),{read:true,readAt:serverTimestamp()});b.textContent="Response Sent";await loadMyMatchInvitations(rootId);
      }catch(e){say(e.message,"error");b.disabled=false;}};actions.append(b);
     }box.append(actions);
    }root.append(box);
