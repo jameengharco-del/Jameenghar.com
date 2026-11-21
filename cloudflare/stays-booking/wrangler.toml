@@ -1,0 +1,20 @@
+name = "jameenghar-stays-booking"
+main = "worker.js"
+compatibility_date = "2026-11-21"
+workers_dev = true
+
+[vars]
+FIREBASE_PROJECT_ID = "jameenghar-ffdfd"
+OWNER_UID = "P46WrdzpVWVHVC4t6vqIOYcZfxC3"
+
+[durable_objects]
+bindings = [
+  { name = "CALENDARS", class_name = "PropertyCalendar" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PropertyCalendar"]
+
+[observability]
+enabled = true
