@@ -252,6 +252,50 @@ try {
     await assertSucceeds(getDoc(doc(owner, "marketplacePrivate", "property_valid")));
   });
 
+  await env.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "smartMatches", "owner_demo_match"), { status: "invited" });
+    await setDoc(doc(db, "marketplaceNotifications", "owner_demo_match_seller"), {
+      toUid: "P46WrdzpVWVHVC4t6vqIOYcZfxC3", type: "match_invitation"
+    });
+    await setDoc(doc(db, "marketplaceNotifications", "owner_demo_match_buyer"), {
+      toUid: crmUid, type: "match_invitation"
+    });
+  });
+
+  await test("Owner can respond to its own seller-side invitation", async () => {
+    await assertSucceeds(setDoc(doc(owner, "marketplaceInterests", "owner_demo_match_owner"), {
+      matchId: "owner_demo_match", interestByUid: "P46WrdzpVWVHVC4t6vqIOYcZfxC3",
+      side: "seller", response: "interested", status: "responded", respondedAt: serverTimestamp()
+    }));
+  });
+
+  await test("Owner cannot submit a buyer-side invitation response", async () => {
+    await assertFails(setDoc(doc(owner, "marketplaceInterests", "owner_demo_match_owner_buyer"), {
+      matchId: "owner_demo_match", interestByUid: "P46WrdzpVWVHVC4t6vqIOYcZfxC3",
+      side: "buyer", response: "interested", status: "responded", respondedAt: serverTimestamp()
+    }));
+  });
+
+  await test("Owner can mark only its own seller invitation as read", async () => {
+    await assertSucceeds(updateDoc(doc(owner, "marketplaceNotifications", "owner_demo_match_seller"), {
+      read: true, readAt: serverTimestamp()
+    }));
+  });
+
+  await test("Owner cannot mark a CRM user's invitation as read", async () => {
+    await assertFails(updateDoc(doc(owner, "marketplaceNotifications", "owner_demo_match_buyer"), {
+      read: true, readAt: serverTimestamp()
+    }));
+  });
+
+  await test("Approved CRM user can respond to its own buyer-side invitation", async () => {
+    await assertSucceeds(setDoc(doc(crm, "marketplaceInterests", "owner_demo_match_crm"), {
+      matchId: "owner_demo_match", interestByUid: crmUid,
+      side: "buyer", response: "interested", status: "responded", respondedAt: serverTimestamp()
+    }));
+  });
+
   console.log("\nAll " + passed + " Smart Matching Firestore rules tests passed.");
 } finally {
   await env.cleanup();
