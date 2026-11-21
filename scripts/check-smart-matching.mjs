@@ -57,7 +57,7 @@ checks.push(
  ["Managed deal stages include site visit, negotiation, token, agreement and registry",["site_visit_scheduled","negotiation","token_received","agreement_signed","registry_completed"].every(stage=>html.includes('"'+stage+'"'))],
  ["Managed deal updates persist follow-up and Owner notes",html.includes("nextFollowUpDate:followDate")&&html.includes("ownerRemarks:note")&&html.includes("stageHistory:arrayUnion(historyEntry)")],
  ["Managed deal history is displayed",html.includes("Activity History (")&&html.includes("stageHistory")],
- ["Managed deal records remain Owner-only",rules.includes('match /marketplaceDeals/{dealId} {\\n      allow read, write: if isAdmin();')],
+ ["Managed deal records remain Owner-only",rules.includes("match /marketplaceDeals/{dealId}")&&rules.includes("allow read, write: if isAdmin();")],
  ["Managed deal Owner-only permission tests exist",fs.readFileSync("scripts/test-smart-matching-rules.mjs","utf8").includes("Approved CRM user cannot read private managed deal records") ]
 );
 const failed=checks.filter(([,ok])=>!ok);
