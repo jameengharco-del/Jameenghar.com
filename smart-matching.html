@@ -37,7 +37,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 </section>
 <section class="panel hidden" id="workspace">
 <div class="tabs"><button type="button" class="active" id="buyerTab">Post Buyer Requirement</button><button type="button" id="sellerTab">Post Seller / Broker Property</button></div>
-<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Demo Seller Property</h2><p class="muted">Create one clearly labelled synthetic Seller listing with generated demo photos, a silent demo video and a private test-proof image. This is not a real property or legal proof; it stays pending until Owner approval.</p><button type="button" id="createDemoSeller">Create Demo Seller Property</button><div id="demoSellerStatus" class="notice" style="margin-top:10px">No demo seller property created yet.</div><h2 style="margin-top:22px">Owner Demo Seller Invitations</h2><button type="button" id="refreshOwnerInvitations">Refresh Seller Invitations</button><div id="ownerMatchInvitations" class="notice">Checking Owner seller invitations…</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div></section>
+<section id="ownerPanel" class="hidden"><h2>Owner Verification Queue</h2><p class="muted">Only Owner can preview private property proof documents and approve/reject new posts.</p><div id="ownerQueue" class="notice">Loading pending posts…</div><h2 style="margin-top:22px">Legacy Active Lead Migration</h2><p class="muted">Existing active Buyer, Seller and Landlord leads are copied into an Owner-only correction queue. Original CRM leads are never changed or deleted.</p><button type="button" id="migrateLegacy">Import Existing Active Leads</button><div id="migrationSummary" class="notice">Not run yet.</div><div id="demoSeedStatus" class="notice" style="margin-top:10px">DEMO TEST DATA setup will run once for the six sample Buyer records. Synthetic map coordinates and sample budgets/areas are used; these are not real customer requirements.</div><div id="legacyReviewQueue"></div><h2 style="margin-top:22px">Demo Seller Property</h2><p class="muted">Create one clearly labelled synthetic Seller listing with generated demo photos, a silent demo video and a private test-proof image. This is not a real property or legal proof; it stays pending until Owner approval.</p><button type="button" id="createDemoSeller">Create Demo Seller Property</button><div id="demoSellerStatus" class="notice" style="margin-top:10px">No demo seller property created yet.</div><h2 style="margin-top:22px">Owner Demo Seller Invitations</h2><button type="button" id="refreshOwnerInvitations">Refresh Seller Invitations</button><div id="ownerMatchInvitations" class="notice">Checking Owner seller invitations…</div><h2 style="margin-top:22px">Automatic Buyer ↔ Property Matches</h2><p class="muted">The system compares approved posts using the available fields and map coordinates. Missing coordinates stay in the Owner completion queue.</p><button type="button" id="runMatching">Run Matching Now</button><div id="matchesQueue" class="notice">No match scan run yet.</div><h2 style="margin-top:22px">Buyer & Seller Interest / Deal Approval</h2><button type="button" id="refreshInterestQueue">Refresh Interest Responses</button><div id="ownerInterestQueue" class="notice">Loading interest responses…</div><h2 style="margin-top:22px">Managed Deal Tracking</h2><p class="muted">Track each Owner-approved match through introduction, site visit, negotiation, token, agreement, registry and closure. Only Owner can update stages, notes and follow-up dates.</p><button type="button" id="refreshManagedDeals">Refresh Managed Deals</button><div id="managedDealsQueue" class="notice">Loading managed deals…</div></section>
 <form id="buyerForm">
 <div class="field full"><label>Requirement Title *</label><input name="title" required maxlength="120" placeholder="e.g. 200 Gaj JDA plot required in Vaishali Nagar"></div>
 <div class="field"><label>Buy / Rent *</label><select name="transactionType" required><option value="buy">Buy</option><option value="rent">Rent</option></select></div>
@@ -82,7 +82,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d2d9d1;border-ra
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import {getFirestore,doc,getDoc,getDocs,addDoc,collection,setDoc,updateDoc,serverTimestamp,arrayUnion,query,where} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyCLqBPwR6LfBHRe-pplNaRvztujCEOy2l8",authDomain:"jameenghar-ffdfd.firebaseapp.com",projectId:"jameenghar-ffdfd",storageBucket:"jameenghar-ffdfd.firebasestorage.app",messagingSenderId:"554797022939",appId:"1:554797022939:web:5abc3fd7e68ea6aeca56fe",measurementId:"G-RQJWG3PBY9"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const OWNER_UID="P46WrdzpVWVHVC4t6vqIOYcZfxC3";
@@ -117,7 +117,7 @@ onAuthStateChanged(auth,async user=>{
   $("loginPanel").classList.add("hidden");
   $("authStatus").textContent=isOwner?"Owner access verified. Review pending requirements, properties and private proof documents below.":"Signed in as an approved CRM user. New posts will remain pending Owner approval.";
   $("workspace").classList.remove("hidden");
-  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadDemoSellerStatus();await loadMyMatchInvitations("ownerMatchInvitations");await loadOwnerInterests();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
+  if(isOwner){$("buyerForm").classList.add("hidden");$("sellerForm").classList.add("hidden");$("buyerTab").classList.add("hidden");$("sellerTab").classList.add("hidden");$("ownerPanel").classList.remove("hidden");await loadOwnerQueue();await loadMatchesQueue();await loadLegacyReviewQueue();await runDemoLegacyBuyerCorrections();await loadLegacyReviewQueue();await loadOwnerQueue();await loadDemoSellerStatus();await loadMyMatchInvitations("ownerMatchInvitations");await loadOwnerInterests();await loadManagedDeals();}else{$("marketplaceFeed").classList.remove("hidden");await loadMarketplaceFeed();}
  }catch(e){
   $("authStatus").textContent=e.message;
   $("loginPanel").classList.remove("hidden");
@@ -433,6 +433,154 @@ async function loadOwnerInterests(){
   root.append(box);
  }
 }
+
+const MANAGED_DEAL_STAGES=[
+ ["owner_contact_and_coordination","Owner contact & coordination"],
+ ["buyer_seller_introduction","Buyer–Seller introduction"],
+ ["site_visit_scheduled","Site visit scheduled"],
+ ["site_visit_completed","Site visit completed"],
+ ["negotiation","Negotiation"],
+ ["token_received","Token received"],
+ ["agreement_in_progress","Agreement in progress"],
+ ["agreement_signed","Agreement signed"],
+ ["registry_completed","Registry completed"],
+ ["closed_won","Deal closed — won"],
+ ["closed_lost","Deal closed — lost"],
+ ["on_hold","On hold"]
+];
+function managedDealStageLabel(stage){
+ const found=MANAGED_DEAL_STAGES.find(([value])=>value===stage);
+ return found?found[1]:(stage||"Stage not set");
+}
+function formatManagedDealDate(value){
+ if(!value)return "";
+ const date=value.toDate?value.toDate():new Date(value);
+ return Number.isNaN(date.getTime())?"":date.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
+}
+$("refreshManagedDeals").onclick=loadManagedDeals;
+async function loadManagedDeals(){
+ const root=$("managedDealsQueue");
+ root.textContent="Loading managed deals…";
+ try{
+  const snap=await getDocs(collection(db,"marketplaceDeals"));
+  const deals=snap.docs.map(item=>({id:item.id,...item.data()}));
+  deals.sort((a,b)=>{
+   const av=a.updatedAt?.toMillis?a.updatedAt.toMillis():(a.approvedAt?.toMillis?a.approvedAt.toMillis():0);
+   const bv=b.updatedAt?.toMillis?b.updatedAt.toMillis():(b.approvedAt?.toMillis?b.approvedAt.toMillis():0);
+   return bv-av;
+  });
+  root.innerHTML="";
+  if(!deals.length){root.textContent="No managed deals yet. Deals appear here after both parties express interest and Owner approval.";return;}
+  for(const deal of deals){
+   const card=document.createElement("article");
+   card.style.cssText="padding:14px;border:1px solid #dce8de;border-radius:12px;margin:10px 0;background:#fff";
+   const [propertySnap,requirementSnap]=await Promise.all([
+    deal.propertyId?getDoc(doc(db,"marketplaceProperties",deal.propertyId)):Promise.resolve(null),
+    deal.requirementId?getDoc(doc(db,"marketplaceRequirements",deal.requirementId)):Promise.resolve(null)
+   ]);
+   const property=propertySnap&&propertySnap.exists()?propertySnap.data():{};
+   const requirement=requirementSnap&&requirementSnap.exists()?requirementSnap.data():{};
+   const heading=document.createElement("h3");
+   heading.style.cssText="margin:0 0 8px;color:var(--g)";
+   heading.textContent=property.title||("Managed Deal "+deal.id);
+   const summary=document.createElement("p");
+   summary.className="hint";
+   summary.textContent=[property.approxArea||property.locality||"Location not set",requirement.title||"Buyer requirement", "Deal ID: "+deal.id].join(" · ");
+   const stageLine=document.createElement("p");
+   stageLine.style.cssText="margin:8px 0;font-weight:700;color:var(--g)";
+   stageLine.textContent="Current stage: "+managedDealStageLabel(deal.stage);
+   const statusLine=document.createElement("p");
+   statusLine.className="hint";
+   statusLine.textContent="Deal status: "+(deal.status||"owner_approved_managed")+" · Approved: "+(formatManagedDealDate(deal.approvedAt)||"Date unavailable");
+   card.append(heading,summary,stageLine,statusLine);
+   const form=document.createElement("div");
+   form.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px";
+   const stageWrap=document.createElement("label");
+   stageWrap.className="field";
+   stageWrap.textContent="Update deal stage";
+   const stageSelect=document.createElement("select");
+   for(const [value,label] of MANAGED_DEAL_STAGES){
+    const option=document.createElement("option");option.value=value;option.textContent=label;stageSelect.append(option);
+   }
+   if(MANAGED_DEAL_STAGES.some(([value])=>value===deal.stage))stageSelect.value=deal.stage;
+   else stageSelect.value="owner_contact_and_coordination";
+   stageWrap.append(stageSelect);
+   const followWrap=document.createElement("label");
+   followWrap.className="field";
+   followWrap.textContent="Next follow-up date";
+   const followInput=document.createElement("input");followInput.type="date";followInput.value=deal.nextFollowUpDate||"";
+   followWrap.append(followInput);
+   form.append(stageWrap,followWrap);
+   const noteWrap=document.createElement("label");
+   noteWrap.className="field full";
+   noteWrap.textContent="Owner note / latest update";
+   const noteInput=document.createElement("textarea");
+   noteInput.rows=3;noteInput.maxLength=1500;noteInput.placeholder="e.g. Buyer and seller introduction completed; site visit confirmation pending.";
+   noteInput.value=deal.ownerRemarks||"";
+   noteWrap.append(noteInput);
+   const save=document.createElement("button");
+   save.type="button";save.textContent="Save Deal Update";
+   save.style.marginTop="10px";
+   save.onclick=async()=>{
+    const nextStage=stageSelect.value;
+    if(!MANAGED_DEAL_STAGES.some(([value])=>value===nextStage)){say("Please select a valid deal stage.","error");return;}
+    save.disabled=true;save.textContent="Saving…";
+    try{
+     const note=noteInput.value.trim(),followDate=followInput.value;
+     const nextStatus=nextStage==="closed_won"?"closed_won":nextStage==="closed_lost"?"closed_lost":"owner_approved_managed";
+     const historyEntry={
+      stage:nextStage,
+      note,
+      followUpDate:followDate,
+      updatedAt:new Date().toISOString(),
+      updatedBy:currentUser.uid
+     };
+     await updateDoc(doc(db,"marketplaceDeals",deal.id),{
+      stage:nextStage,
+      status:nextStatus,
+      nextFollowUpDate:followDate,
+      ownerRemarks:note,
+      updatedAt:serverTimestamp(),
+      updatedBy:currentUser.uid,
+      stageHistory:arrayUnion(historyEntry)
+     });
+     say("Managed deal updated: "+managedDealStageLabel(nextStage)+".","success");
+     await loadManagedDeals();
+    }catch(error){
+     say("Could not save managed deal update: "+(error.message||String(error)),"error");
+     save.disabled=false;save.textContent="Save Deal Update";
+    }
+   };
+   const historyBox=document.createElement("details");
+   historyBox.style.cssText="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:8px";
+   const historySummary=document.createElement("summary");
+   historySummary.style.cssText="font-weight:700;color:var(--g);cursor:pointer";
+   historySummary.textContent="Activity History ("+(Array.isArray(deal.stageHistory)?deal.stageHistory.length:0)+" updates)";
+   historyBox.append(historySummary);
+   const historyList=document.createElement("ol");
+   historyList.style.cssText="padding-left:20px;margin:10px 0";
+   const history=Array.isArray(deal.stageHistory)?[...deal.stageHistory].reverse():[];
+   if(!history.length){
+    const li=document.createElement("li");
+    li.textContent="Managed deal started · "+(formatManagedDealDate(deal.approvedAt)||"Approval date unavailable")+". Stage updates will appear here.";
+    historyList.append(li);
+   }else{
+    for(const item of history){
+     const li=document.createElement("li");
+     li.style.marginBottom="8px";
+     li.textContent=[formatManagedDealDate(item.updatedAt)||"Stage update",managedDealStageLabel(item.stage),item.note,item.followUpDate?"Next follow-up: "+item.followUpDate:""].filter(Boolean).join(" · ");
+     historyList.append(li);
+    }
+   }
+   historyBox.append(historyList);
+   card.append(form,noteWrap,save,historyBox);
+   root.append(card);
+  }
+ }catch(error){
+  root.textContent="Could not load managed deals: "+(error.message||String(error));
+ }
+}
+
 async function ownerProofPreview(fileId){
  const response=await fetch(WORKER+"/smart-proof-view",{method:"POST",headers:{"Authorization":"Bearer "+await currentUser.getIdToken(),"Content-Type":"application/json"},body:JSON.stringify({fileId})});
  const data=await response.json();if(!response.ok||!data.signedUrl)throw new Error(data.error||"Could not open private proof document.");return data.signedUrl;
