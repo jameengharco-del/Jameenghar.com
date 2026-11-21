@@ -51,7 +51,8 @@ checks.push(
  ["private proof upload requests ImageKit isPrivateFile response field",worker.includes('uploadForm.append("responseFields", "isPrivateFile")')],
  ["private proof upload enforces confirmed private flag",worker.includes("imageKitData.isPrivateFile === true")],
  ["Owner can view and respond to its seller-side invitation",html.includes('id="ownerMatchInvitations"')&&html.includes('loadMyMatchInvitations("ownerMatchInvitations")')],
- ["Owner seller response is restricted to seller-side invitations",rules.includes('(isAdmin() && request.resource.data.side == "seller")')&&rules.includes('resource.data.toUid == request.auth.uid')]
+ ["Owner seller response is restricted to seller-side invitations",rules.includes('(isAdmin() && request.resource.data.side == "seller")')&&rules.includes('resource.data.toUid == request.auth.uid')],
+ ["Smart Matching offers a visible logout button",html.includes('id="smartLogout"')&&html.includes("signOut(auth)")&&html.includes("import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut}") ]
 );
 const failed=checks.filter(([,ok])=>!ok);
 for(const [label,ok] of checks)console.log((ok?"PASS ":"FAIL ")+label);
