@@ -457,6 +457,17 @@ function formatManagedDealDate(value){
  const date=value.toDate?value.toDate():new Date(value);
  return Number.isNaN(date.getTime())?"":date.toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"});
 }
+function compactManagedDealHistory(history){
+ const seen=new Set();
+ return (Array.isArray(history)?history:[]).filter(item=>{
+  const rawTime=item&&item.updatedAt&&item.updatedAt.toDate?item.updatedAt.toDate():new Date(item&&item.updatedAt||"");
+  const minute=rawTime&&!Number.isNaN(rawTime.getTime())?rawTime.toISOString().slice(0,16):String(item&&item.updatedAt||"");
+  const key=JSON.stringify([item&&item.stage||"",String(item&&item.note||"").trim(),item&&item.followUpDate||"",item&&item.updatedBy||"",minute]);
+  if(seen.has(key))return false;
+  seen.add(key);
+  return true;
+ });
+}
 $("refreshManagedDeals").onclick=loadManagedDeals;
 async function loadManagedDeals(){
  const root=$("managedDealsQueue");
@@ -464,6 +475,18 @@ async function loadManagedDeals(){
  try{
   const snap=await getDocs(collection(db,"marketplaceDeals"));
   const deals=snap.docs.map(item=>({id:item.id,...item.data()}));
+  for(const deal of deals){
+   const originalHistory=Array.isArray(deal.stageHistory)?deal.stageHistory:[];
+   const cleanedHistory=compactManagedDealHistory(originalHistory);
+   if(cleanedHistory.length!==originalHistory.length){
+    deal.stageHistory=cleanedHistory;
+    try{
+     await updateDoc(doc(db,"marketplaceDeals",deal.id),{stageHistory:cleanedHistory});
+    }catch(cleanError){
+     console.warn("Could not compact duplicate managed-deal history entries:",cleanError);
+    }
+   }
+  }
   deals.sort((a,b)=>{
    const av=a.updatedAt?.toMillis?a.updatedAt.toMillis():(a.approvedAt?.toMillis?a.approvedAt.toMillis():0);
    const bv=b.updatedAt?.toMillis?b.updatedAt.toMillis():(b.approvedAt?.toMillis?b.approvedAt.toMillis():0);
@@ -524,9 +547,21 @@ async function loadManagedDeals(){
    save.onclick=async()=>{
     const nextStage=stageSelect.value;
     if(!MANAGED_DEAL_STAGES.some(([value])=>value===nextStage)){say("Please select a valid deal stage.","error");return;}
-    save.disabled=true;save.textContent="Saving…";
+    save.disabled=true;save.textContent="Checking…";
     try{
      const note=noteInput.value.trim(),followDate=followInput.value;
+     const dealRef=doc(db,"marketplaceDeals",deal.id);
+     const latestSnap=await getDoc(dealRef);
+     if(!latestSnap.exists())throw new Error("This managed deal no longer exists.");
+     const latest=latestSnap.data();
+     const currentStage=latest.stage||"owner_contact_and_coordination";
+     const currentNote=String(latest.ownerRemarks||"").trim();
+     const currentFollow=latest.nextFollowUpDate||"";
+     if(nextStage===currentStage&&note===currentNote&&followDate===currentFollow){
+      say("No changes detected. Nothing was saved and Activity History was not changed.","success");
+      save.disabled=false;save.textContent="Save Deal Update";
+      return;
+     }
      const nextStatus=nextStage==="closed_won"?"closed_won":nextStage==="closed_lost"?"closed_lost":"owner_approved_managed";
      const historyEntry={
       stage:nextStage,
@@ -535,14 +570,15 @@ async function loadManagedDeals(){
       updatedAt:new Date().toISOString(),
       updatedBy:currentUser.uid
      };
-     await updateDoc(doc(db,"marketplaceDeals",deal.id),{
+     const cleanedHistory=compactManagedDealHistory(latest.stageHistory);
+     await updateDoc(dealRef,{
       stage:nextStage,
       status:nextStatus,
       nextFollowUpDate:followDate,
       ownerRemarks:note,
       updatedAt:serverTimestamp(),
       updatedBy:currentUser.uid,
-      stageHistory:arrayUnion(historyEntry)
+      stageHistory:[...cleanedHistory,historyEntry]
      });
      say("Managed deal updated: "+managedDealStageLabel(nextStage)+".","success");
      await loadManagedDeals();
@@ -555,11 +591,12 @@ async function loadManagedDeals(){
    historyBox.style.cssText="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:8px";
    const historySummary=document.createElement("summary");
    historySummary.style.cssText="font-weight:700;color:var(--g);cursor:pointer";
-   historySummary.textContent="Activity History ("+(Array.isArray(deal.stageHistory)?deal.stageHistory.length:0)+" updates)";
+   const history=compactManagedDealHistory(deal.stageHistory);
+   historySummary.textContent="Activity History ("+history.length+" updates)";
    historyBox.append(historySummary);
    const historyList=document.createElement("ol");
    historyList.style.cssText="padding-left:20px;margin:10px 0";
-   const history=Array.isArray(deal.stageHistory)?[...deal.stageHistory].reverse():[];
+   history.reverse();
    if(!history.length){
     const li=document.createElement("li");
     li.textContent="Managed deal started · "+(formatManagedDealDate(deal.approvedAt)||"Approval date unavailable")+". Stage updates will appear here.";
