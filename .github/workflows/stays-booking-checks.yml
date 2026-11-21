@@ -1,0 +1,47 @@
+name: Stays Booking Checks
+
+on:
+  pull_request:
+    paths:
+      - "cloudflare/stays-booking/**"
+      - "daybnb.html"
+      - "daybnb-admin.html"
+      - ".github/workflows/stays-booking-checks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "cloudflare/stays-booking/**"
+      - "daybnb.html"
+      - "daybnb-admin.html"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check booking Worker syntax
+        run: node --check cloudflare/stays-booking/worker.js
+      - name: Check public Stays module syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          for name in ["daybnb.html", "daybnb-admin.html"]:
+              text = Path(name).read_text()
+              scripts = re.findall(r'<script type="module">(.*?)</script>', text, re.S)
+              if not scripts:
+                  raise SystemExit(f"No module script found in {name}")
+              Path("/tmp/" + name + ".mjs").write_text(scripts[-1])
+          PY
+          node --check --input-type=module < /tmp/daybnb.html.mjs
+          node --check --input-type=module < /tmp/daybnb-admin.html.mjs
+      - name: Verify secure booking controls are present
+        run: |
+          grep -q "verifyFirebaseToken" cloudflare/stays-booking/worker.js
+          grep -q "RAZORPAY_WEBHOOK_SECRET" cloudflare/stays-booking/worker.js
+          grep -q "new_sqlite_classes" cloudflare/stays-booking/wrangler.toml
+          grep -q "signInAnonymously" daybnb.html
+          grep -q "Cancel & Refund" daybnb-admin.html
