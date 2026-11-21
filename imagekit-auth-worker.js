@@ -268,7 +268,7 @@ export default {
         uploadForm.append("folder", "/private/property-proofs/");
         uploadForm.append("isPrivateFile", "true");
         // ImageKit returns isPrivateFile only when it is explicitly requested.
-        uploadForm.append("responseFields", JSON.stringify(["isPrivateFile"]));
+        uploadForm.append("responseFields", "isPrivateFile");
         uploadForm.append("useUniqueFileName", "true");
         const imageKitResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
           method: "POST",
