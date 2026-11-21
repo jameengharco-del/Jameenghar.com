@@ -124,7 +124,7 @@ onAuthStateChanged(auth,async user=>{
  }
 });
 async function loadMarketplaceFeed(){
- await loadMyMatchInvitations(rootId);
+ await loadMyMatchInvitations();
  const reqRoot=$("requirementsFeed"),propRoot=$("propertiesFeed");reqRoot.innerHTML="<h3>Buyer Requirements</h3>";propRoot.innerHTML="<h3>Verified Properties</h3>";
  try{
   const [reqSnap,propSnap]=await Promise.all([
