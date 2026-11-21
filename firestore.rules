@@ -793,7 +793,10 @@ service cloud.firestore {
 
     match /marketplaceInterests/{interestId} {
       allow read: if isAdmin();
-      allow create: if isApprovedCRM()
+      allow create: if (
+          isApprovedCRM()
+          || (isAdmin() && request.resource.data.side == "seller")
+        )
         && request.resource.data.keys().hasOnly(["matchId", "interestByUid", "side", "response", "status", "respondedAt"])
         && request.resource.data.interestByUid == request.auth.uid
         && request.resource.data.side in ["buyer", "seller"]
@@ -810,9 +813,16 @@ service cloud.firestore {
     match /marketplaceNotifications/{notificationId} {
       allow read: if isAdmin() || (isApprovedCRM() && resource.data.toUid == request.auth.uid);
       allow create: if isAdmin();
-      allow update: if isApprovedCRM()
-        && resource.data.toUid == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
+      allow update: if (
+          isApprovedCRM()
+          && resource.data.toUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"])
+        ) || (
+          isAdmin()
+          && resource.data.toUid == request.auth.uid
+          && resource.data.type == "match_invitation"
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"])
+        );
       allow delete: if isAdmin();
     }
 
